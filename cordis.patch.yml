@@ -1,0 +1,8 @@
+# dsh-office bundle patch: mounts the office plugin.
+# One row serves both faces: the Loader imports the package's Node entry
+# (the `apply` host plugin), and dsh-client-modules discovers the same
+# package's `dsh.client` declaration, hashes lib/client.js into
+# window.__DSH_BOOT__, and serves it from /plugins/dsh-office/client.js.
+- insert:
+    - id: office
+      name: dsh-office

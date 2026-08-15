@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>办公室</title>
+<style>
+  /* ============================================================
+     主题变量（毛玻璃，随明暗切换）
+     生产环境：iframe 背景透明，backdrop-filter 由 Client 浮层容器负责；
+     本骨架独立打开时，用 body 渐变背景演示玻璃效果。
+     ============================================================ */
+  :root {
+    /* 面板：不透明底 + 光感渐变（仿毛玻璃，不依赖 backdrop-filter） */
+    --panel-gradient: linear-gradient(165deg, #fbfbfd 0%, #f3f3f7 55%, #ebebf0 100%);
+    --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(0, 0, 0, 0.06);
+    --glass-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.08);
+    --card-bg: rgba(255, 255, 255, 0.55);
+    --card-hover: rgba(255, 255, 255, 0.8);
+    --text: #1c1c1e;
+    --text-dim: #6e6e73;
+    --text-faint: #9a9aa0;
+    --dot-active: #30d158;
+    --dot-idle: #c7c7cc;
+    --tier-low: #8e8e93;
+    --tier-mid: #0a84ff;
+    --tier-high: #ff9f0a;
+    --noise-opacity: 0.035;
+    /* 磨砂噪点颗粒（SVG feTurbulence） */
+    --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --panel-gradient: linear-gradient(165deg, #26262b 0%, #1d1d21 55%, #17171a 100%);
+      --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 12px 40px rgba(0, 0, 0, 0.5);
+      --card-bg: rgba(255, 255, 255, 0.06);
+      --card-hover: rgba(255, 255, 255, 0.12);
+      --text: #f5f5f7;
+      --text-dim: #a1a1a6;
+      --text-faint: #6e6e73;
+      --dot-active: #30d158;
+      --dot-idle: #48484a;
+      --tier-low: #98989d;
+      --tier-mid: #409cff;
+      --tier-high: #ffd60a;
+      --noise-opacity: 0.05;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
+                 "Segoe UI", "Microsoft YaHei", sans-serif;
+    color: var(--text);
+    /* 生产环境面板不透明、满铺覆盖，此背景不会露出；仅作为兜底 */
+    background: #e9e9ee;
+    overflow: hidden;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #101012; }
+  }
+
+  /* ============ 浮层面板 ============ */
+  .office-panel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel-gradient);
+    box-shadow: var(--panel-highlight), var(--glass-shadow);
+    overflow: hidden;
+  }
+  /* 仿毛玻璃：噪点颗粒层，叠加在不透明渐变之上营造磨砂质感 */
+  .office-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--noise);
+    background-size: 160px 160px;
+    opacity: var(--noise-opacity);
+  }
+
+  /* ============ 标题栏 ============ */
+  .office-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 52px 16px 20px;
+    border-bottom: 1px solid var(--glass-border);
+    flex: none;
+  }
+  .office-title {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  .office-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    border: 1px solid var(--glass-border);
+    border-radius: 9px;
+    background: var(--card-bg);
+    color: var(--text-dim);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .icon-btn:hover { background: var(--card-hover); }
+  .icon-btn:active { transform: scale(0.94); }
+
+  /* ============ 数据口径帮助弹窗 ============ */
+  .help-modal {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.28);
+  }
+  .help-card {
+    width: min(560px, calc(100% - 40px));
+    max-height: 80%;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel-gradient);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+  }
+  .help-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--glass-border);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .help-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 16px 18px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-dim);
+  }
+  .help-body h4 {
+    margin: 12px 0 6px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .help-body h4:first-child { margin-top: 0; }
+  .help-body p { margin: 4px 0; }
+  .help-body ul { margin: 4px 0 4px 16px; }
+  .help-body li { margin: 2px 0; }
+  .help-body b { color: var(--text); font-weight: 600; }
+
+  /* ============ 主体：6 列 ============ */
+  .office-body {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    padding: 16px;
+    min-height: 0; /* 允许子列滚动 */
+  }
+
+  .column {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    background: var(--card-bg);
+    overflow: hidden;
+  }
+
+  /* 角色标题：色点 + 淡名，弱化但精致 */
+  .col-title {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 8px 12px 0;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--text-faint);
+  }
+  .col-title .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  /* 动画区：上方 ~30%（内含统计栏 + 气泡 + 小人） */
+  .anim-area {
+    position: relative;
+    flex: 0 0 30%;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 8px;
+  }
+  .anim-area canvas { flex: 1; min-height: 0; width: 100%; display: block; }
+
+  /* 动画区顶部统计行：项目 / 任务 / token */
+  .column-stats {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 2px 0;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .column-stats b {
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 对话气泡：像素风，全宽，尾巴在左朝下 */
+  .bubble {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    right: 8px;
+    z-index: 1;
+    padding: 5px 8px;
+    background: #ffffff;
+    color: #1c1c1e;
+    border: 1.5px solid #1c1c1e;
+    border-radius: 9px;
+    font-size: 10px;
+    line-height: 1.35;
+    text-align: left;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.14);
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    bottom: -6px;
+    border: 6px solid transparent;
+    border-top-color: #1c1c1e;
+    border-bottom: 0;
+  }
+  @media (prefers-color-scheme: dark) {
+    .bubble { background: #2a2a2f; color: #f5f5f7; border-color: #e5e5ea; }
+    .bubble::after { border-top-color: #e5e5ea; }
+  }
+
+  .badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-size: 16px;
+    line-height: 1;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
+    animation: badge-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes badge-pulse {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(-3px) scale(1.08); }
+  }
+
+  /* 工作区列表：下方 ~70% */
+  .workspace-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+  }
+  .workspace-list::-webkit-scrollbar { width: 0; }
+
+  .workspace {
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: var(--card-bg);
+    transition: background .15s ease;
+  }
+  .workspace:hover { background: var(--card-hover); }
+
+  .ws-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sessions { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .session {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  .session:hover { background: var(--card-hover); }
+  .session .status { flex: none; width: 12px; height: 12px; display: grid; place-items: center; }
+  .session .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .session.idle .dot { background: var(--dot-idle); }
+  /* 进行中：转圈加载动效 */
+  .spinner {
+    width: 11px; height: 11px;
+    border: 2px solid rgba(10, 132, 255, 0.2);
+    border-top-color: #0a84ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .session .label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  /* 输入 token 统计（三档配色） */
+  .session .tokens {
+    flex: none;
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .tokens.low  { color: var(--tier-low); }
+  .tokens.mid  { color: var(--tier-mid); }
+  .tokens.high { color: var(--tier-high); }
+  .tokens.cum  { color: var(--text-dim); font-weight: 500; }
+
+  .empty {
+    font-size: 12px;
+    color: var(--text-faint);
+    text-align: center;
+    padding: 12px 0;
+  }
+
+  /* ============ 配置视图 ============ */
+  .config-view {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px 20px;
+  }
+  .config-hint {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+  .config-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    align-items: start;
+  }
+  .config-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    background: var(--card-bg);
+  }
+  .config-col.full {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .config-col.full .config-col-head { flex: 0 0 100%; }
+  .config-col-head {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .config-col-empty {
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align: center;
+    padding: 8px 0;
+  }
+  .ws-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: var(--card-bg);
+  }
+  .ws-item .ws-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ws-item select {
+    flex: none;
+    max-width: 96px;
+    padding: 4px 6px;
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    background: #ffffff;
+    color: #1c1c1e;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .ws-item select option { background: #ffffff; color: #1c1c1e; }
+  @media (prefers-color-scheme: dark) {
+    .ws-item select { background: #1c1c1e; color: #f5f5f7; }
+    .ws-item select option { background: #1c1c1e; color: #f5f5f7; }
+  }
+
+  /* ============ 保存按钮 & 未保存提示 ============ */
+  .save-btn {
+    width: auto;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dim);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease, background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .save-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .save-btn.dirty {
+    color: #fff;
+    background: #0a84ff;
+    border-color: #0a84ff;
+    font-weight: 600;
+  }
+  .save-btn.dirty:hover {
+    background: #409cff;
+    border-color: #409cff;
+  }
+  @media (prefers-color-scheme: dark) {
+    .save-btn.dirty { color: #000; }
+  }
+  .dirty-badge {
+    display: none;
+    font-size: 10px;
+    color: #ff9f0a;
+    font-weight: 500;
+    white-space: nowrap;
+    align-items: center;
+    gap: 3px;
+  }
+  .dirty-badge.visible { display: inline-flex; }
+  .dirty-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #ff9f0a;
+    flex: none;
+  }
+
+  /* ============ 加载遮罩 ============ */
+  .loading-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.3s ease;
+  }
+  .loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .loading-text {
+    color: #9ca3af;
+    font-size: 14px;
+    margin-top: 12px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div style="text-align:center">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">正在加载办公室...</div>
+    </div>
+  </div>
+  <div class="office-panel">
+    <header class="office-header">
+      <div class="office-title" id="officeTitle">🏢 办公室</div>
+      <div class="office-actions">
+        <span class="dirty-badge" id="dirtyBadge"><span class="dirty-dot"></span>有未保存的更改</span>
+        <button class="icon-btn save-btn" id="saveBtn" title="保存更改">保存</button>
+        <button class="icon-btn" id="helpBtn" title="数据口径">?</button>
+        <button class="icon-btn" id="configBtn" title="配置">⚙︎</button>
+      </div>
+    </header>
+
+    <div class="office-body" id="officeBody"></div>
+    <div class="config-view" id="configView" hidden></div>
+    <div class="help-modal" id="helpModal" hidden>
+      <div class="help-card">
+        <div class="help-head">
+          <span>数据口径说明</span>
+          <button class="icon-btn" id="helpClose" title="关闭">✕</button>
+        </div>
+        <div class="help-body">
+          <h4>会话状态</h4>
+          <ul>
+            <li><b>进行中</b>（🔵 转圈）：该会话的 agent 正在运行。</li>
+            <li><b>待确认</b>（⚠️ 举手）：该会话有待审批 / 待回答的交互。</li>
+          </ul>
+          <h4>会话 token</h4>
+          <ul>
+            <li><b>单次输入 token</b>（进行中会话）：最近一次请求的输入量 = 输入 + 缓存读 + 缓存写；三档分色：&lt;10K 灰、10K~100K 蓝、&gt;100K 黄。</li>
+            <li><b>累计 token</b>（历史会话）：该会话自创建以来所有回合的 输入 + 输出 + 缓存读 + 缓存写 之和。</li>
+          </ul>
+          <h4>列头 token</h4>
+          <p>该列所有工作区会话的累计 token 之和（含归档会话）。</p>
+          <h4>项目 / 任务</h4>
+          <p><b>项目</b>：该列分配的工作区数；<b>任务</b>：该列所有工作区的会话数（含归档会话）。</p>
+          <h4>四态动画</h4>
+          <ul>
+            <li>🟢 空闲：该列无进行中会话。</li>
+            <li>🔵 工作：1~4 个进行中会话。</li>
+            <li>🟠 忙疯：超过 4 个进行中会话。</li>
+            <li>🔴 举手：存在待确认会话。</li>
+          </ul>
+          <h4>对话气泡</h4>
+          <p>按状态 / 最近调用工具 / 会话标题关键词，匹配一句随机文案。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ============================================================
+  // 办公室页面：轮询 /office-ui/data，6 列小人 + 会话列表
+  // ============================================================
+
+  // 6 个角色：sprite 走 Kenney 精灵图，label 用于配置列标题/下拉，color 用于色底
+  const CHARACTERS = [
+    { sprite: 'male_adventurer',   label: '工程师',   color: '#7b8fa1' },
+    { sprite: 'male_person',       label: '项目经理', color: '#4a6fd4' },
+    { sprite: 'female_adventurer', label: '探索专家', color: '#3f8f5f' },
+    { sprite: 'female_person',     label: '开发者',   color: '#d4af37' },
+    { sprite: 'zombie',            label: '摸鱼大师', color: '#7b5bd4' },
+    { sprite: 'robot',             label: '机器人',   color: '#d97706' },
+  ];
+
+  // Kenney Toon Characters 精灵帧（每帧 96×128，坐标来自 Tilesheet XML）
+  const KW = 96, KH = 128;
+  const KFRAMES = {
+    idle:   [[0, 0]],
+    cheer:  [[672, 0], [768, 0]],
+    behindBack: [[480, 256]],
+    run:    [[576, 256], [672, 256], [768, 256]],
+    think:  [[288, 384]],
+    talk:   [[0, 256]],
+    show:   [[384, 256]],
+    hold:   [[288, 256]],
+    walk:   [[0, 512], [96, 512], [192, 512], [288, 512], [384, 512], [480, 512], [576, 512], [672, 512]],
+  };
+
+  // 状态徽标：idle/working 无徽标，busy 🔥，warning ⚠️
+  const BADGE = { idle: '', working: '', busy: '🔥', warning: '⚠️' };
+
+  // 空闲动作池 + 点开时为每列随机取一个（整个打开期间保持不变）
+  const IDLE_ACTIONS = ['idle', 'behindBack', 'think', 'talk', 'show', 'hold'];
+  const columnIdleActions = CHARACTERS.map(() => IDLE_ACTIONS[Math.floor(Math.random() * IDLE_ACTIONS.length)]);
+
+  // 输入 token 分档阈值（单次输入口径，按 1M 上下文校准，可配置）：
+  //   < low 灰(很少)，low~high 蓝(差不多)，> high 黄(浪费)
+  const TOKEN_TIERS = { low: 10000, high: 100000 };
+  function tierOf(tokens) {
+    if (tokens == null) return 'low';
+    if (tokens < TOKEN_TIERS.low) return 'low';
+    if (tokens <= TOKEN_TIERS.high) return 'mid';
+    return 'high';
+  }
+  function formatTokens(n) {
+    if (n == null) return '';
+    if (n < 1000) return String(n);
+    if (n < 10000) return (n / 1000).toFixed(1) + 'K';
+    if (n < 1000000) return Math.round(n / 1000) + 'K';
+    const m = n / 1000000;
+    return (m >= 100 ? Math.round(m) : m.toFixed(1)) + 'M';
+  }
+
+  // 6 列骨架
+  function emptyColumns() {
+    return CHARACTERS.map((c, index) => ({ index, workspaces: [] }));
+  }
+
+  // 兜底演示数据（独立打开 office.html 时展示）
+  function demoData() {
+    const columns = emptyColumns();
+    columns[0].workspaces = [{ id: 'demo-1', title: '项目A', sessions: [
+      { id: 's1', title: '重构登录模块', active: true,  inputTokens: 180000 },
+      { id: 's2', title: '调研方案', active: false, inputTokens: 4500 },
+    ]}];
+    columns[1].workspaces = [{ id: 'demo-2', title: '项目B', sessions: [
+      { id: 's3', title: '对接审批', active: true, inputTokens: 32000 },
+    ]}];
+    columns[2].workspaces = [{ id: 'demo-3', title: '项目C', sessions: [
+      { id: 's4', title: '爬取数据', active: true, inputTokens: 260000 },
+      { id: 's5', title: '清洗数据', active: false, inputTokens: 12000 },
+    ]}];
+    return { columns, assignments: {} };
+  }
+
+  // 当前数据：初始为空骨架，优先 /office-ui/data，独立打开时用演示兜底
+  let DATA = { columns: emptyColumns(), assignments: {} };
+  let dataLoaded = false;
+  let hasPendingChanges = false;
+
+  async function fetchData() {
+    try {
+      const res = await fetch('/office-ui/data', { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      if (json && Array.isArray(json.columns) && json.columns.length) {
+        DATA = json;
+        dataLoaded = true;
+      }
+    } catch (e) {
+      if (!dataLoaded) DATA = demoData();  // 独立打开兜底
+    }
+  }
+
+  // 列状态：由会话 active 数推导（pendingCount / 待确认 待接）
+  function columnState(column) {
+    let activeCount = 0;
+    let pendingCount = 0;
+    for (const ws of column.workspaces || []) {
+      for (const s of ws.sessions || []) {
+        if (s.active) activeCount++;
+        if (s.pending) pendingCount++;
+      }
+    }
+    if (pendingCount > 0) return 'warning';
+    if (activeCount === 0) return 'idle';
+    if (activeCount > 4) return 'busy';
+    return 'working';
+  }
+
+  // ---------- 对话气泡：按状态/角色个性化文案 ----------
+  function pick(arr) {
+    if (!arr || !arr.length) return '';
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+  // 稳定选择：同一种子（工具名/标题）始终返回同一句，避免被 10 秒轮换随机重抽
+  function stablePick(arr, seed) {
+    if (!arr || !arr.length) return '';
+    let h = 0;
+    const s = String(seed || '');
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return arr[Math.abs(h) % arr.length];
+  }
+  function truncate(s, n) {
+    return s.length > n ? s.slice(0, n) + '…' : s;
+  }
+  // 气泡文案：从 /office-ui/bubble-texts（bubble-texts.json）加载，不在 HTML 硬编码
+  let BUBBLE_TEXTS = null;
+  async function loadBubbleTexts() {
+    try {
+      const res = await fetch('/office-ui/bubble-texts', { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      if (json && typeof json === 'object') BUBBLE_TEXTS = json;
+    } catch (e) {
+      BUBBLE_TEXTS = { warning: [], busy: [], titleRules: [], toolRules: [], idle: { zombie: [], robot: [], default: [] } };
+    }
+  }
+  function bubbleText(col, state) {
+    const T = BUBBLE_TEXTS || { warning: [], busy: [], titleRules: [], toolRules: [], idle: {} };
+    const char = CHARACTERS[col.index];
+    const sessions = (col.workspaces || []).flatMap((ws) => ws.sessions || []);
+    const active = sessions.filter((s) => s.active);
+    // 1) 紧急状态优先
+    if (state === 'warning') return pick(T.warning);
+    if (state === 'busy') return pick(T.busy);
+    if (active.length) {
+      const s = active[0];
+      // 2) 工具匹配（最近调用的工具）
+      if (s.tools && s.tools.length) {
+        for (const rule of (T.toolRules || [])) {
+          if (rule.keys && rule.keys.some((k) => s.tools.some((t) => String(t).toLowerCase().includes(k)))) {
+            return stablePick(rule.texts, s.tools.join(','));
+          }
+        }
+      }
+      // 3) 标题关键词匹配 → 4) 标题引用
+      const title = s.title || '';
+      const lower = title.toLowerCase();
+      for (const rule of (T.titleRules || [])) {
+        if (rule.keys && rule.keys.some((k) => lower.includes(k))) return stablePick(rule.texts, title);
+      }
+      return '在搞「' + truncate(title, 10) + '」…';
+    }
+    // 5) 角色个性化兜底：按角色 sprite 取各自 MBTI 风格的文案
+    const idle = T.idle || {};
+    return pick(idle[char.sprite] || idle.default);
+  }
+
+  const $body = document.getElementById('officeBody');
+  const $config = document.getElementById('configView');
+  const $configBtn = document.getElementById('configBtn');
+  const $officeTitle = document.getElementById('officeTitle');
+
+  // ---------- 渲染 6 列 ----------
+  function structureKey() {
+    return (DATA.columns || []).map((col) => {
+      return (col.workspaces || []).map((ws) => {
+        return ws.id + '[' + (ws.sessions || []).map((s) => s.id).join(',') + ']';
+      }).join('|');
+    }).join('::');
+  }
+
+  let lastStructureKey = '';
+
+  function renderColumns() {
+    const sk = structureKey();
+    if (sk !== lastStructureKey || $body.children.length === 0) {
+      lastStructureKey = sk;
+      fullRender();
+    } else {
+      updateColumns();
+    }
+  }
+
+  function colStats(col) {
+    const projectCount = col.workspaces.length;
+    const taskCount = col.workspaces.reduce((sum, ws) => sum + (typeof ws.sessionCount === 'number' ? ws.sessionCount : (ws.sessions || []).length), 0);
+    const tokenTotal = col.workspaces.reduce((sum, ws) => sum + (typeof ws.tokenTotal === 'number' ? ws.tokenTotal : 0), 0);
+    return { projectCount, taskCount, tokenTotal };
+  }
+
+  function setStats(statsEl, col) {
+    const { projectCount, taskCount, tokenTotal } = colStats(col);
+    const bs = statsEl.querySelectorAll('b');
+    if (bs[0]) bs[0].textContent = String(projectCount);
+    if (bs[1]) bs[1].textContent = String(taskCount);
+    if (bs[2]) { bs[2].textContent = formatTokens(tokenTotal); bs[2].title = '累计输入 token：' + tokenTotal; }
+  }
+
+  function bubbleKey(col, state) {
+    if (state === 'working') {
+      const sessions = (col.workspaces || []).flatMap((ws) => ws.sessions || []);
+      const active = sessions.filter((s) => s.active);
+      if (active.length) {
+        const s = active[0];
+        return state + '|' + (s.tools || []).join(',') + '|' + (s.title || '');
+      }
+    }
+    return state;
+  }
+
+  function sessionRow(s) {
+    const li = document.createElement('li');
+    li.className = 'session ' + (s.active ? 'active' : 'idle');
+    li.dataset.sid = s.id;
+    li.title = '点击打开会话';
+    li.addEventListener('click', () => openSession(s.id));
+
+    const status = document.createElement('span');
+    status.className = 'status';
+    const indicator = document.createElement('span');
+    indicator.className = s.active ? 'spinner' : 'dot';
+    status.appendChild(indicator);
+
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = s.title;
+
+    const sessActive = !!s.active;
+    const displayTokens = sessActive ? s.inputTokens : (s.tokenTotal != null ? s.tokenTotal : null);
+    const tokens = document.createElement('span');
+    tokens.className = 'tokens ' + (sessActive ? tierOf(s.inputTokens) : 'cum');
+    tokens.textContent = formatTokens(displayTokens);
+    tokens.title = (sessActive ? '单次输入 token：' : '累计 token：') + (displayTokens == null ? '' : displayTokens);
+
+    li.appendChild(status);
+    li.appendChild(label);
+    li.appendChild(tokens);
+    return li;
+  }
+
+  function updateSessionRow(li, s) {
+    const sessActive = !!s.active;
+    li.className = 'session ' + (sessActive ? 'active' : 'idle');
+    const indicator = li.querySelector('.status span');
+    if (indicator) indicator.className = sessActive ? 'spinner' : 'dot';
+    const label = li.querySelector('.label');
+    if (label && label.textContent !== s.title) label.textContent = s.title;
+    const displayTokens = sessActive ? s.inputTokens : (s.tokenTotal != null ? s.tokenTotal : null);
+    const tokens = li.querySelector('.tokens');
+    if (tokens) {
+      tokens.className = 'tokens ' + (sessActive ? tierOf(s.inputTokens) : 'cum');
+      const txt = formatTokens(displayTokens);
+      if (tokens.textContent !== txt) tokens.textContent = txt;
+      tokens.title = (sessActive ? '单次输入 token：' : '累计 token：') + (displayTokens == null ? '' : displayTokens);
+    }
+  }
+
+  function fullRender() {
+    $body.querySelectorAll('canvas').forEach((c) => c._stop && c._stop());
+    $body.innerHTML = '';
+    for (const col of (DATA.columns || [])) {
+      const state = columnState(col);
+      const char = CHARACTERS[col.index];
+
+      const section = document.createElement('section');
+      section.className = 'column';
+      section.dataset.bubbleKey = bubbleKey(col, state);
+
+      // 角色标题
+      const colTitle = document.createElement('div');
+      colTitle.className = 'col-title';
+      const titleDot = document.createElement('span');
+      titleDot.className = 'dot';
+      titleDot.style.background = char.color;
+      const titleName = document.createElement('span');
+      titleName.textContent = char.label;
+      colTitle.appendChild(titleDot);
+      colTitle.appendChild(titleName);
+
+      // 动画区
+      const anim = document.createElement('div');
+      anim.className = 'anim-area';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = bubbleText(col, state);
+      anim.appendChild(bubble);
+
+      const canvas = document.createElement('canvas');
+      anim.appendChild(canvas);
+
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = BADGE[state] || '';
+      badge.style.display = BADGE[state] ? '' : 'none';
+      anim.appendChild(badge);
+
+      const stats = document.createElement('div');
+      stats.className = 'column-stats';
+      ['项目', '任务', 'token'].forEach((label) => {
+        const span = document.createElement('span');
+        span.textContent = label + ' ';
+        const b = document.createElement('b');
+        b.textContent = '0';
+        span.appendChild(b);
+        stats.appendChild(span);
+      });
+      setStats(stats, col);
+      anim.appendChild(stats);
+
+      // 工作区列表
+      const list = document.createElement('ul');
+      list.className = 'workspace-list';
+      if (col.workspaces.length === 0) {
+        const empty = document.createElement('li');
+        empty.className = 'empty';
+        empty.textContent = '未分配工作区';
+        list.appendChild(empty);
+      } else {
+        for (const ws of col.workspaces) {
+          const wsItem = document.createElement('li');
+          wsItem.className = 'workspace';
+          const title = document.createElement('div');
+          title.className = 'ws-title';
+          title.textContent = ws.title;
+          wsItem.appendChild(title);
+          const sessions = document.createElement('ul');
+          sessions.className = 'sessions';
+          for (const s of ws.sessions) {
+            sessions.appendChild(sessionRow(s));
+          }
+          wsItem.appendChild(sessions);
+          list.appendChild(wsItem);
+        }
+      }
+
+      section.appendChild(colTitle);
+      section.appendChild(anim);
+      section.appendChild(list);
+      $body.appendChild(section);
+
+      startSprite(canvas, char, state, col.index);
+    }
+  }
+
+  function updateColumns() {
+    const cols = DATA.columns || [];
+    const sections = Array.from($body.querySelectorAll('.column'));
+    sections.forEach((section, index) => {
+      const col = cols[index];
+      if (!col) return;
+      const state = columnState(col);
+
+      const stats = section.querySelector('.column-stats');
+      if (stats) setStats(stats, col);
+
+      const badge = section.querySelector('.badge');
+      if (badge) {
+        const b = BADGE[state] || '';
+        if (badge.textContent !== b) badge.textContent = b;
+        badge.style.display = b ? '' : 'none';
+      }
+
+      const bk = bubbleKey(col, state);
+      if (section.dataset.bubbleKey !== bk) {
+        section.dataset.bubbleKey = bk;
+        const bubble = section.querySelector('.bubble');
+        if (bubble) bubble.textContent = bubbleText(col, state);
+      }
+
+      const canvas = section.querySelector('canvas');
+      if (canvas && canvas._setState) canvas._setState(state);
+
+      const list = section.querySelector('.workspace-list');
+      if (!list) return;
+      const wsItems = Array.from(list.querySelectorAll('.workspace'));
+      const wsList = col.workspaces || [];
+      const flatSessions = [];
+      for (let wi = 0; wi < wsList.length; wi++) {
+        const ws = wsList[wi];
+        const wsItem = wsItems[wi];
+        if (wsItem) {
+          const titleEl = wsItem.querySelector('.ws-title');
+          if (titleEl && titleEl.textContent !== ws.title) titleEl.textContent = ws.title;
+        }
+        for (const s of (ws.sessions || [])) flatSessions.push(s);
+      }
+      const sessionLis = Array.from(list.querySelectorAll('.session'));
+      sessionLis.forEach((li, i) => {
+        const s = flatSessions[i];
+        if (s) updateSessionRow(li, s);
+      });
+    });
+  }
+
+  // ---------- P2-3: Single master rAF loop for all column canvases ----------
+  const _spriteList = [];
+  let _masterRaf = 0;
+  let _masterRunning = false;
+
+  function masterDrawLoop() {
+    if (!_masterRunning) return;
+    for (const sprite of _spriteList) {
+      if (!sprite.alive) continue;
+      sprite.draw();
+    }
+    _masterRaf = requestAnimationFrame(masterDrawLoop);
+  }
+  function ensureMasterLoop() {
+    if (!_masterRunning) {
+      _masterRunning = true;
+      _masterRaf = requestAnimationFrame(masterDrawLoop);
+    }
+  }
+
+  // ---------- 占位小人（呼吸动画，之后换 LPC 精灵）----------
+  function startSprite(canvas, char, state, columnIndex) {
+    const ctx = canvas.getContext('2d');
+    let currentState = state;
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.max(1, Math.floor(canvas.clientWidth * dpr));
+      canvas.height = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const img = new Image();
+    img.src = '/office-ui/assets/toon/' + char.sprite + '.png';
+
+    const idleAction = columnIdleActions[columnIndex] || 'idle';
+    const t0 = performance.now();
+
+    const sprite = {
+      alive: true,
+      canvas, ctx, img, char, t0,
+      get currentState() { return currentState; },
+      draw() {
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        ctx.clearRect(0, 0, w, h);
+        const t = (performance.now() - t0) / 1000;
+
+        let key;
+        if (currentState === 'idle') key = idleAction;
+        else if (currentState === 'busy') key = 'run';
+        else if (currentState === 'warning') key = 'cheer';
+        else key = 'walk';
+
+        const frames = KFRAMES[key] || KFRAMES.idle;
+        const fps = key === 'run' ? 12 : 6;
+        const f = frames[Math.floor(t * fps) % frames.length];
+
+        ctx.fillStyle = char.color;
+        ctx.globalAlpha = 0.22;
+        ctx.beginPath(); ctx.arc(w / 2, h / 2, Math.min(w, h) * 0.34, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+
+        ctx.imageSmoothingEnabled = false;
+        if (img.complete && img.naturalWidth > 0) {
+          const scale = Math.min(w, h) / KH;
+          const dw = KW * scale, dh = KH * scale;
+          const dx = (w - dw) / 2;
+          let dy = (h - dh) / 2;
+          if (currentState === 'idle') dy += Math.sin(t * Math.PI * 2 * 0.4) * 2;
+          ctx.drawImage(img, f[0], f[1], KW, KH, dx, dy, dw, dh);
+        }
+      }
+    };
+
+    _spriteList.push(sprite);
+    ensureMasterLoop();
+
+    canvas._stop = () => {
+      sprite.alive = false;
+      window.removeEventListener('resize', resize);
+      if (_spriteList.every(s => !s.alive)) {
+        _masterRunning = false;
+        cancelAnimationFrame(_masterRaf);
+      }
+    };
+    canvas._setState = (s) => { currentState = s; };
+  }
+
+  // ---------- 配置：待保存状态管理 ----------
+  // savedAssignments = 磁盘上已持久化的分配（进入配置模式时的快照，保存后更新）
+  // pendingAssignments = 用户当前正在编辑的分配（下拉变更立即反映到此，仅预览不保存）
+  let savedAssignments = {};
+  let pendingAssignments = {};
+  const $saveBtn = document.getElementById('saveBtn');
+  const $dirtyBadge = document.getElementById('dirtyBadge');
+
+  // 比较 pending vs saved，返回是否有差异
+  function isDirty() {
+    const pKeys = Object.keys(pendingAssignments);
+    const sKeys = Object.keys(savedAssignments);
+    if (pKeys.length !== sKeys.length) return true;
+    for (const k of pKeys) {
+      if (pendingAssignments[k] !== savedAssignments[k]) return true;
+    }
+    return false;
+  }
+
+  // 刷新保存按钮和未保存提示的 UI 状态
+  function updateDirtyUI() {
+    const dirty = isDirty();
+    $saveBtn.classList.toggle('dirty', dirty);
+    $saveBtn.classList.toggle('visible', dirty);
+    $dirtyBadge.classList.toggle('visible', dirty);
+  }
+
+  // 下拉变更：只更新 pending 状态并重新渲染配置视图（不保存到磁盘）
+  function onAssignmentChange(e) {
+    const wsId = e.target.dataset.wsid;
+    const col = parseInt(e.target.value, 10);
+    if (wsId) {
+      if (col === -1) {
+        delete pendingAssignments[wsId];
+      } else {
+        pendingAssignments[wsId] = col;
+      }
+    }
+    renderConfig();
+    updateDirtyUI();
+  }
+
+  // 保存：将 pending 提交到磁盘（POST /office-ui/config）
+  async function saveAssignments() {
+    try {
+      const res = await fetch('/office-ui/config', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ assignments: pendingAssignments })
+      });
+      if (res.ok) {
+        savedAssignments = { ...pendingAssignments };
+        DATA.assignments = { ...pendingAssignments };
+        updateDirtyUI();
+      }
+    } catch (e) {}
+  }
+
+  $saveBtn.addEventListener('click', saveAssignments);
+
+  // ---------- 打开会话 ----------
+  async function openSession(sessionId) {
+    if (!sessionId) return;
+    try {
+      await fetch('/office-ui/open-session', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      });
+    } catch (e) {}
+  }
+
+  // ---------- 配置视图 ----------
+  function renderConfig() {
+    $config.innerHTML = '';
+    const hint = document.createElement('div');
+    hint.className = 'config-hint';
+    hint.textContent = '把工作区加进对应的小人（修改后点击右上角「保存」生效）';
+    $config.appendChild(hint);
+
+    // 收集所有工作区（含未分配）— 使用 pendingAssignments 预览待保存的分配
+    const all = [];
+    if (Array.isArray(DATA.workspaces)) {
+      for (const ws of DATA.workspaces) {
+        const col = pendingAssignments.hasOwnProperty(ws.id)
+          ? pendingAssignments[ws.id]
+          : (typeof ws.col === 'number' ? ws.col : 0);
+        all.push({ id: ws.id, title: ws.title, col });
+      }
+    } else {
+      for (const col of (DATA.columns || [])) {
+        for (const ws of col.workspaces || []) {
+          const c = pendingAssignments.hasOwnProperty(ws.id)
+            ? pendingAssignments[ws.id]
+            : col.index;
+          all.push({ id: ws.id, title: ws.title, col: c });
+        }
+      }
+    }
+    if (all.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = '暂无工作区';
+      $config.appendChild(empty);
+      return;
+    }
+
+    function makeSelect(ws) {
+      const sel = document.createElement('select');
+      const noneOpt = document.createElement('option');
+      noneOpt.value = '-1';
+      noneOpt.textContent = '未分配';
+      sel.appendChild(noneOpt);
+      CHARACTERS.forEach((c, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = c.label;
+        sel.appendChild(opt);
+      });
+      sel.value = String(ws.col);
+      sel.dataset.wsid = ws.id || '';
+      sel.addEventListener('change', onAssignmentChange);
+      return sel;
+    }
+
+    function makeWsItem(ws) {
+      const item = document.createElement('div');
+      item.className = 'ws-item';
+      const name = document.createElement('span');
+      name.className = 'ws-name';
+      name.textContent = ws.title;
+      name.title = ws.title;
+      item.appendChild(name);
+      item.appendChild(makeSelect(ws));
+      return item;
+    }
+
+    function makeCol(head, wsList, full) {
+      const col = document.createElement('div');
+      col.className = 'config-col' + (full ? ' full' : '');
+      const headEl = document.createElement('div');
+      headEl.className = 'config-col-head';
+      headEl.textContent = head;
+      col.appendChild(headEl);
+      if (wsList.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'config-col-empty';
+        empty.textContent = '空';
+        col.appendChild(empty);
+      } else {
+        for (const ws of wsList) col.appendChild(makeWsItem(ws));
+      }
+      return col;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'config-grid';
+
+    // 未分配区（全宽）+ 6 个角色列
+    const unassigned = all.filter((ws) => ws.col < 0 || ws.col > 5);
+    grid.appendChild(makeCol('未分配', unassigned, true));
+    CHARACTERS.forEach((c, i) => {
+      grid.appendChild(makeCol(c.label, all.filter((ws) => ws.col === i)));
+    });
+
+    $config.appendChild(grid);
+  }
+
+  // ---------- 配置视图开关 ----------
+  let showingConfig = false;
+  function toggleConfig() {
+    showingConfig = !showingConfig;
+    $body.hidden = showingConfig;
+    $config.hidden = !showingConfig;
+    $configBtn.textContent = showingConfig ? '✓' : '⚙︎';
+    $configBtn.title = showingConfig ? '完成' : '配置';
+    $officeTitle.textContent = showingConfig ? '🏢 办公室 · 配置' : '🏢 办公室';
+    if (showingConfig) {
+      // 进入配置模式：快照当前已保存的分配，初始化待编辑状态
+      savedAssignments = { ...(DATA.assignments || {}) };
+      pendingAssignments = { ...savedAssignments };
+      renderConfig();
+      updateDirtyUI();
+    } else {
+      // 离开配置模式：重置待保存状态，刷新主视图
+      pendingAssignments = {};
+      savedAssignments = {};
+      updateDirtyUI();
+      refresh();
+    }
+  }
+  $configBtn.addEventListener('click', toggleConfig);
+
+  // ---------- 数据口径帮助弹窗 ----------
+  const $helpBtn = document.getElementById('helpBtn');
+  const $helpModal = document.getElementById('helpModal');
+  const $helpClose = document.getElementById('helpClose');
+  $helpBtn.addEventListener('click', () => { $helpModal.hidden = !$helpModal.hidden; });
+  $helpClose.addEventListener('click', () => { $helpModal.hidden = true; });
+  $helpModal.addEventListener('click', (e) => { if (e.target === $helpModal) $helpModal.hidden = true; });
+
+  // ---------- 启动：拉数据 → 渲染 → 轮询（数据变化才重渲） ----------
+  // P2-1: lightweight structural key instead of full JSON.stringify
+  function getDataKey() {
+    return (DATA.columns || []).map((col) => {
+      return (col.workspaces || []).map((ws) => {
+        const sessKey = (ws.sessions || []).map((s) =>
+          s.id + ':' + (s.active ? '1' : '0') + ':' + (s.pending ? '1' : '0') + ':' + (s.inputTokens || 0) + ':' + (s.tokenTotal || 0)
+        ).join(',');
+        return ws.id + ':' + (ws.sessionCount || 0) + ':' + (ws.tokenTotal || 0) + '[' + sessKey + ']';
+      }).join('|');
+    }).join('::');
+  }
+  let lastDataKey = '';
+  function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+      overlay.classList.add('hidden');
+      setTimeout(() => overlay.remove(), 300);
+    }
+  }
+  async function refresh() {
+    if (hasPendingChanges) return;  // 有未保存更改时不拉取新数据，避免覆盖编辑状态
+    try {
+      await fetchData();
+      if (showingConfig) return;  // 配置中不重渲染，离开时刷新
+      const key = getDataKey();
+      if (key !== lastDataKey) {
+        lastDataKey = key;
+        renderColumns();
+      }
+      hideLoading();
+    } catch (e) {
+      hideLoading();
+    }
+  }
+  // ---------- 打字机：逐字打出文字，气泡框本身不动 ----------
+  function typewriter(el, text) {
+    if (el._tw) { clearTimeout(el._tw); el._tw = null; }
+    let i = 0;
+    el.textContent = '';
+    const speed = 50;
+    (function tick() {
+      if (i > text.length) { el._tw = null; return; }
+      el.textContent = text.slice(0, i);
+      i++;
+      el._tw = setTimeout(tick, speed);
+    })();
+  }
+
+  // ---------- 气泡错峰轮换：按 MBTI 的 E/I 决定频率（E 人话多勤快，I 人安静少言） ----------
+  const BUBBLE_INTERVAL_MS = {
+    male_person:       [4000, 9000],    // ENTJ 项目经理（E）：勤快，常冒泡
+    female_adventurer: [4000, 9000],    // ENFP 探索专家（E）：勤快，点子多
+    male_adventurer:   [15000, 30000],  // ISTP 工程师（I）：偶尔冒一句
+    female_person:     [18000, 35000],  // INFP 开发者（I）：安静，偶尔说话
+    zombie:            [20000, 40000],  // INTP 摸鱼大师（I）：懒，但爱突发奇想
+    robot:             [30000, 60000],  // ISTJ 机器人（I）：最沉默，按规程报一句
+  };
+
+  function rotateColumnBubble(index) {
+    if (showingConfig) return;
+    const col = DATA.columns && DATA.columns[index];
+    if (!col) return;
+    const state = columnState(col);
+    if (state === 'working') return;  // 工作/工具列保持稳定，不轮换
+    const section = $body.querySelectorAll('.column')[index];
+    if (!section) return;
+    const bubble = section.querySelector('.bubble');
+    if (!bubble) return;
+    typewriter(bubble, bubbleText(col, state));
+  }
+
+  function scheduleColumnBubble(index) {
+    const char = CHARACTERS[index];
+    const range = (char && BUBBLE_INTERVAL_MS[char.sprite]) || [20000, 40000];
+    const delay = range[0] + Math.floor(Math.random() * (range[1] - range[0]));
+    const tid = setTimeout(() => {
+      rotateColumnBubble(index);
+      scheduleColumnBubble(index);
+    }, delay);
+    bubbleTimers.push(tid);
+  }
+
+  // P1-3: timer tracking for cleanup
+  let refreshTimer = null;
+  const bubbleTimers = [];
+  const animFrames = [];
+
+  (async function start() {
+    await Promise.all([loadBubbleTexts(), (async () => { renderColumns(); await refresh(); })()]);
+    refreshTimer = setInterval(refresh, 3000);
+    for (let i = 0; i < 6; i++) scheduleColumnBubble(i);  // 每列按自己 MBTI 的 E/I 频率轮换
+  })();
+
+  // P1-3: cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (refreshTimer) clearInterval(refreshTimer);
+    bubbleTimers.forEach(t => clearTimeout(t));
+    animFrames.forEach(id => cancelAnimationFrame(id));
+  });
+</script>
+</body>
+</html>

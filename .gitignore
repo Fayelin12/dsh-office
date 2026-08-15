@@ -1,0 +1,15 @@
+# 依赖与构建产物
+node_modules/
+
+# 运行时数据（实际在 ~/.dsh，这里兜底）
+*.log
+*.jsonl
+*.jsonl.zstd
+
+# 内部调试/规划文档（不随包发布）
+ERROR-ANALYSIS.md
+DEPLOY-PLAN.md
+
+# 系统文件
+.DS_Store
+Thumbs.db

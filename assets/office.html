@@ -2335,6 +2335,7 @@
   let feishuSince = '';      // 上次同步时间（'YYYY-MM-DD HH:MM'），用于标注新消息
   let feishuMention = [];    // 提醒关键词（来自 /status，卡片标黄）
   let feishuSyncTimer = null;
+  let feishuLazyFired = false;  // 惰性补同步：每次打开只触发一次
 
   function setFeishuStatus(text) { 
     $feishuStatus.textContent = text || '';
@@ -2355,9 +2356,16 @@
       if (!d.configured) { renderFeishuGuide(); return; }
       $feishuSyncBtn.disabled = false;
       feishuMention = Array.isArray(d.mention) ? d.mention.filter((s) => s) : [];
-      const base = d.syncing ? '同步中…' : formatLastSync(d.lastSync) || '尚未同步';
+      const auto = d.autoSync || {};
+      let base = d.syncing ? '同步中…' : formatLastSync(d.lastSync) || '尚未同步';
+      if (auto.enabled && base && !d.syncing) base += ' · 每' + auto.intervalMin + '分钟自动同步';
       setFeishuStatus(base);
       if (feishuMessages.length) renderFeishuCards(feishuMessages);  // 关键词到位后刷新卡片状态
+      // ③ 惰性补同步：autoSync 开启且数据过期（stale）→ 打开时自动触发一次
+      if (auto.enabled && d.stale && !d.syncing && !feishuLazyFired) {
+        feishuLazyFired = true;
+        syncFeishu();
+      }
     } catch (e) {
       setFeishuStatus('状态获取失败');
     }
@@ -2601,7 +2609,7 @@
     tpl.appendChild(document.createTextNode('配置模板：'));
     const tplText = document.createElement('div');
     tplText.className = 'ms-prompt-text';
-    tplText.textContent = '{ "scripts": { "sync": "<你的同步脚本路径，如 .../ingestor/ingestor.js>", "latest": "<你的读取脚本路径，如 .../ingestor/latest.js>" }, "mention": ["你的名字，可选；最近消息提到则卡片标黄"] }';
+    tplText.textContent = '{ "scripts": { "sync": "<你的同步脚本路径，如 .../ingestor/ingestor.js>", "latest": "<你的读取脚本路径，如 .../ingestor/latest.js>" }, "mention": ["你的名字，可选；最近消息提到则卡片标黄"], "autoSync": { "enabled": false, "intervalMin": 30, "说明": "可选；enabled=true 时按间隔自动同步（仅 dsh web 运行期间生效）" } }';
     tpl.appendChild(tplText);
 
     const actions = document.createElement('div');
@@ -2709,6 +2717,7 @@
     $officeTitle.textContent = feishuViewOpen ? '🏢 办公室 · 飞书' : '🏢 办公室';
     if (!feishuViewOpen) closeFeishuModal();
     if (feishuViewOpen) {
+      feishuLazyFired = false;
       loadFeishuStatus();
       loadFeishuMessages();
     }

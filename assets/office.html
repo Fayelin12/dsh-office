@@ -802,15 +802,37 @@
     min-width: 0;
   }
   .f-card {
-    border: 1px solid var(--glass-border);
+    border: 1.5px solid var(--glass-border);
     border-radius: 14px;
     background: var(--card-bg);
     overflow: hidden;
     cursor: pointer;
-    transition: background .15s ease, border-color .15s ease, transform .1s ease;
+    transition: box-shadow .15s ease, transform .1s ease, opacity .15s ease;
   }
-  .f-card:hover { background: var(--card-hover); transform: translateY(-1px); }
-  .f-card.new { border-color: rgba(10, 132, 255, 0.5); }
+  .f-card:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10); }
+  /* 状态边框：黄（提到我）> 蓝（6 小时内活跃）> 灰（超 3 天弱化） */
+  .f-card.yellow {
+    border-color: transparent;
+    background:
+      linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+      linear-gradient(135deg, rgb(255, 214, 10), rgb(255, 159, 10)) border-box;
+  }
+  .f-card.blue {
+    border-color: transparent;
+    background:
+      linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+      linear-gradient(135deg, rgb(103, 158, 254), rgb(65, 118, 230)) border-box;
+  }
+  .f-card.gray {
+    border-color: transparent;
+    background:
+      linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+      linear-gradient(135deg, rgb(142, 142, 147), rgb(199, 199, 204)) border-box;
+    opacity: 0.7;
+  }
+  .f-card.gray .f-name,
+  .f-card.gray .f-preview .fp-row,
+  .f-card.gray .f-time { color: var(--text-faint); }
   .f-head {
     display: flex;
     align-items: center;
@@ -2311,6 +2333,7 @@
   let feishuViewOpen = false;
   let feishuMessages = [];   // 会话数组（方案 B 卡片流）
   let feishuSince = '';      // 上次同步时间（'YYYY-MM-DD HH:MM'），用于标注新消息
+  let feishuMention = [];    // 提醒关键词（来自 /status，卡片标黄）
   let feishuSyncTimer = null;
 
   function setFeishuStatus(text) { 
@@ -2331,8 +2354,10 @@
       const d = json.data;
       if (!d.configured) { renderFeishuGuide(); return; }
       $feishuSyncBtn.disabled = false;
+      feishuMention = Array.isArray(d.mention) ? d.mention.filter((s) => s) : [];
       const base = d.syncing ? '同步中…' : formatLastSync(d.lastSync) || '尚未同步';
       setFeishuStatus(base);
+      if (feishuMessages.length) renderFeishuCards(feishuMessages);  // 关键词到位后刷新卡片状态
     } catch (e) {
       setFeishuStatus('状态获取失败');
     }
@@ -2374,6 +2399,33 @@
     return (m && (m.sender_name || (m.user_id || '').slice(0, 8))) || '未知';
   }
 
+  // 卡片状态：yellow（最近 10 条提到关键词）> blue（6 小时内活跃）> gray（超 3 天）
+  function feishuCardState(c) {
+    if (feishuMention.length) {
+      const recent10 = (c.messages || []).slice(0, 10);
+      for (const m of recent10) {
+        const t = (m && m.text) || '';
+        if (feishuMention.some((k) => t.includes(k))) return 'yellow';
+      }
+    }
+    const lastAt = c && c.last_at;
+    if (lastAt) {
+      const t = new Date(String(lastAt).replace(' ', 'T')).getTime();
+      if (!isNaN(t)) {
+        const diff = Date.now() - t;
+        if (diff <= 6 * 3600 * 1000) return 'blue';
+        if (diff > 3 * 24 * 3600 * 1000) return 'gray';
+      }
+    }
+    return 'normal';
+  }
+  function feishuStateTitle(state) {
+    if (state === 'yellow') return '最近消息提到了「' + feishuMention.join(' / ') + '」';
+    if (state === 'blue') return '最近 6 小时内有消息';
+    if (state === 'gray') return '超过 3 天没有新消息';
+    return '';
+  }
+
   function renderFeishuCards(chats) {
     $feishuList.classList.remove('guide');
     $feishuList.innerHTML = '';
@@ -2410,8 +2462,14 @@
 
   function buildFeishuCard(c) {
     const card = document.createElement('div');
-    card.className = 'f-card' + ((c.new_count || 0) > 0 ? ' new' : '');
+    const state = feishuCardState(c);
+    const cls = ['f-card'];
+    if (state !== 'normal') cls.push(state);
+    if ((c.new_count || 0) > 0) cls.push('new');
+    card.className = cls.join(' ');
     card.dataset.id = c.chat_id || '';
+    const stTitle = feishuStateTitle(state);
+    if (stTitle) card.title = stTitle;
 
     const head = document.createElement('div');
     head.className = 'f-head';
@@ -2543,7 +2601,7 @@
     tpl.appendChild(document.createTextNode('配置模板：'));
     const tplText = document.createElement('div');
     tplText.className = 'ms-prompt-text';
-    tplText.textContent = '{ "scripts": { "sync": "<你的同步脚本路径，如 .../ingestor/ingestor.js>", "latest": "<你的读取脚本路径，如 .../ingestor/latest.js>" } }';
+    tplText.textContent = '{ "scripts": { "sync": "<你的同步脚本路径，如 .../ingestor/ingestor.js>", "latest": "<你的读取脚本路径，如 .../ingestor/latest.js>" }, "mention": ["你的名字，可选；最近消息提到则卡片标黄"] }';
     tpl.appendChild(tplText);
 
     const actions = document.createElement('div');

@@ -783,35 +783,41 @@
     font-size: 12px;
     font-weight: 500;
   }
-  /* 飞书会话卡片流（方案 B） */
+  /* 飞书会话卡片流（方案 B：4 列错层瀑布流） */
   .feishu-cards {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    align-items: start;
     padding-right: 2px;
   }
+  .feishu-cards.guide { display: block; }  /* 引导卡时单列 */
+  .f-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
   .f-card {
-    flex: none;
     border: 1px solid var(--glass-border);
     border-radius: 14px;
     background: var(--card-bg);
     overflow: hidden;
-    transition: background .15s ease, border-color .15s ease;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, transform .1s ease;
   }
+  .f-card:hover { background: var(--card-hover); transform: translateY(-1px); }
   .f-card.new { border-color: rgba(10, 132, 255, 0.5); }
-  .f-card.expanded { background: var(--card-hover); }
   .f-head {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 10px 12px;
-    cursor: pointer;
     user-select: none;
   }
-  .f-head:hover { background: var(--card-hover); }
   .f-name {
     flex: 1;
     min-width: 0;
@@ -858,59 +864,28 @@
   }
   .f-preview .fp-row:hover { color: var(--text); }
   .f-preview .fp-row b { font-weight: 600; color: var(--text); }
-  .f-body {
-    display: none;
-    border-top: 1px solid var(--glass-border);
-    max-height: 320px;
-    overflow-y: auto;
-    padding: 6px 0;
-  }
-  .f-card.expanded .f-body { display: block; }
-  .f-body .fb-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 6px 12px;
-    cursor: pointer;
-  }
-  .f-body .fb-row:hover { background: var(--card-hover); }
-  .fb-who {
-    flex: none;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-dim);
-    min-width: 64px;
-    max-width: 140px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .fb-text {
-    flex: 1;
-    min-width: 0;
-    font-size: 12px;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .fb-time { flex: none; font-size: 10px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
-  .fb-new-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--tier-mid); align-self: center; }
-  /* 消息详情层（底部弹出） */
-  .feishu-detail {
+  /* 会话弹窗（点击卡片打开） */
+  .feishu-modal {
     position: absolute;
-    left: 0; right: 0; bottom: 0;
-    z-index: 15;
-    max-height: 55%;
+    inset: 0;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.32);
+  }
+  .fm-card {
+    width: min(680px, calc(100% - 48px));
+    max-height: 82%;
     display: flex;
     flex-direction: column;
     background: var(--panel-gradient);
-    border-top: 1px solid var(--glass-border);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
     box-shadow: var(--glass-shadow);
-    border-radius: 16px 16px 0 0;
     overflow: hidden;
   }
-  .fd-head {
+  .fm-head {
     flex: none;
     display: flex;
     align-items: center;
@@ -921,22 +896,45 @@
     font-size: 13px;
     font-weight: 600;
   }
-  .fd-head #fdTitle {
+  .fm-head #fmTitle {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .fd-body {
+  .fm-body {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 14px 16px;
-    font-size: 13px;
-    line-height: 1.7;
-    color: var(--text);
+    padding: 8px 0;
+  }
+  .fm-msg {
+    padding: 8px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .fm-msg:hover { background: var(--card-hover); }
+  .fm-msg-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  .fm-msg-who { font-size: 11px; font-weight: 600; color: var(--text-dim); }
+  .fm-msg-time { font-size: 10px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+  .fm-msg-new { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--tier-mid); }
+  .fm-msg-text {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fm-msg.open .fm-msg-text {
     white-space: pre-wrap;
     word-break: break-word;
+    color: var(--text);
   }
   /* 写信 / 回复弹窗 */
   .compose-modal {
@@ -1094,12 +1092,14 @@
         </div>
       </div>
       <div class="feishu-cards" id="feishuList"></div>
-      <div class="feishu-detail" id="feishuDetail" hidden>
-        <div class="fd-head">
-          <span id="fdTitle"></span>
-          <button class="icon-btn" id="fdClose" title="关闭">✕</button>
+      <div class="feishu-modal" id="feishuModal" hidden>
+        <div class="fm-card">
+          <div class="fm-head">
+            <span id="fmTitle"></span>
+            <button class="icon-btn" id="fmClose" title="关闭">✕</button>
+          </div>
+          <div class="fm-body" id="fmBody"></div>
         </div>
-        <div class="fd-body" id="fdBody"></div>
       </div>
     </div>
     <div class="compose-modal" id="composeModal" hidden>
@@ -2303,10 +2303,10 @@
   const $feishuList = document.getElementById('feishuList');
   const $feishuRefreshBtn = document.getElementById('feishuRefreshBtn');
   const $feishuSyncBtn = document.getElementById('feishuSyncBtn');
-  const $feishuDetail = document.getElementById('feishuDetail');
-  const $fdTitle = document.getElementById('fdTitle');
-  const $fdBody = document.getElementById('fdBody');
-  const $fdClose = document.getElementById('fdClose');
+  const $feishuModal = document.getElementById('feishuModal');
+  const $fmTitle = document.getElementById('fmTitle');
+  const $fmBody = document.getElementById('fmBody');
+  const $fmClose = document.getElementById('fmClose');
 
   let feishuViewOpen = false;
   let feishuMessages = [];   // 会话数组（方案 B 卡片流）
@@ -2375,6 +2375,7 @@
   }
 
   function renderFeishuCards(chats) {
+    $feishuList.classList.remove('guide');
     $feishuList.innerHTML = '';
     if (!chats.length) {
       const empty = document.createElement('div');
@@ -2389,7 +2390,22 @@
       if (na !== nb) return nb - na;
       return String(b.last_at || '').localeCompare(String(a.last_at || ''));
     });
-    for (const c of sorted) $feishuList.appendChild(buildFeishuCard(c));
+    // 4 列错层瀑布流：贪心放入当前最矮的列
+    const cols = [];
+    for (let i = 0; i < 4; i++) {
+      const col = document.createElement('div');
+      col.className = 'f-col';
+      $feishuList.appendChild(col);
+      cols.push(col);
+    }
+    for (const c of sorted) {
+      let mi = 0, mh = Infinity;
+      for (let i = 0; i < cols.length; i++) {
+        const h = cols[i].offsetHeight;
+        if (h < mh) { mh = h; mi = i; }
+      }
+      cols[mi].appendChild(buildFeishuCard(c));
+    }
   }
 
   function buildFeishuCard(c) {
@@ -2430,60 +2446,77 @@
         who.textContent = feishuWho(m) + '：';
         row.appendChild(who);
         row.appendChild(document.createTextNode(feishuPreview(m)));
-        row.addEventListener('click', (e) => { e.stopPropagation(); openFeishuDetail(c, m); });
+        row.addEventListener('click', (e) => { e.stopPropagation(); openFeishuChat(c, m.message_id); });
         preview.appendChild(row);
       }
     }
 
-    const body = document.createElement('div');
-    body.className = 'f-body';
-    for (const m of (c.messages || [])) {
-      const row = document.createElement('div');
-      row.className = 'fb-row';
-      const isNew = feishuSince && m.created_at && m.created_at > feishuSince;
-      if (isNew) {
-        const dot = document.createElement('span');
-        dot.className = 'fb-new-dot';
-        dot.title = '同步后新增';
-        row.appendChild(dot);
-      }
-      const who = document.createElement('span');
-      who.className = 'fb-who';
-      who.textContent = feishuWho(m);
-      who.title = m.user_id || '';
-      const text = document.createElement('span');
-      text.className = 'fb-text';
-      text.textContent = feishuPreview(m);
-      const tm = document.createElement('span');
-      tm.className = 'fb-time';
-      tm.textContent = shortTime(m.created_at);
-      row.appendChild(who); row.appendChild(text); row.appendChild(tm);
-      row.addEventListener('click', () => openFeishuDetail(c, m));
-      body.appendChild(row);
-    }
-
-    head.addEventListener('click', () => {
-      const expanded = card.classList.toggle('expanded');
-      // 展开的会话置顶
-      if (expanded && card.parentNode) card.parentNode.insertBefore(card, card.parentNode.firstChild);
-    });
-
-    card.appendChild(head); card.appendChild(preview); card.appendChild(body);
+    card.addEventListener('click', () => openFeishuChat(c, null));
+    card.appendChild(head); card.appendChild(preview);
     return card;
   }
 
-  // 消息详情（底部弹出层）
-  function openFeishuDetail(c, m) {
-    $fdTitle.textContent = (c.chat_name || c.chat_id || '') + ' · ' + feishuWho(m) + ' · ' + (m.created_at || '');
-    $fdBody.textContent = (m && m.text) || '（无正文）';
-    $feishuDetail.hidden = false;
+  // ---------- 会话弹窗（点击卡片打开） ----------
+  function openFeishuChat(c, expandMsgId) {
+    $fmTitle.textContent = (c.chat_name || c.chat_id || '') +
+      ' · ' + chatTypeLabel(c.chat_type) + ' · ' + (c.count || (c.messages || []).length) + ' 条消息';
+    $fmBody.innerHTML = '';
+    const msgs = c.messages || [];
+    if (!msgs.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = '该会话暂无文字消息';
+      $fmBody.appendChild(empty);
+    }
+    for (const m of msgs) {
+      const row = document.createElement('div');
+      row.className = 'fm-msg';
+      row.dataset.id = m.message_id || '';
+
+      const head = document.createElement('div');
+      head.className = 'fm-msg-head';
+      const isNew = feishuSince && m.created_at && m.created_at > feishuSince;
+      if (isNew) {
+        const dot = document.createElement('span');
+        dot.className = 'fm-msg-new';
+        dot.title = '同步后新增';
+        head.appendChild(dot);
+      }
+      const who = document.createElement('span');
+      who.className = 'fm-msg-who';
+      who.textContent = feishuWho(m);
+      who.title = m.user_id || '';
+      const tm = document.createElement('span');
+      tm.className = 'fm-msg-time';
+      tm.textContent = shortTime(m.created_at);
+      head.appendChild(who); head.appendChild(tm);
+
+      const text = document.createElement('div');
+      text.className = 'fm-msg-text';
+      text.textContent = feishuPreview(m);
+
+      row.appendChild(head); row.appendChild(text);
+      row.addEventListener('click', () => {
+        // 点击行：展开/收起完整正文（同一时间只展开一条）
+        const opened = row.classList.contains('open');
+        $fmBody.querySelectorAll('.fm-msg.open').forEach((el) => el.classList.remove('open'));
+        if (!opened) row.classList.add('open');
+      });
+      $fmBody.appendChild(row);
+    }
+    $feishuModal.hidden = false;
+    if (expandMsgId) {
+      const target = $fmBody.querySelector('.fm-msg[data-id="' + expandMsgId + '"]');
+      if (target) target.classList.add('open');
+    }
   }
-  function closeFeishuDetail() { $feishuDetail.hidden = true; }
+  function closeFeishuModal() { $feishuModal.hidden = true; }
 
   // ---------- 未配置引导卡 ----------
   function renderFeishuGuide() {
     $feishuIdentity.textContent = '💬 飞书';
     $feishuSyncBtn.disabled = true;
+    $feishuList.classList.add('guide');
     $feishuList.innerHTML = '';
     const wrap = document.createElement('div');
     wrap.className = 'mail-setup';
@@ -2551,7 +2584,7 @@
     card.appendChild(actions);
     wrap.appendChild(card);
     $feishuList.appendChild(wrap);
-    closeFeishuDetail();
+    closeFeishuModal();
   }
 
   // ---------- 同步（手动触发，异步执行 + 轮询状态） ----------
@@ -2616,7 +2649,7 @@
     $feishuView.hidden = !feishuViewOpen;
     $feishuBtn.style.background = feishuViewOpen ? 'var(--card-hover)' : '';
     $officeTitle.textContent = feishuViewOpen ? '🏢 办公室 · 飞书' : '🏢 办公室';
-    if (!feishuViewOpen) closeFeishuDetail();
+    if (!feishuViewOpen) closeFeishuModal();
     if (feishuViewOpen) {
       loadFeishuStatus();
       loadFeishuMessages();
@@ -2625,7 +2658,8 @@
   $feishuBtn.addEventListener('click', toggleFeishu);
   $feishuRefreshBtn.addEventListener('click', () => { loadFeishuStatus(); loadFeishuMessages(); });
   $feishuSyncBtn.addEventListener('click', syncFeishu);
-  $fdClose.addEventListener('click', closeFeishuDetail);
+  $fmClose.addEventListener('click', closeFeishuModal);
+  $feishuModal.addEventListener('click', (e) => { if (e.target === $feishuModal) closeFeishuModal(); });
 
   // ---------- 启动：拉数据 → 渲染 → 轮询（数据变化才重渲） ----------
   // P2-1: lightweight structural key instead of full JSON.stringify

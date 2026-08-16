@@ -60,6 +60,27 @@ pnpm add dsh-office@file:<path/to/dsh-office>
 2. 打开 6 列面板，看到工作区 / 会话 / token / 子代理。
 3. 点会话卡片跳转；面板随侧边栏切换自动收起。
 
+## Agent Mail 邮箱功能 / Mail tab
+
+The 📧 mail tab lets you read & send emails from your **Agent Mail** (腾讯 Agent 邮箱)
+address right inside the office panel. Each user has their own mailbox; credentials are
+stored in the local keychain by the CLI, so multiple people on the same machine don't clash.
+
+邮箱页签需要先**安装并授权 Agent Mail CLI**（每人一个独立邮箱，凭据由 CLI 存在本机 keychain，互不冲突）：
+
+```bash
+# 1. 安装 CLI（全局安装）
+npm install -g @tencent-qqmail/agently-cli
+
+# 2. OAuth 授权（浏览器完成）
+agently-cli auth login
+```
+
+- 未安装 / 未授权时，面板的 📧 邮箱页签会显示**安装引导卡片**（含步骤与可复制的提示语），不影响办公室其它功能。
+- 也可以让 Agent 代为安装配置，直接把下面这句发给 Agent：
+  > 请阅读 https://agent.qq.com/doc/cli-setup.md 文档，按照步骤为我安装并配置 Agent Mail CLI。
+- 完整安装文档：<https://agent.qq.com/doc/cli-setup.md>
+
 ## Why dsh-office? / 解决什么问题
 
 - **Before / 之前**：工作区多、会话散、token 不可见、子代理混在主列表里。

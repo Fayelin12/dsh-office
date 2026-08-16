@@ -10,7 +10,7 @@
 - 功能 / Function: 6 列精灵办公室，可视化工作区、会话、token 用量、子代理状态；内置 Agent 邮箱页签（收件箱/已发送/读信/写信/回复）
 - 技术栈 / Stack: 纯 JavaScript，零构建；Host = Node ESM，Client = React
 - 路由 / Routes: HTTP `/office-ui/*`（面板与数据，含 `/office-ui/mail/*` 邮箱接口），RPC `/office`（会话跳转/徽标同步）
-- 邮箱 / Mail: 依赖全局 `agently-cli`（@tencent-qqmail/agently-cli），Host 直接以 Node 执行其 `scripts/run.js`，不走 cmd 外壳
+- 邮箱 / Mail: 依赖全局 `agently-cli`（@tencent-qqmail/agently-cli），Host 直接以 Node 执行其 `scripts/run.js`，不走 cmd 外壳；未安装/未授权时面板内显示安装引导卡片，引导文案指向 https://agent.qq.com/doc/cli-setup.md
 - 兼容 / Compat: 与 dsh-polling 等其它 DSH 插件可共存
 - 许可证 / License: MIT
 

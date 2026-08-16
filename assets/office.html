@@ -56,8 +56,8 @@
     *::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 4px; }
     *::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
     *::-webkit-scrollbar-track { background: transparent; }
-    /* 邮件正文：反色实现深色阅读（白底反成深底；图片会随之反色） */
-    .mail-read-body { filter: invert(0.92) hue-rotate(180deg); }
+    /* 邮件正文：深色下用文档内注入的 filter 反色（见 openMail），iframe 底色转深 */
+    .mail-read-body { background: #101012; }
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -712,6 +712,76 @@
     border: none;
     background: #ffffff;
     width: 100%;
+  }
+  /* 未配置 Agent Mail 时的安装/授权引导卡片 */
+  .mail-setup {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .mail-setup-card {
+    width: min(560px, 100%);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    background: var(--card-bg);
+    box-shadow: var(--glass-shadow);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .ms-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .ms-steps {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .ms-steps code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    background: var(--card-hover);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 2px 6px;
+    color: var(--text);
+    word-break: break-all;
+  }
+  .ms-prompt {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .ms-prompt-text {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text);
+    background: var(--card-hover);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    word-break: break-all;
+    user-select: all;
+  }
+  .ms-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .ms-actions .icon-btn {
+    width: auto;
+    padding: 0 14px;
+    font-size: 12px;
+    font-weight: 500;
   }
   /* 写信 / 回复弹窗 */
   .compose-modal {
@@ -1399,6 +1469,8 @@
 
     canvas._stop = () => {
       sprite.alive = false;
+      const idx = _spriteList.indexOf(sprite);
+      if (idx >= 0) _spriteList.splice(idx, 1);
       window.removeEventListener('resize', resize);
       if (_spriteList.every(s => !s.alive)) {
         _masterRunning = false;
@@ -1463,7 +1535,7 @@
         DATA.assignments = { ...pendingAssignments };
         updateDirtyUI();
       }
-    } catch (e) {}
+    } catch (e) { console.warn('[office]', e?.message || e); }
   }
 
   $saveBtn.addEventListener('click', saveAssignments);
@@ -1477,7 +1549,7 @@
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ sessionId })
       });
-    } catch (e) {}
+    } catch (e) { console.warn('[office]', e?.message || e); }
   }
 
   // ---------- 配置视图 ----------
@@ -1657,20 +1729,118 @@
     $mailStatus.textContent = text || '';
   }
 
+  // ---------- 未配置邮箱：安装/授权引导卡片 ----------
+  let mailSetupRequired = false;   // true 时禁用写邮件按钮
+  function renderMailSetup(setup, authOnly) {
+    mailSetupRequired = true;
+    $mailComposeBtn.disabled = true;
+    $mailList.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'mail-setup';
+    const card = document.createElement('div');
+    card.className = 'mail-setup-card';
+
+    const title = document.createElement('div');
+    title.className = 'ms-title';
+    title.textContent = authOnly ? '📧 邮箱未授权' : '📧 需要先安装 Agent Mail CLI';
+
+    const steps = document.createElement('ol');
+    steps.className = 'ms-steps';
+    const mkStep = (html) => {
+      const li = document.createElement('li');
+      li.innerHTML = html;   // 只含下方静态常量 HTML，无外部输入
+      return li;
+    };
+    steps.appendChild(mkStep('安装 CLI：<code>npm install -g @tencent-qqmail/agently-cli</code>'));
+    steps.appendChild(mkStep('授权：<code>agently-cli auth login</code>（浏览器完成授权）'));
+    steps.appendChild(mkStep('重启 dsh web，然后点「重新检测」'));
+
+    const prompt = document.createElement('div');
+    prompt.className = 'ms-prompt';
+    prompt.appendChild(document.createTextNode('也可以把下面这句发给你的 Agent，让它代为安装配置：'));
+    const promptText = document.createElement('div');
+    promptText.className = 'ms-prompt-text';
+    promptText.textContent = (setup && setup.prompt) || '请阅读 https://agent.qq.com/doc/cli-setup.md 文档，按照步骤为我安装并配置 Agent Mail CLI。';
+    prompt.appendChild(promptText);
+
+    const actions = document.createElement('div');
+    actions.className = 'ms-actions';
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'icon-btn';
+    copyBtn.textContent = '复制提示语';
+    copyBtn.addEventListener('click', () => {
+      const text = promptText.textContent;
+      const done = () => setMailStatus('已复制 ✓');
+      const fail = () => setMailStatus('复制失败');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(fail);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (_) { fail(); }
+        document.body.removeChild(ta);
+      }
+    });
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'icon-btn';
+    retryBtn.textContent = '重新检测';
+    retryBtn.addEventListener('click', () => {
+      setMailStatus('检测中…');
+      loadMailIdentity();
+      loadMailList(mailDir, '', false);
+    });
+    actions.appendChild(copyBtn);
+    actions.appendChild(retryBtn);
+
+    card.appendChild(title);
+    card.appendChild(steps);
+    card.appendChild(prompt);
+    card.appendChild(actions);
+    wrap.appendChild(card);
+    $mailList.appendChild(wrap);
+
+    // 读信区清空为引导提示
+    $mailRead.innerHTML = '';
+    const empty = document.createElement('div');
+    empty.className = 'mail-read-empty';
+    empty.textContent = authOnly ? '请先完成邮箱授权' : '请先安装 Agent Mail CLI';
+    $mailRead.appendChild(empty);
+  }
+
+  function hideMailSetup() {
+    if (!mailSetupRequired) return;
+    mailSetupRequired = false;
+    $mailComposeBtn.disabled = false;
+  }
+
   async function loadMailIdentity() {
     try {
       const res = await fetch('/office-ui/mail/me', { cache: 'no-store' });
       const json = await res.json();
       if (json && json.ok && json.data && json.data.email) {
         $mailIdentity.textContent = '📧 ' + json.data.email;
-      } else if (json && json.error) {
-        $mailIdentity.textContent = '📧 未授权';
-        setMailStatus(json.error.message || '授权异常');
+        hideMailSetup();
+      } else if (json && !json.ok) {
+        const code = json.error && json.error.code;
+        if (code === 'MAIL_CLI_REQUIRED' || code === 'MAIL_AUTH_REQUIRED') {
+          $mailIdentity.textContent = '📧 未配置邮箱';
+          setMailStatus('');
+          renderMailSetup(json.error && json.error.setup, code === 'MAIL_AUTH_REQUIRED');
+          return;
+        }
+        if (code === 3) $mailIdentity.textContent = '📧 未授权';
+        else if (code === 1 || code === 4) $mailIdentity.textContent = '📧 服务暂不可用';
+        else $mailIdentity.textContent = '📧 ' + (json.error && json.error.message || '加载失败');
+        setMailStatus((json.error && json.error.message) || '授权异常');
+        return;
       } else {
         $mailIdentity.textContent = '📧 未授权';
       }
     } catch (e) {
-      $mailIdentity.textContent = '📧 未授权';
+      console.error('[office][mail] loadMailIdentity failed:', e);
+      $mailIdentity.textContent = '📧 连接失败';
     }
   }
 
@@ -1724,7 +1894,15 @@
       const res = await fetch('/office-ui/mail/list?' + params.toString(), { cache: 'no-store' });
       const json = await res.json();
       if (!json || !json.ok) {
-        setMailStatus((json && json.error && json.error.message) || '加载失败');
+        const code = json && json.error && json.error.code;
+        if (code === 'MAIL_CLI_REQUIRED' || code === 'MAIL_AUTH_REQUIRED') {
+          setMailStatus('');
+          renderMailSetup(json.error && json.error.setup, code === 'MAIL_AUTH_REQUIRED');
+          return;
+        }
+        const errMsg = (json && json.error && json.error.message) || '加载失败';
+        setMailStatus(errMsg);
+        console.warn('[office][mail] mail list error:', errMsg);
         return;
       }
       const items = (json.data && json.data.data) || [];
@@ -1737,6 +1915,7 @@
       if (moreBtn) moreBtn.hidden = !mailHasMore;
       setMailStatus('');
     } catch (e) {
+      console.error('[office][mail] loadMailList failed:', e);
       setMailStatus('加载失败：' + (e && e.message ? e.message : e));
     } finally {
       mailLoading = false;
@@ -1796,7 +1975,23 @@
       const bodyFrame = document.createElement('iframe');
       bodyFrame.className = 'mail-read-body';
       bodyFrame.sandbox = '';
-      bodyFrame.srcdoc = d.body || '<p>（无正文）</p>';
+      // 深色阅读：父页面 CSS 无法穿透 sandbox iframe，改为在邮件文档内注入反色样式；
+      // 图片用双重反色抵消保持原色。不依赖邮件自身的 prefers-color-scheme（对声明
+      // color-scheme: light only 的邮件同样生效）。
+      let emailHtml = d.body || '<p>（无正文）</p>';
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        const darkStyle = '<style>html{filter:invert(0.92) hue-rotate(180deg)}img,picture,video{filter:invert(0.92) hue-rotate(180deg)}</style>';
+        const headMatch = emailHtml.match(/<head[^>]*>/i);
+        const doctypeMatch = emailHtml.match(/^\s*<!doctype[^>]*>/i);
+        if (headMatch) {
+          emailHtml = emailHtml.slice(0, headMatch.index + headMatch[0].length) + darkStyle + emailHtml.slice(headMatch.index + headMatch[0].length);
+        } else if (doctypeMatch) {
+          emailHtml = emailHtml.slice(0, doctypeMatch.index + doctypeMatch[0].length) + darkStyle + emailHtml.slice(doctypeMatch.index + doctypeMatch[0].length);
+        } else {
+          emailHtml = darkStyle + emailHtml;
+        }
+      }
+      bodyFrame.srcdoc = emailHtml;
 
       $mailRead.innerHTML = '';
       $mailRead.appendChild(head);
@@ -1804,10 +1999,11 @@
       $mailRead.appendChild(actions);
       if (itemEl) itemEl.classList.add('read');
     } catch (e) {
+      console.error('[office][mail] openMail failed:', e);
       $mailRead.innerHTML = '';
       const err = document.createElement('div');
       err.className = 'mail-read-empty';
-      err.textContent = '读取失败';
+      err.textContent = '读取失败: ' + (e && e.message || e);
       $mailRead.appendChild(err);
     }
   }
@@ -1866,6 +2062,7 @@
         $composeError.textContent = (json && json.error && json.error.message) || '发送失败';
       }
     } catch (e) {
+      console.error('[office][mail] submitMail failed:', e);
       $composeError.textContent = '发送失败：' + (e && e.message ? e.message : e);
     } finally {
       $composeSendBtn.disabled = false;
@@ -1984,28 +2181,36 @@
     const char = CHARACTERS[index];
     const range = (char && BUBBLE_INTERVAL_MS[char.sprite]) || [20000, 40000];
     const delay = range[0] + Math.floor(Math.random() * (range[1] - range[0]));
-    const tid = setTimeout(() => {
+    if (bubbleTimers[index]) clearTimeout(bubbleTimers[index]);
+    bubbleTimers[index] = setTimeout(() => {
       rotateColumnBubble(index);
       scheduleColumnBubble(index);
     }, delay);
-    bubbleTimers.push(tid);
   }
 
   // P1-3: timer tracking for cleanup
   let refreshTimer = null;
-  const bubbleTimers = [];
+  const bubbleTimers = new Array(6).fill(null);
   const animFrames = [];
+
+  // setTimeout 链替代 setInterval：等 refresh 完成后再调度下一次，避免请求堆积
+  function scheduleRefresh() {
+    refreshTimer = setTimeout(async () => {
+      await refresh();
+      scheduleRefresh();
+    }, 3000);
+  }
 
   (async function start() {
     await Promise.all([loadBubbleTexts(), (async () => { renderColumns(); await refresh(); })()]);
-    refreshTimer = setInterval(refresh, 3000);
+    scheduleRefresh();
     for (let i = 0; i < 6; i++) scheduleColumnBubble(i);  // 每列按自己 MBTI 的 E/I 频率轮换
   })();
 
   // P1-3: cleanup on page unload
   window.addEventListener('beforeunload', () => {
-    if (refreshTimer) clearInterval(refreshTimer);
-    bubbleTimers.forEach(t => clearTimeout(t));
+    if (refreshTimer) clearTimeout(refreshTimer);
+    bubbleTimers.forEach(t => { if (t) clearTimeout(t); });
     animFrames.forEach(id => cancelAnimationFrame(id));
   });
 </script>

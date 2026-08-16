@@ -1,7 +1,11 @@
 # 🏢 dsh-office
 
-> Office workspace & session dashboard plugin for **DeepSeek Harness (DSH)**.
-> 给 **DeepSeek Harness (DSH)** 的「办公室」工作区 / 会话 / 子代理可视化插件。
+> **一眼看穿你的每个 Agent 在忙什么。** The agent-office dashboard for **DeepSeek Harness (DSH)**:
+> workspaces, sessions, token usage, subagents and your **Agent Mail** inbox, in one sprite-filled
+> office — every agent, at a glance.
+>
+> DeepSeek Harness「办公室」插件：工作区 / 会话 / token 用量 / 子代理 / Agent 邮箱，
+> 一屏 6 列精灵办公室，每个 agent 在忙什么，一眼就知道。
 
 [![npm](https://img.shields.io/npm/v/dsh-office)](https://www.npmjs.com/package/dsh-office)
 [![npm downloads](https://img.shields.io/npm/dm/dsh-office)](https://www.npmjs.com/package/dsh-office)

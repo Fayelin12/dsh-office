@@ -1,6 +1,6 @@
 {
   "name": "dsh-office",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Office workspace & session dashboard plugin for DeepSeek Harness (DSH): a 6-column sprite office visualizing workspaces, sessions, token usage and subagents. 给 DeepSeek Harness 的「办公室」工作区/会话/子代理可视化插件。",
   "license": "MIT",
   "author": "nanfei",
@@ -29,8 +29,12 @@
   "type": "module",
   "main": "lib/index.js",
   "exports": {
-    ".": { "default": "./lib/index.js" },
-    "./client": { "default": "./lib/client.js" },
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
     "./package.json": "./package.json"
   },
   "homepage": "https://github.com/Fayelin12/dsh-office#readme",
@@ -42,7 +46,9 @@
     "url": "https://github.com/Fayelin12/dsh-office/issues"
   },
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "inject": [],
       "platform": "web"

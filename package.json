@@ -1,7 +1,7 @@
 {
   "name": "dsh-office",
   "version": "0.2.0",
-  "description": "Agent-office dashboard for DeepSeek Harness (DSH): a 6-column sprite office visualizing workspaces, sessions, token usage, subagents and your Agent Mail inbox — every agent at a glance. 给 DeepSeek Harness 的「办公室」插件：工作区/会话/token/子代理/Agent 邮箱一屏总览，一眼看穿每个 Agent 在忙什么。",
+  "description": "Agent-office dashboard for DeepSeek Harness (DSH): a 6-column sprite office visualizing workspaces, sessions, token usage and subagents — with a built-in Agent Mail inbox to read, send & reply right in the panel. 给 DeepSeek Harness 的「办公室」插件：工作区/会话/token/子代理一屏总览，内置 Agent 邮箱收发，一眼看穿每个 Agent 在忙什么。",
   "license": "MIT",
   "author": "nanfei",
   "keywords": [

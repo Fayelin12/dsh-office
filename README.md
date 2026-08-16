@@ -1,11 +1,14 @@
 # 🏢 dsh-office
 
 > **一眼看穿你的每个 Agent 在忙什么。** The agent-office dashboard for **DeepSeek Harness (DSH)**:
-> workspaces, sessions, token usage, subagents and your **Agent Mail** inbox, in one sprite-filled
-> office — every agent, at a glance.
+> workspaces, sessions, token usage and subagents, visualized as a living 6-column sprite office —
+> every agent, at a glance.
 >
-> DeepSeek Harness「办公室」插件：工作区 / 会话 / token 用量 / 子代理 / Agent 邮箱，
-> 一屏 6 列精灵办公室，每个 agent 在忙什么，一眼就知道。
+> **📧 内置 Agent 邮箱**：收件箱 / 读信 / 写信 / 回复，不离开面板直接收发。
+> Built-in **Agent Mail** — read, send & reply to email right inside the panel.
+>
+> DeepSeek Harness「办公室」插件：工作区 / 会话 / token 用量 / 子代理一屏总览，
+> 内置 Agent 邮箱收发，每个 agent 在忙什么，一眼就知道。
 
 [![npm](https://img.shields.io/npm/v/dsh-office)](https://www.npmjs.com/package/dsh-office)
 [![npm downloads](https://img.shields.io/npm/dm/dsh-office)](https://www.npmjs.com/package/dsh-office)
@@ -17,22 +20,23 @@
 ## What is dsh-office? / 这是什么
 
 dsh-office is a floating **office panel** for DeepSeek Harness. It turns your
-**workspaces, sessions, token usage and subagents** into a 6-column sprite office,
+**workspaces, sessions, token usage, subagents and Agent Mail** into a 6-column sprite office,
 so you can see what every agent is doing at a glance — without opening each session.
 
 dsh-office 是 DeepSeek Harness 的一个悬浮「办公室」面板，把**工作区、会话、
-token 用量、子代理**变成一屏 6 列精灵办公室，一眼看清每个 agent 在忙什么，
-不用逐个点开会话。
+token 用量、子代理、Agent 邮箱**变成一屏 6 列精灵办公室，一眼看清每个 agent
+在忙什么，不用逐个点开会话。
 
 - **Workspace / 工作区**：6 列布局，一眼总览。
 - **Session / 会话**：活跃 / 待确认 / 已完成状态，彩色边框区分。
 - **Token / token 用量**：单次输入 vs 累计，活跃会话实时、历史会话冷读。
 - **Subagent / 子代理**：自动过滤子代理会话，父会话聚合显示「有子代理在跑」。
+- **Mail / 邮箱**：内置 Agent 邮箱页签，收件箱 / 已发送 / 读信 / 写信 / 回复，不离开面板。
 
 ## Features / 特性
 
+- 📧 **Agent 邮箱页签** / Agent Mail tab（收件箱 / 已发送 / 读信 / 写信 / 回复，基于 `agently-cli`，不离开面板）
 - 🏢 6-column sprite office / 6 列精灵办公室
-- 📧 Agent 邮箱页签 / Agent Mail tab（收件箱 / 已发送 / 读信 / 写信 / 回复，基于 `agently-cli`）
 - 🔵 悬浮入口 + 一键开关 / floating FAB + toggle
 - 🧠 MBTI 角色 + 个性化气泡 / MBTI characters + idle bubble texts
 - 🔢 token 单次 vs 累计口径 / per-input vs cumulative token

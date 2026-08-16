@@ -495,6 +495,280 @@
     flex: none;
   }
 
+  /* ============ 邮箱视图（Agent Mail） ============ */
+  .mail-view {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 16px 16px;
+    gap: 12px;
+  }
+  .mail-toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .mail-identity {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    background: var(--card-bg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+  }
+  .mail-folders {
+    flex: none;
+    display: flex;
+    gap: 4px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 3px;
+  }
+  .mail-folder {
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: inherit;
+    padding: 5px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .mail-folder:hover { color: var(--text); }
+  .mail-folder.active {
+    background: var(--card-hover);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .mail-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .mail-status {
+    font-size: 11px;
+    color: var(--text-faint);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mail-split {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 12px;
+  }
+  .mail-list {
+    flex: 0 0 340px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .mail-item {
+    flex: none;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    background: var(--card-bg);
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .mail-item:hover { background: var(--card-hover); }
+  .mail-item.active { border-color: var(--tier-mid); }
+  .mail-item .m-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .mail-item .m-dot {
+    flex: none;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--tier-mid);
+  }
+  .mail-item.read .m-dot { background: transparent; }
+  .mail-item .m-from {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mail-item.read .m-from { font-weight: 500; color: var(--text-dim); }
+  .mail-item .m-time {
+    flex: none;
+    font-size: 10px;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .mail-item .m-subject {
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+  .mail-item .m-snippet {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mail-load-more {
+    flex: none;
+    border: 1px dashed var(--glass-border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: inherit;
+    padding: 8px;
+    cursor: pointer;
+  }
+  .mail-load-more:hover { background: var(--card-hover); }
+  .mail-read {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    background: var(--card-bg);
+    overflow: hidden;
+  }
+  .mail-read-empty {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .mail-read-head {
+    flex: none;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .mail-read-subject {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    word-break: break-word;
+  }
+  .mail-read-meta {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    word-break: break-all;
+    white-space: pre-line;
+  }
+  .mail-read-actions {
+    flex: none;
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--glass-border);
+  }
+  .mail-read-body {
+    flex: 1;
+    min-height: 0;
+    border: none;
+    background: #ffffff;
+    width: 100%;
+  }
+  /* 写信 / 回复弹窗 */
+  .compose-modal {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.28);
+  }
+  .compose-card {
+    width: min(640px, calc(100% - 40px));
+    max-height: 86%;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel-gradient);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+  }
+  .compose-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--glass-border);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .compose-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+  .compose-body input,
+  .compose-body textarea {
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    background: var(--card-bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: none;
+    width: 100%;
+  }
+  .compose-body input:focus,
+  .compose-body textarea:focus { border-color: var(--tier-mid); }
+  .compose-body textarea {
+    flex: 1;
+    min-height: 160px;
+    resize: none;
+    line-height: 1.6;
+  }
+  .compose-foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--glass-border);
+  }
+  .compose-error {
+    flex: 1;
+    font-size: 11px;
+    color: #ff453a;
+  }
+
   /* ============ 加载遮罩 ============ */
   .loading-overlay {
     position: fixed;
@@ -539,6 +813,7 @@
       <div class="office-actions">
         <span class="dirty-badge" id="dirtyBadge"><span class="dirty-dot"></span>有未保存的更改</span>
         <button class="icon-btn save-btn" id="saveBtn" title="保存更改">保存</button>
+        <button class="icon-btn" id="mailBtn" title="邮箱">📧</button>
         <button class="icon-btn" id="helpBtn" title="数据口径">?</button>
         <button class="icon-btn" id="configBtn" title="配置">⚙︎</button>
       </div>
@@ -546,6 +821,43 @@
 
     <div class="office-body" id="officeBody"></div>
     <div class="config-view" id="configView" hidden></div>
+    <div class="mail-view" id="mailView" hidden>
+      <div class="mail-toolbar">
+        <span class="mail-identity" id="mailIdentity">📧 邮箱</span>
+        <div class="mail-folders" id="mailFolders">
+          <button class="mail-folder active" data-dir="inbox">收件箱</button>
+          <button class="mail-folder" data-dir="sent">已发送</button>
+        </div>
+        <div class="mail-actions">
+          <span class="mail-status" id="mailStatus"></span>
+          <button class="icon-btn" id="mailRefreshBtn" title="刷新">⟳</button>
+          <button class="icon-btn" id="mailComposeBtn" title="写邮件">✎</button>
+        </div>
+      </div>
+      <div class="mail-split">
+        <div class="mail-list" id="mailList"></div>
+        <div class="mail-read" id="mailRead">
+          <div class="mail-read-empty">选择一封邮件查看</div>
+        </div>
+      </div>
+    </div>
+    <div class="compose-modal" id="composeModal" hidden>
+      <div class="compose-card">
+        <div class="compose-head">
+          <span id="composeHead">✎ 写邮件</span>
+          <button class="icon-btn" id="composeClose" title="关闭">✕</button>
+        </div>
+        <div class="compose-body">
+          <input id="composeTo" placeholder="收件人邮箱（多个用逗号分隔）" autocomplete="off" />
+          <input id="composeSubject" placeholder="主题" autocomplete="off" />
+          <textarea id="composeBody" placeholder="正文（支持 HTML，如 <b>加粗</b> 或换行）"></textarea>
+        </div>
+        <div class="compose-foot">
+          <span class="compose-error" id="composeError"></span>
+          <button class="icon-btn" id="composeSendBtn" style="width:auto;padding:0 18px;font-size:12px;font-weight:600">发送</button>
+        </div>
+      </div>
+    </div>
     <div class="help-modal" id="helpModal" hidden>
       <div class="help-card">
         <div class="help-head">
@@ -1253,6 +1565,12 @@
     showingConfig = !showingConfig;
     $body.hidden = showingConfig;
     $config.hidden = !showingConfig;
+    // 进配置视图时关闭邮箱视图（若有）
+    if (showingConfig && mailViewOpen) {
+      mailViewOpen = false;
+      $mailView.hidden = true;
+      $mailBtn.style.background = '';
+    }
     $configBtn.textContent = showingConfig ? '✓' : '⚙︎';
     $configBtn.title = showingConfig ? '完成' : '配置';
     $officeTitle.textContent = showingConfig ? '🏢 办公室 · 配置' : '🏢 办公室';
@@ -1280,6 +1598,298 @@
   $helpClose.addEventListener('click', () => { $helpModal.hidden = true; });
   $helpModal.addEventListener('click', (e) => { if (e.target === $helpModal) $helpModal.hidden = true; });
 
+  // ============================================================
+  // 邮箱视图（Agent Mail / agently-cli）
+  // ============================================================
+  const $mailBtn = document.getElementById('mailBtn');
+  const $mailView = document.getElementById('mailView');
+  const $mailIdentity = document.getElementById('mailIdentity');
+  const $mailFolders = document.getElementById('mailFolders');
+  const $mailList = document.getElementById('mailList');
+  const $mailRead = document.getElementById('mailRead');
+  const $mailStatus = document.getElementById('mailStatus');
+  const $mailRefreshBtn = document.getElementById('mailRefreshBtn');
+  const $mailComposeBtn = document.getElementById('mailComposeBtn');
+
+  let mailViewOpen = false;
+  let mailDir = 'inbox';
+  let mailCursor = '';
+  let mailHasMore = false;
+  let mailLoading = false;
+  let composeMode = 'send';   // send | reply
+  let composeReplyId = '';
+  const MAIL_LIMIT = 20;
+
+  function mailTime(iso) {
+    if (!iso) return '';
+    const t = new Date(iso);
+    if (isNaN(t.getTime())) return '';
+    const diff = Date.now() - t.getTime();
+    if (diff >= 0 && diff < 60 * 1000) return '刚刚';
+    if (diff >= 0 && diff < 60 * 60 * 1000) return Math.floor(diff / 60000) + ' 分钟前';
+    if (diff >= 0 && diff < 24 * 60 * 60 * 1000) return Math.floor(diff / 3600000) + ' 小时前';
+    const pad = (n) => String(n).padStart(2, '0');
+    return t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate()) + ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes());
+  }
+  function mailFromName(m) {
+    if (!m) return '';
+    const from = m.from || {};
+    return from.name || from.email || '';
+  }
+  function setMailStatus(text) {
+    $mailStatus.textContent = text || '';
+  }
+
+  async function loadMailIdentity() {
+    try {
+      const res = await fetch('/office-ui/mail/me', { cache: 'no-store' });
+      const json = await res.json();
+      if (json && json.ok && json.data && json.data.email) {
+        $mailIdentity.textContent = '📧 ' + json.data.email;
+      } else if (json && json.error) {
+        $mailIdentity.textContent = '📧 未授权';
+        setMailStatus(json.error.message || '授权异常');
+      } else {
+        $mailIdentity.textContent = '📧 未授权';
+      }
+    } catch (e) {
+      $mailIdentity.textContent = '📧 未授权';
+    }
+  }
+
+  function appendMailItems(items) {
+    for (const m of items || []) {
+      const item = document.createElement('div');
+      item.className = 'mail-item' + (m.is_read ? ' read' : '');
+      item.dataset.id = m.message_id || '';
+
+      const head = document.createElement('div');
+      head.className = 'm-head';
+      const dot = document.createElement('span');
+      dot.className = 'm-dot';
+      const from = document.createElement('span');
+      from.className = 'm-from';
+      from.textContent = mailFromName(m) || ((m.from && m.from.email) || '未知发件人');
+      from.title = (m.from && m.from.email) || '';
+      const time = document.createElement('span');
+      time.className = 'm-time';
+      time.textContent = mailTime(m.created_at);
+      head.appendChild(dot); head.appendChild(from); head.appendChild(time);
+
+      const subject = document.createElement('div');
+      subject.className = 'm-subject';
+      subject.textContent = (m.has_attachments ? '📎 ' : '') + (m.subject || '（无主题）');
+
+      const snippet = document.createElement('div');
+      snippet.className = 'm-snippet';
+      snippet.textContent = m.snippet || '';
+
+      item.appendChild(head); item.appendChild(subject); item.appendChild(snippet);
+      item.addEventListener('click', () => openMail(item.dataset.id, item));
+      $mailList.appendChild(item);
+    }
+    if (!$mailList.querySelector('.mail-load-more')) {
+      const more = document.createElement('button');
+      more.className = 'mail-load-more';
+      more.textContent = '加载更多';
+      more.addEventListener('click', () => loadMailList(mailDir, mailCursor, true));
+      $mailList.appendChild(more);
+    }
+  }
+
+  async function loadMailList(dir, cursor, append) {
+    if (mailLoading) return;
+    mailLoading = true;
+    setMailStatus('加载中…');
+    try {
+      const params = new URLSearchParams({ dir: dir || mailDir, limit: String(MAIL_LIMIT) });
+      if (cursor) params.set('cursor', cursor);
+      const res = await fetch('/office-ui/mail/list?' + params.toString(), { cache: 'no-store' });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        setMailStatus((json && json.error && json.error.message) || '加载失败');
+        return;
+      }
+      const items = (json.data && json.data.data) || [];
+      const pagination = (json.data && json.data.pagination) || {};
+      if (!append) $mailList.innerHTML = '';
+      appendMailItems(items);
+      mailCursor = pagination.next_cursor || '';
+      mailHasMore = !!pagination.has_more;
+      const moreBtn = $mailList.querySelector('.mail-load-more');
+      if (moreBtn) moreBtn.hidden = !mailHasMore;
+      setMailStatus('');
+    } catch (e) {
+      setMailStatus('加载失败：' + (e && e.message ? e.message : e));
+    } finally {
+      mailLoading = false;
+    }
+  }
+
+  async function openMail(id, itemEl) {
+    if (!id) return;
+    $mailList.querySelectorAll('.mail-item.active').forEach((el) => el.classList.remove('active'));
+    if (itemEl) itemEl.classList.add('active');
+    $mailRead.innerHTML = '';
+    const loading = document.createElement('div');
+    loading.className = 'mail-read-empty';
+    loading.textContent = '加载中…';
+    $mailRead.appendChild(loading);
+    try {
+      const res = await fetch('/office-ui/mail/read?id=' + encodeURIComponent(id), { cache: 'no-store' });
+      const json = await res.json();
+      if (!json || !json.ok || !json.data) {
+        $mailRead.innerHTML = '';
+        const err = document.createElement('div');
+        err.className = 'mail-read-empty';
+        err.textContent = (json && json.error && json.error.message) || '读取失败';
+        $mailRead.appendChild(err);
+        return;
+      }
+      const d = json.data;
+
+      const head = document.createElement('div');
+      head.className = 'mail-read-head';
+      const subj = document.createElement('div');
+      subj.className = 'mail-read-subject';
+      subj.textContent = d.subject || '（无主题）';
+      const meta = document.createElement('div');
+      meta.className = 'mail-read-meta';
+      const from = (d.from && (d.from.name ? d.from.name + ' <' + d.from.email + '>' : d.from.email)) || '';
+      const to = (d.to || []).map((t) => t.email || '').filter(Boolean).join(', ');
+      let metaText = '发件人：' + from + '\n时间：' + mailTime(d.created_at);
+      if (to) metaText += '\n收件人：' + to;
+      const attNames = (d.attachments || []).map((a) => a.filename || a.attachment_id || '').filter(Boolean).join('、');
+      if (attNames) metaText += '\n附件：' + attNames;
+      meta.textContent = metaText;
+      head.appendChild(subj); head.appendChild(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'mail-read-actions';
+      const replyBtn = document.createElement('button');
+      replyBtn.className = 'icon-btn';
+      replyBtn.textContent = '↩ 回复';
+      replyBtn.style.width = 'auto';
+      replyBtn.style.padding = '0 14px';
+      replyBtn.style.fontSize = '12px';
+      replyBtn.addEventListener('click', () => openCompose('reply', id, d.from && d.from.email));
+      actions.appendChild(replyBtn);
+
+      // 邮件正文是不可信外部输入：用 sandbox 无脚本 iframe 渲染（srcdoc 继承 CSP，sandbox 再兜一层）
+      const bodyFrame = document.createElement('iframe');
+      bodyFrame.className = 'mail-read-body';
+      bodyFrame.sandbox = '';
+      bodyFrame.srcdoc = d.body || '<p>（无正文）</p>';
+
+      $mailRead.innerHTML = '';
+      $mailRead.appendChild(head);
+      $mailRead.appendChild(bodyFrame);
+      $mailRead.appendChild(actions);
+      if (itemEl) itemEl.classList.add('read');
+    } catch (e) {
+      $mailRead.innerHTML = '';
+      const err = document.createElement('div');
+      err.className = 'mail-read-empty';
+      err.textContent = '读取失败';
+      $mailRead.appendChild(err);
+    }
+  }
+
+  // ---------- 写信 / 回复 ----------
+  const $composeModal = document.getElementById('composeModal');
+  const $composeClose = document.getElementById('composeClose');
+  const $composeHead = document.getElementById('composeHead');
+  const $composeTo = document.getElementById('composeTo');
+  const $composeSubject = document.getElementById('composeSubject');
+  const $composeBody = document.getElementById('composeBody');
+  const $composeSendBtn = document.getElementById('composeSendBtn');
+  const $composeError = document.getElementById('composeError');
+
+  function openCompose(mode, id, replyTo) {
+    composeMode = mode || 'send';
+    composeReplyId = id || '';
+    $composeTo.value = replyTo || '';
+    $composeSubject.value = '';
+    $composeBody.value = '';
+    $composeError.textContent = '';
+    $composeHead.textContent = composeMode === 'reply' ? '↩ 回复邮件' : '✎ 写邮件';
+    $composeTo.hidden = composeMode === 'reply';
+    $composeModal.hidden = false;
+    if (composeMode === 'reply') $composeBody.focus();
+    else $composeTo.focus();
+  }
+  function closeCompose() {
+    $composeModal.hidden = true;
+  }
+  $composeClose.addEventListener('click', closeCompose);
+  $composeModal.addEventListener('click', (e) => { if (e.target === $composeModal) closeCompose(); });
+
+  async function submitMail() {
+    $composeSendBtn.disabled = true;
+    $composeError.textContent = '';
+    try {
+      const payload = composeMode === 'reply'
+        ? { id: composeReplyId, body: $composeBody.value }
+        : {
+            to: $composeTo.value.split(/[,，;；\s]+/).map((s) => s.trim()).filter(Boolean),
+            subject: $composeSubject.value,
+            body: $composeBody.value
+          };
+      const res = await fetch('/office-ui/mail/' + (composeMode === 'reply' ? 'reply' : 'send'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json && json.ok) {
+        closeCompose();
+        setMailStatus('已发送 ✓');
+        loadMailList(mailDir, '', false);
+      } else {
+        $composeError.textContent = (json && json.error && json.error.message) || '发送失败';
+      }
+    } catch (e) {
+      $composeError.textContent = '发送失败：' + (e && e.message ? e.message : e);
+    } finally {
+      $composeSendBtn.disabled = false;
+    }
+  }
+  $composeSendBtn.addEventListener('click', submitMail);
+
+  // ---------- 邮箱视图开关 ----------
+  function toggleMail() {
+    mailViewOpen = !mailViewOpen;
+    $body.hidden = mailViewOpen;
+    // 若配置视图开着，一并关掉
+    if (showingConfig) {
+      showingConfig = false;
+      $configBtn.textContent = '⚙︎';
+      $configBtn.title = '配置';
+    }
+    $config.hidden = true;
+    $mailView.hidden = !mailViewOpen;
+    $mailBtn.style.background = mailViewOpen ? 'var(--card-hover)' : '';
+    $officeTitle.textContent = mailViewOpen ? '🏢 办公室 · 邮箱' : '🏢 办公室';
+    if (mailViewOpen) {
+      mailDir = 'inbox';
+      mailCursor = '';
+      mailHasMore = false;
+      loadMailIdentity();
+      loadMailList('inbox', '', false);
+    }
+  }
+  $mailBtn.addEventListener('click', toggleMail);
+  $mailRefreshBtn.addEventListener('click', () => loadMailList(mailDir, '', false));
+  $mailComposeBtn.addEventListener('click', () => openCompose('send'));
+  $mailFolders.addEventListener('click', (e) => {
+    const btn = e.target.closest('.mail-folder');
+    if (!btn || btn.dataset.dir === mailDir) return;
+    mailDir = btn.dataset.dir;
+    $mailFolders.querySelectorAll('.mail-folder').forEach((b) => b.classList.toggle('active', b === btn));
+    mailCursor = '';
+    loadMailList(mailDir, '', false);
+  });
+
   // ---------- 启动：拉数据 → 渲染 → 轮询（数据变化才重渲） ----------
   // P2-1: lightweight structural key instead of full JSON.stringify
   function getDataKey() {
@@ -1301,6 +1911,7 @@
     }
   }
   async function refresh() {
+    if (mailViewOpen) return;  // 邮箱视图打开时不轮询办公室数据
     if (hasPendingChanges) return;  // 有未保存更改时不拉取新数据，避免覆盖编辑状态
     try {
       await fetchData();

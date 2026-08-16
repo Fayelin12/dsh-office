@@ -1,7 +1,7 @@
 {
   "name": "dsh-office",
-  "version": "0.1.1",
-  "description": "Office workspace & session dashboard plugin for DeepSeek Harness (DSH): a 6-column sprite office visualizing workspaces, sessions, token usage and subagents. 给 DeepSeek Harness 的「办公室」工作区/会话/子代理可视化插件。",
+  "version": "0.2.0",
+  "description": "Office workspace & session dashboard plugin for DeepSeek Harness (DSH): a 6-column sprite office visualizing workspaces, sessions, token usage and subagents, with an Agent Mail (agently-cli) tab. 给 DeepSeek Harness 的「办公室」工作区/会话/子代理可视化插件，含 Agent 邮箱页签。",
   "license": "MIT",
   "author": "nanfei",
   "keywords": [

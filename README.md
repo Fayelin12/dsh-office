@@ -28,6 +28,7 @@ token 用量、子代理**变成一屏 6 列精灵办公室，一眼看清每个
 ## Features / 特性
 
 - 🏢 6-column sprite office / 6 列精灵办公室
+- 📧 Agent 邮箱页签 / Agent Mail tab（收件箱 / 已发送 / 读信 / 写信 / 回复，基于 `agently-cli`）
 - 🔵 悬浮入口 + 一键开关 / floating FAB + toggle
 - 🧠 MBTI 角色 + 个性化气泡 / MBTI characters + idle bubble texts
 - 🔢 token 单次 vs 累计口径 / per-input vs cumulative token

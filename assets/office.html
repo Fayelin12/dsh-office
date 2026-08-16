@@ -29,6 +29,7 @@
     --noise-opacity: 0.035;
     /* 磨砂噪点颗粒（SVG feTurbulence） */
     --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -47,11 +48,27 @@
       --tier-mid: #409cff;
       --tier-high: #ffd60a;
       --noise-opacity: 0.05;
+      color-scheme: dark;
     }
+    /* 深色滚动条（覆盖全局默认） */
+    * { scrollbar-color: rgba(255, 255, 255, 0.22) transparent; }
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 4px; }
+    *::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+    *::-webkit-scrollbar-track { background: transparent; }
+    /* 邮件正文：反色实现深色阅读（白底反成深底；图片会随之反色） */
+    .mail-read-body { filter: invert(0.92) hue-rotate(180deg); }
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   [hidden] { display: none !important; }
+
+  /* 滚动条：浅色默认 + 深色覆盖（见 dark media query） */
+  * { scrollbar-width: thin; scrollbar-color: rgba(0, 0, 0, 0.25) transparent; }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.22); border-radius: 4px; }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.36); }
+  *::-webkit-scrollbar-track { background: transparent; }
 
   html, body { height: 100%; }
 

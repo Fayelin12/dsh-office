@@ -577,10 +577,10 @@
   .mail-status {
     font-size: 11px;
     color: var(--text-faint);
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    max-width: none;
+    white-space: normal;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
   }
   .mail-split {
     flex: 1;
@@ -783,6 +783,161 @@
     font-size: 12px;
     font-weight: 500;
   }
+  /* 飞书会话卡片流（方案 B） */
+  .feishu-cards {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 2px;
+  }
+  .f-card {
+    flex: none;
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    background: var(--card-bg);
+    overflow: hidden;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .f-card.new { border-color: rgba(10, 132, 255, 0.5); }
+  .f-card.expanded { background: var(--card-hover); }
+  .f-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .f-head:hover { background: var(--card-hover); }
+  .f-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .f-type {
+    flex: none;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    color: var(--text-dim);
+  }
+  .f-type.p2p { color: var(--tier-mid); border-color: var(--tier-mid); }
+  .f-new {
+    flex: none;
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, rgb(103, 158, 254), rgb(65, 118, 230));
+    border-radius: 999px;
+    padding: 1px 8px;
+    display: none;
+  }
+  .f-card.new .f-new { display: inline-block; }
+  .f-time { flex: none; font-size: 10px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+  .f-preview {
+    padding: 0 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .f-preview .fp-row {
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .f-preview .fp-row:hover { color: var(--text); }
+  .f-preview .fp-row b { font-weight: 600; color: var(--text); }
+  .f-body {
+    display: none;
+    border-top: 1px solid var(--glass-border);
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 6px 0;
+  }
+  .f-card.expanded .f-body { display: block; }
+  .f-body .fb-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  .f-body .fb-row:hover { background: var(--card-hover); }
+  .fb-who {
+    flex: none;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    min-width: 64px;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fb-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fb-time { flex: none; font-size: 10px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+  .fb-new-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--tier-mid); align-self: center; }
+  /* 消息详情层（底部弹出） */
+  .feishu-detail {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    z-index: 15;
+    max-height: 55%;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel-gradient);
+    border-top: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+  }
+  .fd-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--glass-border);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .fd-head #fdTitle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fd-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
   /* 写信 / 回复弹窗 */
   .compose-modal {
     position: absolute;
@@ -938,11 +1093,13 @@
           <button class="icon-btn" id="feishuSyncBtn" title="同步消息" style="width:auto;padding:0 12px;font-size:12px">同步</button>
         </div>
       </div>
-      <div class="mail-split">
-        <div class="mail-list" id="feishuList"></div>
-        <div class="mail-read" id="feishuRead">
-          <div class="mail-read-empty">选择一条消息查看</div>
+      <div class="feishu-cards" id="feishuList"></div>
+      <div class="feishu-detail" id="feishuDetail" hidden>
+        <div class="fd-head">
+          <span id="fdTitle"></span>
+          <button class="icon-btn" id="fdClose" title="关闭">✕</button>
         </div>
+        <div class="fd-body" id="fdBody"></div>
       </div>
     </div>
     <div class="compose-modal" id="composeModal" hidden>
@@ -1751,6 +1908,7 @@
   }
   function setMailStatus(text) {
     $mailStatus.textContent = text || '';
+    $mailStatus.title = text || '';
   }
 
   // ---------- 未配置邮箱：安装/授权引导卡片 ----------
@@ -2143,15 +2301,22 @@
   const $feishuIdentity = document.getElementById('feishuIdentity');
   const $feishuStatus = document.getElementById('feishuStatus');
   const $feishuList = document.getElementById('feishuList');
-  const $feishuRead = document.getElementById('feishuRead');
   const $feishuRefreshBtn = document.getElementById('feishuRefreshBtn');
   const $feishuSyncBtn = document.getElementById('feishuSyncBtn');
+  const $feishuDetail = document.getElementById('feishuDetail');
+  const $fdTitle = document.getElementById('fdTitle');
+  const $fdBody = document.getElementById('fdBody');
+  const $fdClose = document.getElementById('fdClose');
 
   let feishuViewOpen = false;
-  let feishuMessages = [];
+  let feishuMessages = [];   // 会话数组（方案 B 卡片流）
+  let feishuSince = '';      // 上次同步时间（'YYYY-MM-DD HH:MM'），用于标注新消息
   let feishuSyncTimer = null;
 
-  function setFeishuStatus(text) { $feishuStatus.textContent = text || ''; }
+  function setFeishuStatus(text) { 
+    $feishuStatus.textContent = text || '';
+    $feishuStatus.title = text || '';
+  }
 
   function formatLastSync(ls) {
     if (!ls) return '';
@@ -2175,7 +2340,7 @@
 
   async function loadFeishuMessages() {
     try {
-      const res = await fetch('/office-ui/feishu/messages?limit=100', { cache: 'no-store' });
+      const res = await fetch('/office-ui/feishu/messages?per-chat=20', { cache: 'no-store' });
       const json = await res.json();
       if (!json || !json.ok) {
         const code = json && json.error && json.error.code;
@@ -2183,86 +2348,137 @@
         setFeishuStatus((json && json.error && json.error.message) || '读取失败');
         return;
       }
-      feishuMessages = (json.data && json.data.messages) || [];
-      renderFeishuList(feishuMessages);
+      feishuMessages = (json.data && json.data.chats) || [];
+      feishuSince = (json.data && json.data.since) || '';
+      renderFeishuCards(feishuMessages);
     } catch (e) {
       setFeishuStatus('读取失败：' + (e && e.message ? e.message : e));
     }
   }
 
-  function renderFeishuList(messages) {
+  // 正文预览：图片占位符转 📷，压缩空白
+  function feishuPreview(m) {
+    const t = (m && m.text) || '';
+    return t.replace(/!\[[^\]]*\]\([^)]*\)/g, '📷 图片').replace(/\s+/g, ' ').trim() || '（无正文）';
+  }
+  function chatTypeLabel(t) { return t === 'p2p' ? '私聊' : '群聊'; }
+  function shortTime(created) {
+    if (!created) return '';
+    const [date, time] = String(created).split(' ');
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const today = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    return date === today ? (time || '') : date.slice(5);
+  }
+  function feishuWho(m) {
+    return (m && (m.sender_name || (m.user_id || '').slice(0, 8))) || '未知';
+  }
+
+  function renderFeishuCards(chats) {
     $feishuList.innerHTML = '';
-    if (!messages.length) {
+    if (!chats.length) {
       const empty = document.createElement('div');
       empty.className = 'empty';
       empty.textContent = '暂无消息，点「同步」拉取';
       $feishuList.appendChild(empty);
       return;
     }
-    for (const m of messages) {
-      const item = document.createElement('div');
-      item.className = 'mail-item';
-      item.dataset.id = m.message_id || '';
-
-      const head = document.createElement('div');
-      head.className = 'm-head';
-      const dot = document.createElement('span');
-      dot.className = 'm-dot';
-      const from = document.createElement('span');
-      from.className = 'm-from';
-      const chatLabel = (m.chat_name || m.chat_id || '').slice(0, 18);
-      from.textContent = chatLabel;
-      from.title = m.chat_name || m.chat_id || '';
-      const time = document.createElement('span');
-      time.className = 'm-time';
-      time.textContent = mailTime(m.created_at);
-      head.appendChild(dot); head.appendChild(from); head.appendChild(time);
-
-      const subject = document.createElement('div');
-      subject.className = 'm-subject';
-      subject.textContent = m.sender_name || (m.user_id || '').slice(0, 8) || '未知成员';
-
-      const snippet = document.createElement('div');
-      snippet.className = 'm-snippet';
-      snippet.textContent = (m.text || '').replace(/\s+/g, ' ');
-
-      item.appendChild(head); item.appendChild(subject); item.appendChild(snippet);
-      item.addEventListener('click', () => openFeishuMessage(m, item));
-      $feishuList.appendChild(item);
-    }
+    // 排序：新增数降序 → 最后活跃时间倒序
+    const sorted = chats.slice().sort((a, b) => {
+      const na = a.new_count || 0, nb = b.new_count || 0;
+      if (na !== nb) return nb - na;
+      return String(b.last_at || '').localeCompare(String(a.last_at || ''));
+    });
+    for (const c of sorted) $feishuList.appendChild(buildFeishuCard(c));
   }
 
-  function openFeishuMessage(m, itemEl) {
-    $feishuList.querySelectorAll('.mail-item.active').forEach((el) => el.classList.remove('active'));
-    if (itemEl) itemEl.classList.add('active');
-    $feishuRead.innerHTML = '';
+  function buildFeishuCard(c) {
+    const card = document.createElement('div');
+    card.className = 'f-card' + ((c.new_count || 0) > 0 ? ' new' : '');
+    card.dataset.id = c.chat_id || '';
 
     const head = document.createElement('div');
-    head.className = 'mail-read-head';
-    const subj = document.createElement('div');
-    subj.className = 'mail-read-subject';
-    subj.textContent = (m.chat_name || m.chat_id || '') + ' · ' + (m.sender_name || (m.user_id || '').slice(0, 8) || '未知成员');
-    const meta = document.createElement('div');
-    meta.className = 'mail-read-meta';
-    meta.textContent = '时间：' + mailTime(m.created_at) +
-      '\n来源：' + (m.chat_name || m.chat_id || '') + (m.chat_type === 'p2p' ? '（私聊）' : '（群聊）');
-    head.appendChild(subj);
-    head.appendChild(meta);
+    head.className = 'f-head';
+    const name = document.createElement('span');
+    name.className = 'f-name';
+    name.textContent = c.chat_name || (c.chat_id || '').slice(0, 12);
+    name.title = c.chat_name || c.chat_id || '';
+    const type = document.createElement('span');
+    type.className = 'f-type' + (c.chat_type === 'p2p' ? ' p2p' : '');
+    type.textContent = chatTypeLabel(c.chat_type);
+    const badge = document.createElement('span');
+    badge.className = 'f-new';
+    badge.textContent = '+' + (c.new_count || 0);
+    const time = document.createElement('span');
+    time.className = 'f-time';
+    time.textContent = shortTime(c.last_at);
+    head.appendChild(name); head.appendChild(type); head.appendChild(badge); head.appendChild(time);
+
+    const preview = document.createElement('div');
+    preview.className = 'f-preview';
+    const prevMsgs = (c.messages || []).slice(0, 3);
+    if (!prevMsgs.length) {
+      const row = document.createElement('div');
+      row.className = 'fp-row';
+      row.textContent = '（暂无消息）';
+      preview.appendChild(row);
+    } else {
+      for (const m of prevMsgs) {
+        const row = document.createElement('div');
+        row.className = 'fp-row';
+        const who = document.createElement('b');
+        who.textContent = feishuWho(m) + '：';
+        row.appendChild(who);
+        row.appendChild(document.createTextNode(feishuPreview(m)));
+        row.addEventListener('click', (e) => { e.stopPropagation(); openFeishuDetail(c, m); });
+        preview.appendChild(row);
+      }
+    }
 
     const body = document.createElement('div');
-    body.style.padding = '14px 16px';
-    body.style.fontSize = '13px';
-    body.style.lineHeight = '1.7';
-    body.style.color = 'var(--text)';
-    body.style.whiteSpace = 'pre-wrap';
-    body.style.wordBreak = 'break-word';
-    body.style.overflowY = 'auto';
-    // 本地消息按不可信数据渲染：纯文本，不解析 HTML/图片
-    body.textContent = m.text || '（无正文）';
+    body.className = 'f-body';
+    for (const m of (c.messages || [])) {
+      const row = document.createElement('div');
+      row.className = 'fb-row';
+      const isNew = feishuSince && m.created_at && m.created_at > feishuSince;
+      if (isNew) {
+        const dot = document.createElement('span');
+        dot.className = 'fb-new-dot';
+        dot.title = '同步后新增';
+        row.appendChild(dot);
+      }
+      const who = document.createElement('span');
+      who.className = 'fb-who';
+      who.textContent = feishuWho(m);
+      who.title = m.user_id || '';
+      const text = document.createElement('span');
+      text.className = 'fb-text';
+      text.textContent = feishuPreview(m);
+      const tm = document.createElement('span');
+      tm.className = 'fb-time';
+      tm.textContent = shortTime(m.created_at);
+      row.appendChild(who); row.appendChild(text); row.appendChild(tm);
+      row.addEventListener('click', () => openFeishuDetail(c, m));
+      body.appendChild(row);
+    }
 
-    $feishuRead.appendChild(head);
-    $feishuRead.appendChild(body);
+    head.addEventListener('click', () => {
+      const expanded = card.classList.toggle('expanded');
+      // 展开的会话置顶
+      if (expanded && card.parentNode) card.parentNode.insertBefore(card, card.parentNode.firstChild);
+    });
+
+    card.appendChild(head); card.appendChild(preview); card.appendChild(body);
+    return card;
   }
+
+  // 消息详情（底部弹出层）
+  function openFeishuDetail(c, m) {
+    $fdTitle.textContent = (c.chat_name || c.chat_id || '') + ' · ' + feishuWho(m) + ' · ' + (m.created_at || '');
+    $fdBody.textContent = (m && m.text) || '（无正文）';
+    $feishuDetail.hidden = false;
+  }
+  function closeFeishuDetail() { $feishuDetail.hidden = true; }
 
   // ---------- 未配置引导卡 ----------
   function renderFeishuGuide() {
@@ -2335,12 +2551,7 @@
     card.appendChild(actions);
     wrap.appendChild(card);
     $feishuList.appendChild(wrap);
-
-    $feishuRead.innerHTML = '';
-    const empty = document.createElement('div');
-    empty.className = 'mail-read-empty';
-    empty.textContent = '配置飞书消息流后显示消息';
-    $feishuRead.appendChild(empty);
+    closeFeishuDetail();
   }
 
   // ---------- 同步（手动触发，异步执行 + 轮询状态） ----------
@@ -2405,6 +2616,7 @@
     $feishuView.hidden = !feishuViewOpen;
     $feishuBtn.style.background = feishuViewOpen ? 'var(--card-hover)' : '';
     $officeTitle.textContent = feishuViewOpen ? '🏢 办公室 · 飞书' : '🏢 办公室';
+    if (!feishuViewOpen) closeFeishuDetail();
     if (feishuViewOpen) {
       loadFeishuStatus();
       loadFeishuMessages();
@@ -2413,6 +2625,7 @@
   $feishuBtn.addEventListener('click', toggleFeishu);
   $feishuRefreshBtn.addEventListener('click', () => { loadFeishuStatus(); loadFeishuMessages(); });
   $feishuSyncBtn.addEventListener('click', syncFeishu);
+  $fdClose.addEventListener('click', closeFeishuDetail);
 
   // ---------- 启动：拉数据 → 渲染 → 轮询（数据变化才重渲） ----------
   // P2-1: lightweight structural key instead of full JSON.stringify
@@ -2502,6 +2715,55 @@
   let refreshTimer = null;
   const bubbleTimers = new Array(6).fill(null);
   const animFrames = [];
+
+  // 接收父窗口传入的会话快照（OfficeFab 的 useSessions 数据），即时渲染
+  // 零额外轮询/监听：只在 iframe 加载时收一次，后续 fetchData 返回后自然替换
+  window.addEventListener('message', function handler(evt) {
+    var msg = evt && evt.data;
+    if (!msg || msg.type !== 'office-snapshot' || !Array.isArray(msg.sessions)) return;
+    window.removeEventListener('message', handler); // 只收一次
+    try {
+      // 将快照转为 DATA 格式：所有会话放入第一个 column 的占位工作区
+      var snapSessions = msg.sessions.map(function(s) {
+        return {
+          id: String(s.id),
+          title: s.title || '会话 ' + String(s.id).slice(0, 6),
+          active: s.status === 'running' || s.status === 'pending',
+          pending: s.status === 'pending',
+          inputTokens: null,
+          tokenTotal: 0,
+          tools: []
+        };
+      });
+      if (snapSessions.length) {
+        DATA = {
+          assignments: {},
+          columns: (function() {
+            var cols = [];
+            for (var i = 0; i < 6; i++) cols.push({ index: i, workspaces: [] });
+            cols[0].workspaces.push({
+              id: '__snapshot__',
+              title: '',
+              sessions: snapSessions,
+              sessionCount: snapSessions.length,
+              tokenTotal: 0
+            });
+            return cols;
+          })(),
+          workspaces: [{
+            id: '__snapshot__',
+            title: '',
+            col: 0,
+            sessions: snapSessions,
+            sessionCount: snapSessions.length,
+            tokenTotal: 0
+          }]
+        };
+        renderColumns();
+        hideLoading();
+      }
+    } catch (_) {}
+  });
 
   // setTimeout 链替代 setInterval：等 refresh 完成后再调度下一次，避免请求堆积
   function scheduleRefresh() {

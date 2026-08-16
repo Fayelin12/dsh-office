@@ -900,6 +900,7 @@
       <div class="office-actions">
         <span class="dirty-badge" id="dirtyBadge"><span class="dirty-dot"></span>有未保存的更改</span>
         <button class="icon-btn save-btn" id="saveBtn" title="保存更改">保存</button>
+        <button class="icon-btn" id="feishuBtn" title="飞书消息">💬</button>
         <button class="icon-btn" id="mailBtn" title="邮箱">📧</button>
         <button class="icon-btn" id="helpBtn" title="数据口径">?</button>
         <button class="icon-btn" id="configBtn" title="配置">⚙︎</button>
@@ -925,6 +926,22 @@
         <div class="mail-list" id="mailList"></div>
         <div class="mail-read" id="mailRead">
           <div class="mail-read-empty">选择一封邮件查看</div>
+        </div>
+      </div>
+    </div>
+    <div class="mail-view" id="feishuView" hidden>
+      <div class="mail-toolbar">
+        <span class="mail-identity" id="feishuIdentity">💬 飞书</span>
+        <div class="mail-actions">
+          <span class="mail-status" id="feishuStatus"></span>
+          <button class="icon-btn" id="feishuRefreshBtn" title="刷新">⟳</button>
+          <button class="icon-btn" id="feishuSyncBtn" title="同步消息" style="width:auto;padding:0 12px;font-size:12px">同步</button>
+        </div>
+      </div>
+      <div class="mail-split">
+        <div class="mail-list" id="feishuList"></div>
+        <div class="mail-read" id="feishuRead">
+          <div class="mail-read-empty">选择一条消息查看</div>
         </div>
       </div>
     </div>
@@ -1654,11 +1671,18 @@
     showingConfig = !showingConfig;
     $body.hidden = showingConfig;
     $config.hidden = !showingConfig;
-    // 进配置视图时关闭邮箱视图（若有）
-    if (showingConfig && mailViewOpen) {
-      mailViewOpen = false;
-      $mailView.hidden = true;
-      $mailBtn.style.background = '';
+    // 进配置视图时关闭邮箱/飞书视图（若有）
+    if (showingConfig && (mailViewOpen || feishuViewOpen)) {
+      if (mailViewOpen) {
+        mailViewOpen = false;
+        $mailView.hidden = true;
+        $mailBtn.style.background = '';
+      }
+      if (feishuViewOpen) {
+        feishuViewOpen = false;
+        $feishuView.hidden = true;
+        $feishuBtn.style.background = '';
+      }
     }
     $configBtn.textContent = showingConfig ? '✓' : '⚙︎';
     $configBtn.title = showingConfig ? '完成' : '配置';
@@ -2081,6 +2105,12 @@
       $configBtn.title = '配置';
     }
     $config.hidden = true;
+    // 与飞书视图互斥
+    if (mailViewOpen && feishuViewOpen) {
+      feishuViewOpen = false;
+      $feishuView.hidden = true;
+      $feishuBtn.style.background = '';
+    }
     $mailView.hidden = !mailViewOpen;
     $mailBtn.style.background = mailViewOpen ? 'var(--card-hover)' : '';
     $officeTitle.textContent = mailViewOpen ? '🏢 办公室 · 邮箱' : '🏢 办公室';
@@ -2104,6 +2134,286 @@
     loadMailList(mailDir, '', false);
   });
 
+  // ============================================================
+  // 飞书消息流视图（配置驱动：~/.dsh/office/feishu-config.json）
+  // 只读取本地脚本输出，不联网；未配置时显示引导卡
+  // ============================================================
+  const $feishuBtn = document.getElementById('feishuBtn');
+  const $feishuView = document.getElementById('feishuView');
+  const $feishuIdentity = document.getElementById('feishuIdentity');
+  const $feishuStatus = document.getElementById('feishuStatus');
+  const $feishuList = document.getElementById('feishuList');
+  const $feishuRead = document.getElementById('feishuRead');
+  const $feishuRefreshBtn = document.getElementById('feishuRefreshBtn');
+  const $feishuSyncBtn = document.getElementById('feishuSyncBtn');
+
+  let feishuViewOpen = false;
+  let feishuMessages = [];
+  let feishuSyncTimer = null;
+
+  function setFeishuStatus(text) { $feishuStatus.textContent = text || ''; }
+
+  function formatLastSync(ls) {
+    if (!ls) return '';
+    return '上次同步 | 新增=' + ls.added + ' 跳过=' + ls.skipped + ' 总消息=' + ls.total + ' 耗时=' + ls.elapsed + 's';
+  }
+
+  async function loadFeishuStatus() {
+    try {
+      const res = await fetch('/office-ui/feishu/status', { cache: 'no-store' });
+      const json = await res.json();
+      if (!json || !json.ok || !json.data) { setFeishuStatus('状态获取失败'); return; }
+      const d = json.data;
+      if (!d.configured) { renderFeishuGuide(); return; }
+      $feishuSyncBtn.disabled = false;
+      const base = d.syncing ? '同步中…' : formatLastSync(d.lastSync) || '尚未同步';
+      setFeishuStatus(base);
+    } catch (e) {
+      setFeishuStatus('状态获取失败');
+    }
+  }
+
+  async function loadFeishuMessages() {
+    try {
+      const res = await fetch('/office-ui/feishu/messages?limit=100', { cache: 'no-store' });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        const code = json && json.error && json.error.code;
+        if (code === 'FEISHU_CONFIG_REQUIRED') { renderFeishuGuide(); return; }
+        setFeishuStatus((json && json.error && json.error.message) || '读取失败');
+        return;
+      }
+      feishuMessages = (json.data && json.data.messages) || [];
+      renderFeishuList(feishuMessages);
+    } catch (e) {
+      setFeishuStatus('读取失败：' + (e && e.message ? e.message : e));
+    }
+  }
+
+  function renderFeishuList(messages) {
+    $feishuList.innerHTML = '';
+    if (!messages.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = '暂无消息，点「同步」拉取';
+      $feishuList.appendChild(empty);
+      return;
+    }
+    for (const m of messages) {
+      const item = document.createElement('div');
+      item.className = 'mail-item';
+      item.dataset.id = m.message_id || '';
+
+      const head = document.createElement('div');
+      head.className = 'm-head';
+      const dot = document.createElement('span');
+      dot.className = 'm-dot';
+      const from = document.createElement('span');
+      from.className = 'm-from';
+      const chatLabel = (m.chat_name || m.chat_id || '').slice(0, 18);
+      from.textContent = chatLabel;
+      from.title = m.chat_name || m.chat_id || '';
+      const time = document.createElement('span');
+      time.className = 'm-time';
+      time.textContent = mailTime(m.created_at);
+      head.appendChild(dot); head.appendChild(from); head.appendChild(time);
+
+      const subject = document.createElement('div');
+      subject.className = 'm-subject';
+      subject.textContent = m.sender_name || (m.user_id || '').slice(0, 8) || '未知成员';
+
+      const snippet = document.createElement('div');
+      snippet.className = 'm-snippet';
+      snippet.textContent = (m.text || '').replace(/\s+/g, ' ');
+
+      item.appendChild(head); item.appendChild(subject); item.appendChild(snippet);
+      item.addEventListener('click', () => openFeishuMessage(m, item));
+      $feishuList.appendChild(item);
+    }
+  }
+
+  function openFeishuMessage(m, itemEl) {
+    $feishuList.querySelectorAll('.mail-item.active').forEach((el) => el.classList.remove('active'));
+    if (itemEl) itemEl.classList.add('active');
+    $feishuRead.innerHTML = '';
+
+    const head = document.createElement('div');
+    head.className = 'mail-read-head';
+    const subj = document.createElement('div');
+    subj.className = 'mail-read-subject';
+    subj.textContent = (m.chat_name || m.chat_id || '') + ' · ' + (m.sender_name || (m.user_id || '').slice(0, 8) || '未知成员');
+    const meta = document.createElement('div');
+    meta.className = 'mail-read-meta';
+    meta.textContent = '时间：' + mailTime(m.created_at) +
+      '\n来源：' + (m.chat_name || m.chat_id || '') + (m.chat_type === 'p2p' ? '（私聊）' : '（群聊）');
+    head.appendChild(subj);
+    head.appendChild(meta);
+
+    const body = document.createElement('div');
+    body.style.padding = '14px 16px';
+    body.style.fontSize = '13px';
+    body.style.lineHeight = '1.7';
+    body.style.color = 'var(--text)';
+    body.style.whiteSpace = 'pre-wrap';
+    body.style.wordBreak = 'break-word';
+    body.style.overflowY = 'auto';
+    // 本地消息按不可信数据渲染：纯文本，不解析 HTML/图片
+    body.textContent = m.text || '（无正文）';
+
+    $feishuRead.appendChild(head);
+    $feishuRead.appendChild(body);
+  }
+
+  // ---------- 未配置引导卡 ----------
+  function renderFeishuGuide() {
+    $feishuIdentity.textContent = '💬 飞书';
+    $feishuSyncBtn.disabled = true;
+    $feishuList.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'mail-setup';
+    const card = document.createElement('div');
+    card.className = 'mail-setup-card';
+
+    const title = document.createElement('div');
+    title.className = 'ms-title';
+    title.textContent = '💬 飞书 / 消息流视图';
+
+    const desc = document.createElement('div');
+    desc.className = 'ms-prompt';
+    desc.appendChild(document.createTextNode('本视图用于把本机上的消息数据（例如飞书群聊/私聊消息）汇总到办公室面板一屏查看。它只读取本机配置文件 feishu-config.json 里指定的本地脚本输出，不联网、不上传任何数据；未配置时该功能保持禁用，不影响其它功能。'));
+
+    const steps = document.createElement('ol');
+    steps.className = 'ms-steps';
+    const mkStep = (html) => { const li = document.createElement('li'); li.innerHTML = html; return li; };
+    steps.appendChild(mkStep('创建配置文件：<code>~/.dsh/office/feishu-config.json</code>'));
+    steps.appendChild(mkStep('填入你的同步脚本与读取脚本的<strong>绝对路径</strong>（见模板）'));
+    steps.appendChild(mkStep('点「重新检测」'));
+
+    const tpl = document.createElement('div');
+    tpl.className = 'ms-prompt';
+    tpl.appendChild(document.createTextNode('配置模板：'));
+    const tplText = document.createElement('div');
+    tplText.className = 'ms-prompt-text';
+    tplText.textContent = '{ "scripts": { "sync": "<你的同步脚本路径，如 .../ingestor/ingestor.js>", "latest": "<你的读取脚本路径，如 .../ingestor/latest.js>" } }';
+    tpl.appendChild(tplText);
+
+    const actions = document.createElement('div');
+    actions.className = 'ms-actions';
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'icon-btn';
+    copyBtn.textContent = '复制配置模板';
+    copyBtn.addEventListener('click', () => {
+      const text = tplText.textContent;
+      const done = () => setFeishuStatus('已复制 ✓');
+      const fail = () => setFeishuStatus('复制失败');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(fail);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (_) { fail(); }
+        document.body.removeChild(ta);
+      }
+    });
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'icon-btn';
+    retryBtn.textContent = '重新检测';
+    retryBtn.addEventListener('click', () => {
+      setFeishuStatus('检测中…');
+      loadFeishuStatus();
+      loadFeishuMessages();
+    });
+    actions.appendChild(copyBtn);
+    actions.appendChild(retryBtn);
+
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(steps);
+    card.appendChild(tpl);
+    card.appendChild(actions);
+    wrap.appendChild(card);
+    $feishuList.appendChild(wrap);
+
+    $feishuRead.innerHTML = '';
+    const empty = document.createElement('div');
+    empty.className = 'mail-read-empty';
+    empty.textContent = '配置飞书消息流后显示消息';
+    $feishuRead.appendChild(empty);
+  }
+
+  // ---------- 同步（手动触发，异步执行 + 轮询状态） ----------
+  async function syncFeishu() {
+    setFeishuStatus('同步中…');
+    $feishuSyncBtn.disabled = true;
+    try {
+      const res = await fetch('/office-ui/feishu/sync', { method: 'POST' });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        const code = json && json.error && json.error.code;
+        if (code === 'FEISHU_CONFIG_REQUIRED') { renderFeishuGuide(); return; }
+        setFeishuStatus((json && json.error && json.error.message) || '同步失败');
+        $feishuSyncBtn.disabled = false;
+        return;
+      }
+      // 轮询 /status 直到同步结束（最长 ~5 分钟）
+      let attempts = 0;
+      if (feishuSyncTimer) clearInterval(feishuSyncTimer);
+      feishuSyncTimer = setInterval(async () => {
+        attempts++;
+        try {
+          const r = await fetch('/office-ui/feishu/status', { cache: 'no-store' });
+          const j = await r.json();
+          const d = j && j.ok && j.data;
+          if (d && !d.syncing) {
+            clearInterval(feishuSyncTimer);
+            feishuSyncTimer = null;
+            $feishuSyncBtn.disabled = false;
+            setFeishuStatus(formatLastSync(d.lastSync) || '同步完成');
+            loadFeishuMessages();
+          } else if (attempts > 100) {
+            clearInterval(feishuSyncTimer);
+            feishuSyncTimer = null;
+            $feishuSyncBtn.disabled = false;
+            setFeishuStatus('同步超时，请稍后查看');
+          }
+        } catch (e) { /* 网络抖动，继续轮询 */ }
+      }, 3000);
+    } catch (e) {
+      setFeishuStatus('同步失败：' + (e && e.message ? e.message : e));
+      $feishuSyncBtn.disabled = false;
+    }
+  }
+
+  // ---------- 飞书视图开关 ----------
+  function toggleFeishu() {
+    feishuViewOpen = !feishuViewOpen;
+    $body.hidden = feishuViewOpen;
+    if (showingConfig) {
+      showingConfig = false;
+      $configBtn.textContent = '⚙︎';
+      $configBtn.title = '配置';
+    }
+    $config.hidden = true;
+    // 与邮箱视图互斥
+    if (mailViewOpen) {
+      mailViewOpen = false;
+      $mailView.hidden = true;
+      $mailBtn.style.background = '';
+    }
+    $feishuView.hidden = !feishuViewOpen;
+    $feishuBtn.style.background = feishuViewOpen ? 'var(--card-hover)' : '';
+    $officeTitle.textContent = feishuViewOpen ? '🏢 办公室 · 飞书' : '🏢 办公室';
+    if (feishuViewOpen) {
+      loadFeishuStatus();
+      loadFeishuMessages();
+    }
+  }
+  $feishuBtn.addEventListener('click', toggleFeishu);
+  $feishuRefreshBtn.addEventListener('click', () => { loadFeishuStatus(); loadFeishuMessages(); });
+  $feishuSyncBtn.addEventListener('click', syncFeishu);
+
   // ---------- 启动：拉数据 → 渲染 → 轮询（数据变化才重渲） ----------
   // P2-1: lightweight structural key instead of full JSON.stringify
   function getDataKey() {
@@ -2125,7 +2435,7 @@
     }
   }
   async function refresh() {
-    if (mailViewOpen) return;  // 邮箱视图打开时不轮询办公室数据
+    if (mailViewOpen || feishuViewOpen) return;  // 邮箱/飞书视图打开时不轮询办公室数据
     if (hasPendingChanges) return;  // 有未保存更改时不拉取新数据，避免覆盖编辑状态
     try {
       await fetchData();

@@ -27,6 +27,7 @@
     --tier-mid: #0a84ff;
     --tier-high: #ff9f0a;
     --noise-opacity: 0.035;
+    --card-solid: #ffffff;
     /* 磨砂噪点颗粒（SVG feTurbulence） */
     --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     color-scheme: light;
@@ -48,6 +49,7 @@
       --tier-mid: #409cff;
       --tier-high: #ffd60a;
       --noise-opacity: 0.05;
+      --card-solid: #1d1d21;
       color-scheme: dark;
     }
     /* 深色滚动条（覆盖全局默认） */
@@ -810,25 +812,26 @@
     transition: box-shadow .15s ease, transform .1s ease, opacity .15s ease;
   }
   .f-card:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10); }
-  /* 状态边框：黄（提到我）> 蓝（6 小时内活跃）> 灰（超 3 天弱化） */
+  /* 状态边框：黄（提到我）> 蓝（6 小时内活跃）> 灰（超 3 天弱化）
+     用不透明底（--card-solid）盖住 padding-box，渐变只出现在 1.5px 边框环上，
+     不会把整张卡片染上背景色 */
   .f-card.yellow {
     border-color: transparent;
     background:
-      linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+      linear-gradient(var(--card-solid), var(--card-solid)) padding-box,
       linear-gradient(135deg, rgb(255, 214, 10), rgb(255, 159, 10)) border-box;
   }
   .f-card.blue {
     border-color: transparent;
     background:
-      linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+      linear-gradient(var(--card-solid), var(--card-solid)) padding-box,
       linear-gradient(135deg, rgb(103, 158, 254), rgb(65, 118, 230)) border-box;
   }
   .f-card.gray {
     border-color: transparent;
     background:
-      linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+      linear-gradient(var(--card-solid), var(--card-solid)) padding-box,
       linear-gradient(135deg, rgb(142, 142, 147), rgb(199, 199, 204)) border-box;
-    opacity: 0.7;
   }
   .f-card.gray .f-name,
   .f-card.gray .f-preview .fp-row,
@@ -1256,6 +1259,9 @@
   let DATA = { columns: emptyColumns(), assignments: {} };
   let dataLoaded = false;
   let hasPendingChanges = false;
+  // 快照实时状态：客户端 useSessions 的 active/pending 比服务端 agents.list() 更快
+  // fetchData 返回后用此映射覆盖服务端数据，避免"客户端已知 running 但面板显示 idle"的竞态
+  let _snapshotStatus = null;
 
   async function fetchData() {
     try {
@@ -2753,6 +2759,24 @@
     if (hasPendingChanges) return;  // 有未保存更改时不拉取新数据，避免覆盖编辑状态
     try {
       await fetchData();
+      // 合并快照实时状态：客户端 useSessions 比服务端 agents.list() 更快知道 running/pending
+      // 只"提升"不"降级"——快照说 active 但服务端说 idle → 以快照为准；反之不改
+      if (_snapshotStatus) {
+        var cols = DATA.columns || [];
+        for (var ci = 0; ci < cols.length; ci++) {
+          var wsList = (cols[ci] && cols[ci].workspaces) || [];
+          for (var wi = 0; wi < wsList.length; wi++) {
+            var sessions = wsList[wi].sessions || [];
+            for (var si = 0; si < sessions.length; si++) {
+              var snap = _snapshotStatus[sessions[si].id];
+              if (snap) {
+                if (snap.active) sessions[si].active = true;
+                if (snap.pending) sessions[si].pending = true;
+              }
+            }
+          }
+        }
+      }
       if (showingConfig) return;  // 配置中不重渲染，离开时刷新
       const key = getDataKey();
       if (key !== lastDataKey) {
@@ -2824,6 +2848,15 @@
     if (!msg || msg.type !== 'office-snapshot' || !Array.isArray(msg.sessions)) return;
     window.removeEventListener('message', handler); // 只收一次
     try {
+      // 保存实时状态映射（供 refresh 合并，防止服务端数据覆盖客户端已知状态）
+      _snapshotStatus = {};
+      for (var i = 0; i < msg.sessions.length; i++) {
+        var s = msg.sessions[i];
+        _snapshotStatus[String(s.id)] = {
+          active: s.status === 'running' || s.status === 'pending',
+          pending: s.status === 'pending'
+        };
+      }
       // 将快照转为 DATA 格式：所有会话放入第一个 column 的占位工作区
       var snapSessions = msg.sessions.map(function(s) {
         return {

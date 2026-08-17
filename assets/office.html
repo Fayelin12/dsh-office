@@ -11,13 +11,14 @@
      本骨架独立打开时，用 body 渐变背景演示玻璃效果。
      ============================================================ */
   :root {
+    --column-count: 6;
     /* 面板：不透明底 + 光感渐变（仿毛玻璃，不依赖 backdrop-filter） */
-    --panel-gradient: linear-gradient(165deg, #fbfbfd 0%, #f3f3f7 55%, #ebebf0 100%);
+    --panel-gradient: linear-gradient(165deg, #f0f0f5 0%, #e8e8ee 55%, #e0e0e8 100%);
     --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
     --glass-border: rgba(0, 0, 0, 0.06);
-    --glass-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.08);
-    --card-bg: rgba(255, 255, 255, 0.55);
-    --card-hover: rgba(255, 255, 255, 0.8);
+    --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    --card-bg: #ffffff;
+    --card-hover: #f5f5f7;
     --text: #1c1c1e;
     --text-dim: #6e6e73;
     --text-faint: #9a9aa0;
@@ -26,10 +27,37 @@
     --tier-low: #8e8e93;
     --tier-mid: #0a84ff;
     --tier-high: #ff9f0a;
-    --noise-opacity: 0.035;
-    --card-solid: #ffffff;
-    /* 磨砂噪点颗粒（SVG feTurbulence） */
-    --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    /* ── Shared design tokens (identical in light & dark, declared once) ── */
+    /* 圆角 */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 999px;
+    /* 字号 */
+    --font-sm: 11px;
+    --font-body: 12px;
+    --font-sub: 13px;
+    --font-lg: 14px;
+    /* 阴影 */
+    --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.10);
+    /* 边框 */
+    --border-subtle: 1px solid rgba(0, 0, 0, 0.10);
+    /* 渐变色 */
+    --grad-yellow: linear-gradient(135deg, rgb(255, 214, 10), rgb(255, 159, 10));
+    --grad-blue: linear-gradient(135deg, rgb(103, 158, 254), rgb(65, 118, 230));
+    --grad-green: linear-gradient(135deg, rgb(48, 209, 88), rgb(34, 197, 94));
+    --grad-gray: linear-gradient(135deg, rgb(142, 142, 147), rgb(199, 199, 204));
+    /* 强调色 */
+    --color-error: #ff453a;
+    --color-loading: #4f46e5;
+    --color-loading-text: #9ca3af;
+    /* 背景色 */
+    --body-bg-light: #e9e9ee;
+    --body-bg-dark: #101012;
+    /* 语义色 */
+    --countdown-soon-text: rgb(214, 120, 0);
+    --countdown-live-text: rgb(22, 163, 74);
+    --code-bg: rgba(127, 127, 127, 0.12);
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
@@ -37,9 +65,9 @@
       --panel-gradient: linear-gradient(165deg, #26262b 0%, #1d1d21 55%, #17171a 100%);
       --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.07);
       --glass-border: rgba(255, 255, 255, 0.08);
-      --glass-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 12px 40px rgba(0, 0, 0, 0.5);
-      --card-bg: rgba(255, 255, 255, 0.06);
-      --card-hover: rgba(255, 255, 255, 0.12);
+      --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      --card-bg: #2a2a30;
+      --card-hover: #323238;
       --text: #f5f5f7;
       --text-dim: #a1a1a6;
       --text-faint: #6e6e73;
@@ -48,8 +76,10 @@
       --tier-low: #98989d;
       --tier-mid: #409cff;
       --tier-high: #ffd60a;
-      --noise-opacity: 0.05;
-      --card-solid: #1d1d21;
+      --border-subtle: 1px solid rgba(255, 255, 255, 0.12);
+      --countdown-soon-text: rgb(255, 179, 64);
+      --countdown-live-text: rgb(72, 219, 124);
+      --code-bg: rgba(255, 255, 255, 0.08);
       color-scheme: dark;
     }
     /* 深色滚动条（覆盖全局默认） */
@@ -59,7 +89,7 @@
     *::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
     *::-webkit-scrollbar-track { background: transparent; }
     /* 邮件正文：深色下用文档内注入的 filter 反色（见 openMail），iframe 底色转深 */
-    .mail-read-body { background: #101012; }
+    .mail-read-body { background: var(--body-bg-dark); }
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -79,11 +109,11 @@
                  "Segoe UI", "Microsoft YaHei", sans-serif;
     color: var(--text);
     /* 生产环境面板不透明、满铺覆盖，此背景不会露出；仅作为兜底 */
-    background: #e9e9ee;
+    background: var(--body-bg-light);
     overflow: hidden;
   }
   @media (prefers-color-scheme: dark) {
-    body { background: #101012; }
+    body { background: var(--body-bg-dark); }
   }
 
   /* ============ 浮层面板 ============ */
@@ -96,17 +126,6 @@
     background: var(--panel-gradient);
     box-shadow: var(--panel-highlight), var(--glass-shadow);
     overflow: hidden;
-  }
-  /* 仿毛玻璃：噪点颗粒层，叠加在不透明渐变之上营造磨砂质感 */
-  .office-panel::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-image: var(--noise);
-    background-size: 160px 160px;
-    opacity: var(--noise-opacity);
   }
 
   /* ============ 标题栏 ============ */
@@ -121,7 +140,7 @@
     flex: none;
   }
   .office-title {
-    font-size: 16px;
+    font-size: var(--font-lg);
     font-weight: 600;
     letter-spacing: 0.2px;
   }
@@ -130,36 +149,44 @@
     width: 30px; height: 30px;
     display: grid; place-items: center;
     border: 1px solid var(--glass-border);
-    border-radius: 9px;
+    border-radius: var(--radius-sm);
     background: var(--card-bg);
     color: var(--text-dim);
-    font-size: 14px;
+    font-size: var(--font-lg);
     cursor: pointer;
     transition: background .15s ease, transform .1s ease;
   }
   .icon-btn:hover { background: var(--card-hover); }
   .icon-btn:active { transform: scale(0.94); }
+  .icon-btn.active { background: var(--card-hover); }
 
-  /* ============ 数据口径帮助弹窗 ============ */
-  .help-modal {
+  /* ============ 通用浮层弹窗 ============ */
+  .modal-overlay {
     position: absolute;
     inset: 0;
-    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.28);
   }
-  .help-card {
+  .modal-card {
     width: min(560px, calc(100% - 40px));
     max-height: 80%;
     display: flex;
     flex-direction: column;
     background: var(--panel-gradient);
     border: 1px solid var(--glass-border);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     box-shadow: var(--glass-shadow);
     overflow: hidden;
+  }
+
+  /* ============ 数据口径帮助弹窗 ============ */
+  .help-modal {
+    z-index: 10;
+  }
+  .help-card {
+    /* uses .modal-card defaults */
   }
   .help-head {
     flex: none;
@@ -168,7 +195,7 @@
     justify-content: space-between;
     padding: 14px 16px;
     border-bottom: 1px solid var(--glass-border);
-    font-size: 14px;
+    font-size: var(--font-lg);
     font-weight: 600;
   }
   .help-body {
@@ -176,13 +203,13 @@
     min-height: 0;
     overflow-y: auto;
     padding: 14px 16px 18px;
-    font-size: 12px;
+    font-size: var(--font-body);
     line-height: 1.6;
     color: var(--text-dim);
   }
   .help-body h4 {
     margin: 12px 0 6px;
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text);
   }
   .help-body h4:first-child { margin-top: 0; }
@@ -197,7 +224,7 @@
     z-index: 1;
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(var(--column-count), 1fr);
     gap: 12px;
     padding: 16px;
     min-height: 0; /* 允许子列滚动 */
@@ -209,7 +236,7 @@
     flex-direction: column;
     min-width: 0;
     border: 1px solid var(--glass-border);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     background: var(--card-bg);
     overflow: hidden;
   }
@@ -222,7 +249,7 @@
     justify-content: flex-start;
     gap: 6px;
     padding: 8px 12px 0;
-    font-size: 11px;
+    font-size: var(--font-sm);
     letter-spacing: 0.5px;
     color: var(--text-faint);
   }
@@ -253,7 +280,7 @@
     justify-content: center;
     gap: 10px;
     padding: 2px 0;
-    font-size: 11px;
+    font-size: var(--font-sm);
     color: var(--text-dim);
   }
   .column-stats b {
@@ -270,12 +297,12 @@
     right: 8px;
     z-index: 1;
     padding: 5px 8px;
-    background: #ffffff;
-    color: #1c1c1e;
-    border: 1.5px solid #1c1c1e;
-    border-radius: 9px;
-    font-size: 10px;
-    line-height: 1.35;
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1.5px solid var(--text);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
+    line-height: 1.5;
     text-align: left;
     box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.14);
   }
@@ -285,11 +312,11 @@
     left: 10px;
     bottom: -6px;
     border: 6px solid transparent;
-    border-top-color: #1c1c1e;
+    border-top-color: var(--text);
     border-bottom: 0;
   }
   @media (prefers-color-scheme: dark) {
-    .bubble { background: #2a2a2f; color: #f5f5f7; border-color: #e5e5ea; }
+    .bubble { border-color: #e5e5ea; }
     .bubble::after { border-top-color: #e5e5ea; }
   }
 
@@ -322,7 +349,7 @@
 
   .workspace {
     border: 1px solid var(--glass-border);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     padding: 10px 12px;
     background: var(--card-bg);
     transition: background .15s ease;
@@ -330,7 +357,7 @@
   .workspace:hover { background: var(--card-hover); }
 
   .ws-title {
-    font-size: 13px;
+    font-size: var(--font-sub);
     font-weight: 600;
     margin-bottom: 8px;
     white-space: nowrap;
@@ -343,13 +370,13 @@
     display: flex;
     align-items: center;
     gap: 7px;
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text-dim);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
   }
   .session:hover { background: var(--card-hover); }
   .session .status { flex: none; width: 12px; height: 12px; display: grid; place-items: center; }
@@ -359,7 +386,7 @@
   .spinner {
     width: 11px; height: 11px;
     border: 2px solid rgba(10, 132, 255, 0.2);
-    border-top-color: #0a84ff;
+    border-top-color: var(--tier-mid);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
@@ -368,7 +395,7 @@
   /* 输入 token 统计（三档配色） */
   .session .tokens {
     flex: none;
-    font-size: 11px;
+    font-size: var(--font-sm);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
@@ -378,7 +405,7 @@
   .tokens.cum  { color: var(--text-dim); font-weight: 500; }
 
   .empty {
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text-faint);
     text-align: center;
     padding: 12px 0;
@@ -394,13 +421,13 @@
     padding: 16px 20px;
   }
   .config-hint {
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text-dim);
     margin-bottom: 14px;
   }
   .config-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(var(--column-count), 1fr);
     gap: 10px;
     align-items: start;
   }
@@ -410,7 +437,7 @@
     gap: 6px;
     padding: 10px;
     border: 1px solid var(--glass-border);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background: var(--card-bg);
   }
   .config-col.full {
@@ -421,7 +448,7 @@
   }
   .config-col.full .config-col-head { flex: 0 0 100%; }
   .config-col-head {
-    font-size: 13px;
+    font-size: var(--font-sub);
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -430,7 +457,7 @@
     border-bottom: 1px solid var(--glass-border);
   }
   .config-col-empty {
-    font-size: 11px;
+    font-size: var(--font-sm);
     color: var(--text-faint);
     text-align: center;
     padding: 8px 0;
@@ -440,13 +467,13 @@
     align-items: center;
     gap: 6px;
     padding: 6px 8px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--card-bg);
   }
   .ws-item .ws-name {
     flex: 1;
     min-width: 0;
-    font-size: 12px;
+    font-size: var(--font-body);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -456,24 +483,20 @@
     max-width: 96px;
     padding: 4px 6px;
     border: 1px solid var(--glass-border);
-    border-radius: 6px;
-    background: #ffffff;
-    color: #1c1c1e;
-    font-size: 11px;
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: var(--font-sm);
     font-family: inherit;
     cursor: pointer;
   }
-  .ws-item select option { background: #ffffff; color: #1c1c1e; }
-  @media (prefers-color-scheme: dark) {
-    .ws-item select { background: #1c1c1e; color: #f5f5f7; }
-    .ws-item select option { background: #1c1c1e; color: #f5f5f7; }
-  }
+  .ws-item select option { background: var(--card-bg); color: var(--text); }
 
   /* ============ 保存按钮 & 未保存提示 ============ */
   .save-btn {
     width: auto;
     padding: 0 12px;
-    font-size: 12px;
+    font-size: var(--font-body);
     font-weight: 500;
     color: var(--text-dim);
     opacity: 0;
@@ -486,8 +509,8 @@
   }
   .save-btn.dirty {
     color: #fff;
-    background: #0a84ff;
-    border-color: #0a84ff;
+    background: var(--tier-mid);
+    border-color: var(--tier-mid);
     font-weight: 600;
   }
   .save-btn.dirty:hover {
@@ -499,8 +522,8 @@
   }
   .dirty-badge {
     display: none;
-    font-size: 10px;
-    color: #ff9f0a;
+    font-size: var(--font-sm);
+    color: var(--tier-high);
     font-weight: 500;
     white-space: nowrap;
     align-items: center;
@@ -510,7 +533,7 @@
   .dirty-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
-    background: #ff9f0a;
+    background: var(--tier-high);
     flex: none;
   }
 
@@ -533,11 +556,11 @@
     min-width: 0;
   }
   .mail-identity {
-    font-size: 12px;
+    font-size: var(--font-body);
     font-weight: 600;
     padding: 6px 12px;
     border: 1px solid var(--glass-border);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: var(--card-bg);
     white-space: nowrap;
     overflow: hidden;
@@ -550,17 +573,17 @@
     gap: 4px;
     background: var(--card-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     padding: 3px;
   }
   .mail-folder {
     border: none;
     background: transparent;
     color: var(--text-dim);
-    font-size: 12px;
+    font-size: var(--font-body);
     font-family: inherit;
     padding: 5px 12px;
-    border-radius: 7px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
   }
   .mail-folder:hover { color: var(--text); }
@@ -577,7 +600,7 @@
     min-width: 0;
   }
   .mail-status {
-    font-size: 11px;
+    font-size: var(--font-sm);
     color: var(--text-faint);
     max-width: none;
     white-space: normal;
@@ -601,8 +624,8 @@
   }
   .mail-item {
     flex: none;
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     background: var(--card-bg);
     padding: 10px 12px;
     cursor: pointer;
@@ -626,7 +649,7 @@
   .mail-item .m-from {
     flex: 1;
     min-width: 0;
-    font-size: 12px;
+    font-size: var(--font-body);
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -635,12 +658,12 @@
   .mail-item.read .m-from { font-weight: 500; color: var(--text-dim); }
   .mail-item .m-time {
     flex: none;
-    font-size: 10px;
+    font-size: var(--font-sm);
     color: var(--text-faint);
     font-variant-numeric: tabular-nums;
   }
   .mail-item .m-subject {
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text);
     white-space: nowrap;
     overflow: hidden;
@@ -648,7 +671,7 @@
     margin-bottom: 2px;
   }
   .mail-item .m-snippet {
-    font-size: 11px;
+    font-size: var(--font-sm);
     color: var(--text-dim);
     white-space: nowrap;
     overflow: hidden;
@@ -657,10 +680,10 @@
   .mail-load-more {
     flex: none;
     border: 1px dashed var(--glass-border);
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--text-dim);
-    font-size: 12px;
+    font-size: var(--font-body);
     font-family: inherit;
     padding: 8px;
     cursor: pointer;
@@ -671,8 +694,8 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--glass-border);
-    border-radius: 14px;
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     background: var(--card-bg);
     overflow: hidden;
   }
@@ -680,7 +703,7 @@
     flex: 1;
     display: grid;
     place-items: center;
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text-faint);
   }
   .mail-read-head {
@@ -689,15 +712,15 @@
     border-bottom: 1px solid var(--glass-border);
   }
   .mail-read-subject {
-    font-size: 15px;
+    font-size: var(--font-lg);
     font-weight: 600;
     margin-bottom: 8px;
     word-break: break-word;
   }
   .mail-read-meta {
-    font-size: 11px;
+    font-size: var(--font-sm);
     color: var(--text-dim);
-    line-height: 1.7;
+    line-height: 1.6;
     word-break: break-all;
     white-space: pre-line;
   }
@@ -712,7 +735,7 @@
     flex: 1;
     min-height: 0;
     border: none;
-    background: #ffffff;
+    background: var(--card-bg);
     width: 100%;
   }
   /* 未配置 Agent Mail 时的安装/授权引导卡片 */
@@ -728,7 +751,7 @@
   .mail-setup-card {
     width: min(560px, 100%);
     border: 1px solid var(--glass-border);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     background: var(--card-bg);
     box-shadow: var(--glass-shadow);
     padding: 20px;
@@ -737,7 +760,7 @@
     gap: 12px;
   }
   .ms-title {
-    font-size: 14px;
+    font-size: var(--font-lg);
     font-weight: 600;
   }
   .ms-steps {
@@ -745,32 +768,32 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text-dim);
     line-height: 1.6;
   }
   .ms-steps code {
     font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 11px;
+    font-size: var(--font-sm);
     background: var(--card-hover);
     border: 1px solid var(--glass-border);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     padding: 2px 6px;
     color: var(--text);
     word-break: break-all;
   }
   .ms-prompt {
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text-dim);
     line-height: 1.6;
   }
   .ms-prompt-text {
     margin-top: 6px;
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text);
     background: var(--card-hover);
     border: 1px solid var(--glass-border);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 8px 10px;
     word-break: break-all;
     user-select: all;
@@ -782,7 +805,7 @@
   .ms-actions .icon-btn {
     width: auto;
     padding: 0 14px;
-    font-size: 12px;
+    font-size: var(--font-body);
     font-weight: 500;
   }
   /* 飞书会话卡片流（方案 B：4 列错层瀑布流） */
@@ -804,38 +827,37 @@
     min-width: 0;
   }
   .f-card {
-    border: 1.5px solid var(--glass-border);
-    border-radius: 14px;
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     background: var(--card-bg);
     overflow: hidden;
     cursor: pointer;
     transition: box-shadow .15s ease, transform .1s ease, opacity .15s ease;
   }
-  .f-card:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10); }
+  .f-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
   /* 状态边框：黄（提到我）> 蓝（6 小时内活跃）> 灰（超 3 天弱化）
      内部背景与普通卡片一致：直接用 --card-bg（毛玻璃半透明，随浅/深主题），
      彩色渐变只画在 1.5px 边框环上（border-box 层），卡片内部不染色 */
   .f-card.yellow {
     border-color: transparent;
     background:
-      linear-gradient(135deg, rgb(255, 214, 10), rgb(255, 159, 10)) border-box,
-      var(--card-bg) padding-box;
+      var(--card-bg) padding-box,
+      var(--grad-yellow) border-box;
   }
   .f-card.blue {
     border-color: transparent;
     background:
-      linear-gradient(135deg, rgb(103, 158, 254), rgb(65, 118, 230)) border-box,
-      var(--card-bg) padding-box;
+      var(--card-bg) padding-box,
+      var(--grad-blue) border-box;
   }
   .f-card.gray {
     border-color: transparent;
     background:
-      linear-gradient(135deg, rgb(142, 142, 147), rgb(199, 199, 204)) border-box,
-      var(--card-bg) padding-box;
+      var(--card-bg) padding-box,
+      var(--grad-gray) border-box;
   }
   .f-card.gray .f-name,
-  .f-card.gray .f-preview .fp-row,
-  .f-card.gray .f-time { color: var(--text-faint); }
+  .f-card.gray .f-preview .fp-row { color: var(--text-faint); }
   .f-head {
     display: flex;
     align-items: center;
@@ -846,7 +868,7 @@
   .f-name {
     flex: 1;
     min-width: 0;
-    font-size: 13px;
+    font-size: var(--font-sub);
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -854,25 +876,24 @@
   }
   .f-type {
     flex: none;
-    font-size: 10px;
+    font-size: var(--font-sm);
     padding: 2px 8px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     border: 1px solid var(--glass-border);
     color: var(--text-dim);
   }
   .f-type.p2p { color: var(--tier-mid); border-color: var(--tier-mid); }
   .f-new {
     flex: none;
-    font-size: 11px;
+    font-size: var(--font-sm);
     font-weight: 600;
     color: #ffffff;
-    background: linear-gradient(135deg, rgb(103, 158, 254), rgb(65, 118, 230));
-    border-radius: 999px;
+    background: var(--grad-blue);
+    border-radius: var(--radius-pill);
     padding: 1px 8px;
     display: none;
   }
-  .f-card.new .f-new { display: inline-block; }
-  .f-time { flex: none; font-size: 10px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+  .f-time { flex: none; font-size: var(--font-sm); color: var(--text-faint); font-variant-numeric: tabular-nums; }
   .f-preview {
     padding: 0 12px 10px;
     display: flex;
@@ -880,7 +901,7 @@
     gap: 4px;
   }
   .f-preview .fp-row {
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text-dim);
     white-space: nowrap;
     overflow: hidden;
@@ -918,11 +939,11 @@
     position: sticky;
     top: 0;
     z-index: 2;
-    font-size: 12px;
+    font-size: var(--font-body);
     font-weight: 700;
     letter-spacing: .3px;
     padding: 6px 10px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     background: var(--card-bg);
     border: 1px solid var(--glass-border);
     color: var(--text-dim);
@@ -933,24 +954,24 @@
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    border: 1.5px solid var(--glass-border);
-    border-radius: 12px;
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     background: var(--card-bg);
     padding: 10px 12px;
     transition: box-shadow .15s ease, transform .1s ease;
   }
-  .cal-card:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10); }
+  .cal-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
   .cal-card.soon {
     border-color: transparent;
     background:
-      linear-gradient(135deg, rgb(255, 214, 10), rgb(255, 159, 10)) border-box,
-      var(--card-bg) padding-box;
+      var(--card-bg) padding-box,
+      var(--grad-yellow) border-box;
   }
   .cal-card.live {
     border-color: transparent;
     background:
-      linear-gradient(135deg, rgb(48, 209, 88), rgb(34, 197, 94)) border-box,
-      var(--card-bg) padding-box;
+      var(--card-bg) padding-box,
+      var(--grad-green) border-box;
   }
   .cal-card.done { opacity: .5; }
   /* 左栏时间线：日期（小字）→ 开始时间（大字）→ 至 结束时间（小字灰）
@@ -966,7 +987,7 @@
     line-height: 1.25;
   }
   .cal-time .ct-date {
-    font-size: 10px;
+    font-size: var(--font-sm);
     color: var(--tier-mid);
     font-weight: 600;
     margin-bottom: 2px;
@@ -974,13 +995,13 @@
   }
   .cal-card.done .cal-time .ct-date { color: var(--text-faint); }
   .cal-time .ct-start {
-    font-size: 15px;
+    font-size: var(--font-lg);
     font-weight: 700;
     color: var(--text);
     white-space: nowrap;
   }
   .cal-time .ct-end {
-    font-size: 10px;
+    font-size: var(--font-sm);
     color: var(--text-faint);
     white-space: nowrap;
   }
@@ -993,13 +1014,13 @@
     gap: 3px;
   }
   .cal-title {
-    font-size: 13px;
+    font-size: var(--font-sub);
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.5;
     word-break: break-word;
   }
   .cal-meta {
-    font-size: 11px;
+    font-size: var(--font-sm);
     color: var(--text-faint);
     display: flex;
     flex-wrap: wrap;
@@ -1008,12 +1029,12 @@
   .cal-minutes {
     flex: none;
     align-self: flex-start;
-    font-size: 11px;
+    font-size: var(--font-sm);
     font-weight: 600;
     color: var(--tier-mid);
     text-decoration: none;
     border: 1px solid var(--tier-mid);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     padding: 2px 10px;
     margin-top: 2px;
   }
@@ -1027,22 +1048,22 @@
     align-items: flex-start;
   }
   .cal-right .ct-countdown {
-    font-size: 11px;
+    font-size: var(--font-sm);
     font-weight: 700;
     color: var(--tier-mid);
     white-space: nowrap;
     padding: 3px 10px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     border: 1px solid rgba(103, 158, 254, 0.35);
     background: rgba(103, 158, 254, 0.10);
   }
   .cal-card.soon .cal-right .ct-countdown {
-    color: rgb(214, 120, 0);
+    color: var(--countdown-soon-text);
     border-color: rgba(255, 159, 10, 0.4);
     background: rgba(255, 159, 10, 0.10);
   }
   .cal-card.live .cal-right .ct-countdown {
-    color: rgb(22, 163, 74);
+    color: var(--countdown-live-text);
     border-color: rgba(52, 199, 89, 0.4);
     background: rgba(52, 199, 89, 0.10);
   }
@@ -1057,43 +1078,31 @@
     width: min(560px, 100%);
     background: var(--card-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     padding: 20px 22px;
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
-  .calendar-setup-card h3 { margin: 0; font-size: 15px; }
+  .calendar-setup-card h3 { margin: 0; font-size: var(--font-lg); }
   .calendar-setup-card code {
     display: block;
-    background: rgba(127, 127, 127, 0.12);
-    border-radius: 8px;
+    background: var(--code-bg);
+    border-radius: var(--radius-sm);
     padding: 8px 10px;
-    font-size: 11px;
+    font-size: var(--font-sm);
     white-space: pre-wrap;
     word-break: break-all;
   }
-  .calendar-setup-card .cs-step { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+  .calendar-setup-card .cs-step { font-size: var(--font-body); color: var(--text-dim); line-height: 1.6; }
   /* 会话弹窗（点击卡片打开） */
   .feishu-modal {
-    position: absolute;
-    inset: 0;
     z-index: 25;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background: rgba(0, 0, 0, 0.32);
   }
   .fm-card {
     width: min(680px, calc(100% - 48px));
     max-height: 82%;
-    display: flex;
-    flex-direction: column;
-    background: var(--panel-gradient);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    box-shadow: var(--glass-shadow);
-    overflow: hidden;
   }
   .fm-head {
     flex: none;
@@ -1103,7 +1112,7 @@
     gap: 8px;
     padding: 12px 14px;
     border-bottom: 1px solid var(--glass-border);
-    font-size: 13px;
+    font-size: var(--font-sub);
     font-weight: 600;
   }
   .fm-head #fmTitle {
@@ -1130,11 +1139,11 @@
     gap: 8px;
     margin-bottom: 2px;
   }
-  .fm-msg-who { font-size: 11px; font-weight: 600; color: var(--text-dim); }
-  .fm-msg-time { font-size: 10px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+  .fm-msg-who { font-size: var(--font-sm); font-weight: 600; color: var(--text-dim); }
+  .fm-msg-time { font-size: var(--font-sm); color: var(--text-faint); font-variant-numeric: tabular-nums; }
   .fm-msg-new { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--tier-mid); }
   .fm-msg-text {
-    font-size: 12px;
+    font-size: var(--font-body);
     color: var(--text-dim);
     line-height: 1.6;
     white-space: nowrap;
@@ -1151,10 +1160,10 @@
     margin: 12px auto;
     padding: 6px 18px;
     border: 1px dashed var(--glass-border);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: transparent;
     color: var(--text-dim);
-    font-size: 12px;
+    font-size: var(--font-body);
     font-family: inherit;
     cursor: pointer;
   }
@@ -1162,24 +1171,11 @@
   .fm-more:disabled { cursor: default; opacity: 0.7; }
   /* 写信 / 回复弹窗 */
   .compose-modal {
-    position: absolute;
-    inset: 0;
     z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.28);
   }
   .compose-card {
     width: min(640px, calc(100% - 40px));
     max-height: 86%;
-    display: flex;
-    flex-direction: column;
-    background: var(--panel-gradient);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    box-shadow: var(--glass-shadow);
-    overflow: hidden;
   }
   .compose-head {
     flex: none;
@@ -1188,7 +1184,7 @@
     justify-content: space-between;
     padding: 12px 16px;
     border-bottom: 1px solid var(--glass-border);
-    font-size: 14px;
+    font-size: var(--font-lg);
     font-weight: 600;
   }
   .compose-body {
@@ -1202,11 +1198,11 @@
   .compose-body input,
   .compose-body textarea {
     border: 1px solid var(--glass-border);
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     background: var(--card-bg);
     color: var(--text);
     font-family: inherit;
-    font-size: 13px;
+    font-size: var(--font-sub);
     padding: 9px 12px;
     outline: none;
     width: 100%;
@@ -1229,8 +1225,8 @@
   }
   .compose-error {
     flex: 1;
-    font-size: 11px;
-    color: #ff453a;
+    font-size: var(--font-sm);
+    color: var(--color-error);
   }
 
   /* ============ 加载遮罩 ============ */
@@ -1252,13 +1248,13 @@
     width: 40px;
     height: 40px;
     border: 3px solid rgba(255,255,255,0.1);
-    border-top-color: #4f46e5;
+    border-top-color: var(--color-loading);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
   .loading-text {
-    color: #9ca3af;
-    font-size: 14px;
+    color: var(--color-loading-text);
+    font-size: var(--font-lg);
     margin-top: 12px;
     text-align: center;
   }
@@ -1313,12 +1309,12 @@
         <div class="mail-actions">
           <span class="mail-status" id="feishuStatus"></span>
           <button class="icon-btn" id="feishuRefreshBtn" title="刷新">⟳</button>
-          <button class="icon-btn" id="feishuSyncBtn" title="同步消息" style="width:auto;padding:0 12px;font-size:12px">同步</button>
+          <button class="icon-btn" id="feishuSyncBtn" title="同步消息" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
         </div>
       </div>
       <div class="feishu-cards" id="feishuList"></div>
-      <div class="feishu-modal" id="feishuModal" hidden>
-        <div class="fm-card">
+      <div class="feishu-modal modal-overlay" id="feishuModal" hidden>
+        <div class="fm-card modal-card">
           <div class="fm-head">
             <span id="fmTitle"></span>
             <button class="icon-btn" id="fmClose" title="关闭">✕</button>
@@ -1333,13 +1329,13 @@
         <div class="mail-actions">
           <span class="mail-status" id="calendarStatus"></span>
           <button class="icon-btn" id="calendarRefreshBtn" title="刷新">⟳</button>
-          <button class="icon-btn" id="calendarSyncBtn" title="同步日程" style="width:auto;padding:0 12px;font-size:12px">同步</button>
+          <button class="icon-btn" id="calendarSyncBtn" title="同步日程" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
         </div>
       </div>
       <div class="calendar-list" id="calendarList"></div>
     </div>
-    <div class="compose-modal" id="composeModal" hidden>
-      <div class="compose-card">
+    <div class="compose-modal modal-overlay" id="composeModal" hidden>
+      <div class="compose-card modal-card">
         <div class="compose-head">
           <span id="composeHead">✎ 写邮件</span>
           <button class="icon-btn" id="composeClose" title="关闭">✕</button>
@@ -1351,12 +1347,12 @@
         </div>
         <div class="compose-foot">
           <span class="compose-error" id="composeError"></span>
-          <button class="icon-btn" id="composeSendBtn" style="width:auto;padding:0 18px;font-size:12px;font-weight:600">发送</button>
+          <button class="icon-btn" id="composeSendBtn" style="width:auto;padding:0 18px;font-size:var(--font-body);font-weight:600">发送</button>
         </div>
       </div>
     </div>
-    <div class="help-modal" id="helpModal" hidden>
-      <div class="help-card">
+    <div class="help-modal modal-overlay" id="helpModal" hidden>
+      <div class="help-card modal-card">
         <div class="help-head">
           <span>数据口径说明</span>
           <button class="icon-btn" id="helpClose" title="关闭">✕</button>
@@ -1404,6 +1400,74 @@
     { sprite: 'zombie',            label: '摸鱼大师', color: '#7b5bd4' },
     { sprite: 'robot',             label: '机器人',   color: '#d97706' },
   ];
+  const COLUMN_COUNT = CHARACTERS.length;
+
+  // ---------- 配置常量 ----------
+  const POLL_INTERVAL_MS = 3000;          // 主轮询间隔
+  const POLL_INTERVAL_HIDDEN_MS = 30000;  // 后台标签页轮询间隔
+  const TOKEN_TIER_LOW = 10000;           // token 低档阈值
+  const TOKEN_TIER_HIGH = 100000;         // token 高档阈值
+  const COLUMN_BUSY_THRESHOLD = 4;        // 列状态"忙疯"阈值
+  const FEISHU_ACTIVE_HOURS = 6;          // 飞书卡片"6小时内活跃"
+  const FEISHU_STALE_DAYS = 3;            // 飞书卡片"超3天弱化"
+  const MEETING_SOON_MINUTES = 120;       // 会议"即将开始"阈值（分钟）
+
+  /* ── 常量 ── */
+  const API = '/office-ui';
+  const TEXT_LOADING = '加载中…';
+  const TEXT_LOAD_ERROR = '加载失败';
+  const TEXT_READ_ERROR = '读取失败';
+  const TEXT_NO_SUBJECT = '（无主题）';
+  const TEXT_NO_BODY = '（无正文）';
+  const TEXT_SYNCING = '同步中…';
+  const TEXT_STATUS_ERROR = '状态获取失败';
+  const TEXT_RETRY = '重新检测';
+  const TEXT_COPY_OK = '已复制 ✓';
+  const TEXT_COPY_FAIL = '复制失败';
+  const FEISHU_PER_CHAT = 20;
+  const FEISHU_PREVIEW_COUNT = 10;
+  const SNAPSHOT_WAIT_MS = 150;
+  const CALENDAR_COUNTDOWN_MS = 30000;
+  const FEISHU_SYNC_MAX_POLL = 100;
+  const TYPEWRITER_SPEED_MS = 50;
+  const DARK_INVERT_STRENGTH = '0.92';
+  const JSON_HEADERS = { 'content-type': 'application/json' };
+
+  /* ── 工具函数 ── */
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function setStatus(el, text) {
+    el.textContent = text || '';
+    el.title = text || '';
+  }
+
+  function relativeTime(diffMs, formatDateFn) {
+    if (diffMs < 0) diffMs = 0;
+    if (diffMs < 60000) return '刚刚';
+    if (diffMs < 3600000) return Math.floor(diffMs / 60000) + ' 分钟前';
+    if (diffMs < 86400000) return Math.floor(diffMs / 3600000) + ' 小时前';
+    if (diffMs < 604800000) return Math.floor(diffMs / 86400000) + ' 天前';
+    return formatDateFn ? formatDateFn() : '更早';
+  }
+
+  function copyToClipboard(text, okText, failText) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(okText).catch(failText);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); okText(); } catch (_) { failText(); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  async function apiFetch(path, opts) {
+    const res = await fetch(API + path, opts);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res;
+  }
 
   // Kenney Toon Characters 精灵帧（每帧 96×128，坐标来自 Tilesheet XML）
   const KW = 96, KH = 128;
@@ -1428,7 +1492,7 @@
 
   // 输入 token 分档阈值（单次输入口径，按 1M 上下文校准，可配置）：
   //   < low 灰(很少)，low~high 蓝(差不多)，> high 黄(浪费)
-  const TOKEN_TIERS = { low: 10000, high: 100000 };
+  const TOKEN_TIERS = { low: TOKEN_TIER_LOW, high: TOKEN_TIER_HIGH };
   function tierOf(tokens) {
     if (tokens == null) return 'low';
     if (tokens < TOKEN_TIERS.low) return 'low';
@@ -1469,16 +1533,38 @@
   // 当前数据：初始为空骨架，优先 /office-ui/data，独立打开时用演示兜底
   let DATA = { columns: emptyColumns(), assignments: {} };
   let dataLoaded = false;
-  let hasPendingChanges = false;
   // 快照实时状态：客户端 useSessions 的 active/pending 比服务端 agents.list() 更快
   // fetchData 返回后用此映射覆盖服务端数据，避免"客户端已知 running 但面板显示 idle"的竞态
   let _snapshotStatus = null;
   let _snapshotMerged = false; // 快照合并后强制渲染一次
 
+  function mergeSnapshotStatus() {
+    if (!_snapshotStatus) return;
+    var cols = DATA.columns || [];
+    for (var ci = 0; ci < cols.length; ci++) {
+      var wsList = (cols[ci] && cols[ci].workspaces) || [];
+      for (var wi = 0; wi < wsList.length; wi++) {
+        var sessions = wsList[wi].sessions || [];
+        for (var si = 0; si < sessions.length; si++) {
+          var snap = _snapshotStatus[String(sessions[si].id)];
+          if (snap) {
+            if (snap.active) sessions[si].active = true;
+            if (snap.pending) sessions[si].pending = true;
+          }
+        }
+      }
+    }
+  }
+
+  function mkStep(html) {
+    const li = document.createElement('li');
+    li.innerHTML = html;
+    return li;
+  }
+
   async function fetchData() {
     try {
-      const res = await fetch('/office-ui/data', { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const res = await apiFetch('/data', { cache: 'no-store' });
       const json = await res.json();
       if (json && Array.isArray(json.columns) && json.columns.length) {
         DATA = json;
@@ -1501,7 +1587,7 @@
     }
     if (pendingCount > 0) return 'warning';
     if (activeCount === 0) return 'idle';
-    if (activeCount > 4) return 'busy';
+    if (activeCount > COLUMN_BUSY_THRESHOLD) return 'busy';
     return 'working';
   }
 
@@ -1525,8 +1611,7 @@
   let BUBBLE_TEXTS = null;
   async function loadBubbleTexts() {
     try {
-      const res = await fetch('/office-ui/bubble-texts', { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const res = await apiFetch('/bubble-texts', { cache: 'no-store' });
       const json = await res.json();
       if (json && typeof json === 'object') BUBBLE_TEXTS = json;
     } catch (e) {
@@ -1570,23 +1655,11 @@
   const $officeTitle = document.getElementById('officeTitle');
 
   // ---------- 渲染 6 列 ----------
-  function structureKey() {
-    return (DATA.columns || []).map((col) => {
-      return (col.workspaces || []).map((ws) => {
-        return ws.id + '[' + (ws.sessions || []).map((s) => s.id).join(',') + ']';
-      }).join('|');
-    }).join('::');
-  }
-
-  let lastStructureKey = '';
-
   function renderColumns() {
-    const sk = structureKey();
-    if (sk !== lastStructureKey || $body.children.length === 0) {
-      lastStructureKey = sk;
+    const key = getDataKey();
+    if (key !== lastDataKey || $body.children.length === 0) {
+      lastDataKey = key;
       fullRender();
-    } else {
-      updateColumns();
     }
   }
 
@@ -1619,7 +1692,7 @@
 
   function sessionRow(s) {
     const li = document.createElement('li');
-    li.className = 'session ' + (s.active ? 'active' : 'idle');
+    li.className = 'session' + (s.active ? '' : ' idle');
     li.dataset.sid = s.id;
     li.title = '点击打开会话';
     li.addEventListener('click', () => openSession(s.id));
@@ -1645,23 +1718,6 @@
     li.appendChild(label);
     li.appendChild(tokens);
     return li;
-  }
-
-  function updateSessionRow(li, s) {
-    const sessActive = !!s.active;
-    li.className = 'session ' + (sessActive ? 'active' : 'idle');
-    const indicator = li.querySelector('.status span');
-    if (indicator) indicator.className = sessActive ? 'spinner' : 'dot';
-    const label = li.querySelector('.label');
-    if (label && label.textContent !== s.title) label.textContent = s.title;
-    const displayTokens = sessActive ? s.inputTokens : (s.tokenTotal != null ? s.tokenTotal : null);
-    const tokens = li.querySelector('.tokens');
-    if (tokens) {
-      tokens.className = 'tokens ' + (sessActive ? tierOf(s.inputTokens) : 'cum');
-      const txt = formatTokens(displayTokens);
-      if (tokens.textContent !== txt) tokens.textContent = txt;
-      tokens.title = (sessActive ? '单次输入 token：' : '累计 token：') + (displayTokens == null ? '' : displayTokens);
-    }
   }
 
   function fullRender() {
@@ -1752,56 +1808,6 @@
     }
   }
 
-  function updateColumns() {
-    const cols = DATA.columns || [];
-    const sections = Array.from($body.querySelectorAll('.column'));
-    sections.forEach((section, index) => {
-      const col = cols[index];
-      if (!col) return;
-      const state = columnState(col);
-
-      const stats = section.querySelector('.column-stats');
-      if (stats) setStats(stats, col);
-
-      const badge = section.querySelector('.badge');
-      if (badge) {
-        const b = BADGE[state] || '';
-        if (badge.textContent !== b) badge.textContent = b;
-        badge.style.display = b ? '' : 'none';
-      }
-
-      const bk = bubbleKey(col, state);
-      if (section.dataset.bubbleKey !== bk) {
-        section.dataset.bubbleKey = bk;
-        const bubble = section.querySelector('.bubble');
-        if (bubble) bubble.textContent = bubbleText(col, state);
-      }
-
-      const canvas = section.querySelector('canvas');
-      if (canvas && canvas._setState) canvas._setState(state);
-
-      const list = section.querySelector('.workspace-list');
-      if (!list) return;
-      const wsItems = Array.from(list.querySelectorAll('.workspace'));
-      const wsList = col.workspaces || [];
-      const flatSessions = [];
-      for (let wi = 0; wi < wsList.length; wi++) {
-        const ws = wsList[wi];
-        const wsItem = wsItems[wi];
-        if (wsItem) {
-          const titleEl = wsItem.querySelector('.ws-title');
-          if (titleEl && titleEl.textContent !== ws.title) titleEl.textContent = ws.title;
-        }
-        for (const s of (ws.sessions || [])) flatSessions.push(s);
-      }
-      const sessionLis = Array.from(list.querySelectorAll('.session'));
-      sessionLis.forEach((li, i) => {
-        const s = flatSessions[i];
-        if (s) updateSessionRow(li, s);
-      });
-    });
-  }
-
   // ---------- P2-3: Single master rAF loop for all column canvases ----------
   const _spriteList = [];
   let _masterRaf = 0;
@@ -1837,7 +1843,7 @@
     window.addEventListener('resize', resize);
 
     const img = new Image();
-    img.src = '/office-ui/assets/toon/' + char.sprite + '.png';
+    img.src = API + '/assets/toon/' + char.sprite + '.png';
 
     const idleAction = columnIdleActions[columnIndex] || 'idle';
     const t0 = performance.now();
@@ -1939,9 +1945,9 @@
   // 保存：将 pending 提交到磁盘（POST /office-ui/config）
   async function saveAssignments() {
     try {
-      const res = await fetch('/office-ui/config', {
+      const res = await apiFetch('/config', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ assignments: pendingAssignments })
       });
       if (res.ok) {
@@ -1958,9 +1964,9 @@
   async function openSession(sessionId) {
     if (!sessionId) return;
     try {
-      await fetch('/office-ui/open-session', {
+      await apiFetch('/open-session', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ sessionId })
       });
     } catch (e) { console.warn('[office]', e?.message || e); }
@@ -2053,7 +2059,7 @@
     grid.className = 'config-grid';
 
     // 未分配区（全宽）+ 6 个角色列
-    const unassigned = all.filter((ws) => ws.col < 0 || ws.col > 5);
+    const unassigned = all.filter((ws) => ws.col < 0 || ws.col > COLUMN_COUNT - 1);
     grid.appendChild(makeCol('未分配', unassigned, true));
     CHARACTERS.forEach((c, i) => {
       grid.appendChild(makeCol(c.label, all.filter((ws) => ws.col === i)));
@@ -2062,45 +2068,82 @@
     $config.appendChild(grid);
   }
 
+  // ---------- P2-4: 公共视图切换（互斥逻辑） ----------
+  function toggleView(name, getState, setState, resetFn, loadFn) {
+    const wasOpen = getState();
+    setState(false);
+    if (resetFn) resetFn();
+    if (wasOpen) { switchView('main'); }
+    else { setState(true); switchView(name); loadFn(); }
+  }
+
+  function switchView(viewName) {
+    // 关闭所有视图
+    mailViewOpen = false;
+    feishuViewOpen = false;
+    calendarViewOpen = false;
+    showingConfig = false;
+    $body.hidden = false;
+    $mailView.hidden = true;
+    $feishuView.hidden = true;
+    $calendarView.hidden = true;
+    $config.hidden = true;
+    // 重置所有按钮状态
+    document.querySelectorAll('.office-actions .icon-btn').forEach(function(btn) {
+      btn.classList.remove('active');
+    });
+    // 重置配置按钮文本
+    $configBtn.textContent = '\u2699\uFE0E';
+    $configBtn.title = '配置';
+    // 重置标题
+    $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4';
+    // 打开目标视图
+    if (viewName === 'mail') {
+      mailViewOpen = true;
+      $mailView.hidden = false;
+      $body.hidden = true;
+      $mailBtn.classList.add('active');
+      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u90AE\u7BB1';
+    } else if (viewName === 'feishu') {
+      feishuViewOpen = true;
+      $feishuView.hidden = false;
+      $body.hidden = true;
+      $feishuBtn.classList.add('active');
+      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u98DE\u4E66';
+    } else if (viewName === 'calendar') {
+      calendarViewOpen = true;
+      $calendarView.hidden = false;
+      $body.hidden = true;
+      $calendarBtn.classList.add('active');
+      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u4F1A\u8BAE';
+    } else if (viewName === 'config') {
+      showingConfig = true;
+      $config.hidden = false;
+      $body.hidden = true;
+      $configBtn.textContent = '\u2713';
+      $configBtn.title = '完成';
+      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u914D\u7F6E';
+    }
+    refresh();
+  }
+
   // ---------- 配置视图开关 ----------
   let showingConfig = false;
   function toggleConfig() {
-    showingConfig = !showingConfig;
-    $body.hidden = showingConfig;
-    $config.hidden = !showingConfig;
-    // 进配置视图时关闭邮箱/飞书/会议视图（若有）
-    if (showingConfig && (mailViewOpen || feishuViewOpen || calendarViewOpen)) {
-      if (mailViewOpen) {
-        mailViewOpen = false;
-        $mailView.hidden = true;
-        $mailBtn.style.background = '';
-      }
-      if (feishuViewOpen) {
-        feishuViewOpen = false;
-        $feishuView.hidden = true;
-        $feishuBtn.style.background = '';
-      }
-      if (calendarViewOpen) {
-        calendarViewOpen = false;
-        $calendarView.hidden = true;
-        $calendarBtn.style.background = '';
-      }
-    }
-    $configBtn.textContent = showingConfig ? '✓' : '⚙︎';
-    $configBtn.title = showingConfig ? '完成' : '配置';
-    $officeTitle.textContent = showingConfig ? '🏢 办公室 · 配置' : '🏢 办公室';
     if (showingConfig) {
+      // 离开配置模式：重置待保存状态，刷新主视图
+      pendingAssignments = {};
+      savedAssignments = {};
+      updateDirtyUI();
+      switchView('main');
+      refresh();
+    } else {
+      switchView('config');
       // 进入配置模式：快照当前已保存的分配，初始化待编辑状态
       savedAssignments = { ...(DATA.assignments || {}) };
       pendingAssignments = { ...savedAssignments };
       renderConfig();
       updateDirtyUI();
-    } else {
-      // 离开配置模式：重置待保存状态，刷新主视图
-      pendingAssignments = {};
-      savedAssignments = {};
-      updateDirtyUI();
-      refresh();
     }
   }
   $configBtn.addEventListener('click', toggleConfig);
@@ -2140,20 +2183,12 @@
     const t = new Date(iso);
     if (isNaN(t.getTime())) return '';
     const diff = Date.now() - t.getTime();
-    if (diff >= 0 && diff < 60 * 1000) return '刚刚';
-    if (diff >= 0 && diff < 60 * 60 * 1000) return Math.floor(diff / 60000) + ' 分钟前';
-    if (diff >= 0 && diff < 24 * 60 * 60 * 1000) return Math.floor(diff / 3600000) + ' 小时前';
-    const pad = (n) => String(n).padStart(2, '0');
-    return t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate()) + ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes());
+    return relativeTime(diff, () => t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate()) + ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes()));
   }
   function mailFromName(m) {
     if (!m) return '';
     const from = m.from || {};
     return from.name || from.email || '';
-  }
-  function setMailStatus(text) {
-    $mailStatus.textContent = text || '';
-    $mailStatus.title = text || '';
   }
 
   // ---------- 未配置邮箱：安装/授权引导卡片 ----------
@@ -2173,11 +2208,6 @@
 
     const steps = document.createElement('ol');
     steps.className = 'ms-steps';
-    const mkStep = (html) => {
-      const li = document.createElement('li');
-      li.innerHTML = html;   // 只含下方静态常量 HTML，无外部输入
-      return li;
-    };
     steps.appendChild(mkStep('安装 CLI：<code>npm install -g @tencent-qqmail/agently-cli</code>'));
     steps.appendChild(mkStep('授权：<code>agently-cli auth login</code>（浏览器完成授权）'));
     steps.appendChild(mkStep('重启 dsh web，然后点「重新检测」'));
@@ -2196,25 +2226,15 @@
     copyBtn.className = 'icon-btn';
     copyBtn.textContent = '复制提示语';
     copyBtn.addEventListener('click', () => {
-      const text = promptText.textContent;
-      const done = () => setMailStatus('已复制 ✓');
-      const fail = () => setMailStatus('复制失败');
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(done).catch(fail);
-      } else {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand('copy'); done(); } catch (_) { fail(); }
-        document.body.removeChild(ta);
-      }
+      copyToClipboard(promptText.textContent,
+        () => setStatus($mailStatus, TEXT_COPY_OK),
+        () => setStatus($mailStatus, TEXT_COPY_FAIL));
     });
     const retryBtn = document.createElement('button');
     retryBtn.className = 'icon-btn';
-    retryBtn.textContent = '重新检测';
+    retryBtn.textContent = TEXT_RETRY;
     retryBtn.addEventListener('click', () => {
-      setMailStatus('检测中…');
+      setStatus($mailStatus, '检测中…');
       loadMailIdentity();
       loadMailList(mailDir, '', false);
     });
@@ -2244,7 +2264,7 @@
 
   async function loadMailIdentity() {
     try {
-      const res = await fetch('/office-ui/mail/me', { cache: 'no-store' });
+      const res = await apiFetch('/mail/me', { cache: 'no-store' });
       const json = await res.json();
       if (json && json.ok && json.data && json.data.email) {
         $mailIdentity.textContent = '📧 ' + json.data.email;
@@ -2253,14 +2273,14 @@
         const code = json.error && json.error.code;
         if (code === 'MAIL_CLI_REQUIRED' || code === 'MAIL_AUTH_REQUIRED') {
           $mailIdentity.textContent = '📧 未配置邮箱';
-          setMailStatus('');
+          setStatus($mailStatus, '');
           renderMailSetup(json.error && json.error.setup, code === 'MAIL_AUTH_REQUIRED');
           return;
         }
         if (code === 3) $mailIdentity.textContent = '📧 未授权';
         else if (code === 1 || code === 4) $mailIdentity.textContent = '📧 服务暂不可用';
-        else $mailIdentity.textContent = '📧 ' + (json.error && json.error.message || '加载失败');
-        setMailStatus((json.error && json.error.message) || '授权异常');
+        else $mailIdentity.textContent = '📧 ' + (json.error && json.error.message || TEXT_LOAD_ERROR);
+        setStatus($mailStatus, (json.error && json.error.message) || '授权异常');
         return;
       } else {
         $mailIdentity.textContent = '📧 未授权';
@@ -2292,7 +2312,7 @@
 
       const subject = document.createElement('div');
       subject.className = 'm-subject';
-      subject.textContent = (m.has_attachments ? '📎 ' : '') + (m.subject || '（无主题）');
+      subject.textContent = (m.has_attachments ? '📎 ' : '') + (m.subject || TEXT_NO_SUBJECT);
 
       const snippet = document.createElement('div');
       snippet.className = 'm-snippet';
@@ -2314,21 +2334,21 @@
   async function loadMailList(dir, cursor, append) {
     if (mailLoading) return;
     mailLoading = true;
-    setMailStatus('加载中…');
+    setStatus($mailStatus, TEXT_LOADING);
     try {
       const params = new URLSearchParams({ dir: dir || mailDir, limit: String(MAIL_LIMIT) });
       if (cursor) params.set('cursor', cursor);
-      const res = await fetch('/office-ui/mail/list?' + params.toString(), { cache: 'no-store' });
+      const res = await apiFetch('/mail/list?' + params.toString(), { cache: 'no-store' });
       const json = await res.json();
       if (!json || !json.ok) {
         const code = json && json.error && json.error.code;
         if (code === 'MAIL_CLI_REQUIRED' || code === 'MAIL_AUTH_REQUIRED') {
-          setMailStatus('');
+          setStatus($mailStatus, '');
           renderMailSetup(json.error && json.error.setup, code === 'MAIL_AUTH_REQUIRED');
           return;
         }
-        const errMsg = (json && json.error && json.error.message) || '加载失败';
-        setMailStatus(errMsg);
+        const errMsg = (json && json.error && json.error.message) || TEXT_LOAD_ERROR;
+        setStatus($mailStatus, errMsg);
         console.warn('[office][mail] mail list error:', errMsg);
         return;
       }
@@ -2340,10 +2360,10 @@
       mailHasMore = !!pagination.has_more;
       const moreBtn = $mailList.querySelector('.mail-load-more');
       if (moreBtn) moreBtn.hidden = !mailHasMore;
-      setMailStatus('');
+      setStatus($mailStatus, '');
     } catch (e) {
       console.error('[office][mail] loadMailList failed:', e);
-      setMailStatus('加载失败：' + (e && e.message ? e.message : e));
+      setStatus($mailStatus, TEXT_LOAD_ERROR + '：' + (e && e.message ? e.message : e));
     } finally {
       mailLoading = false;
     }
@@ -2356,16 +2376,16 @@
     $mailRead.innerHTML = '';
     const loading = document.createElement('div');
     loading.className = 'mail-read-empty';
-    loading.textContent = '加载中…';
+    loading.textContent = TEXT_LOADING;
     $mailRead.appendChild(loading);
     try {
-      const res = await fetch('/office-ui/mail/read?id=' + encodeURIComponent(id), { cache: 'no-store' });
+      const res = await apiFetch('/mail/read?id=' + encodeURIComponent(id), { cache: 'no-store' });
       const json = await res.json();
       if (!json || !json.ok || !json.data) {
         $mailRead.innerHTML = '';
         const err = document.createElement('div');
         err.className = 'mail-read-empty';
-        err.textContent = (json && json.error && json.error.message) || '读取失败';
+        err.textContent = (json && json.error && json.error.message) || TEXT_READ_ERROR;
         $mailRead.appendChild(err);
         return;
       }
@@ -2375,7 +2395,7 @@
       head.className = 'mail-read-head';
       const subj = document.createElement('div');
       subj.className = 'mail-read-subject';
-      subj.textContent = d.subject || '（无主题）';
+      subj.textContent = d.subject || TEXT_NO_SUBJECT;
       const meta = document.createElement('div');
       meta.className = 'mail-read-meta';
       const from = (d.from && (d.from.name ? d.from.name + ' <' + d.from.email + '>' : d.from.email)) || '';
@@ -2405,9 +2425,13 @@
       // 深色阅读：父页面 CSS 无法穿透 sandbox iframe，改为在邮件文档内注入反色样式；
       // 图片用双重反色抵消保持原色。不依赖邮件自身的 prefers-color-scheme（对声明
       // color-scheme: light only 的邮件同样生效）。
-      let emailHtml = d.body || '<p>（无正文）</p>';
+      let emailHtml = d.body || '<p>' + TEXT_NO_BODY + '</p>';
+      // 清理危险标签（防止 sandbox 逃逸）
+      emailHtml = emailHtml.replace(/<meta\s[^>]*http-equiv[^>]*>/gi, '');
+      emailHtml = emailHtml.replace(/<base\s[^>]*>/gi, '');
+      emailHtml = emailHtml.replace(/<link\s[^>]*>/gi, '');
       if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        const darkStyle = '<style>html{filter:invert(0.92) hue-rotate(180deg)}img,picture,video{filter:invert(0.92) hue-rotate(180deg)}</style>';
+        const darkStyle = '<style>html{filter:invert(' + DARK_INVERT_STRENGTH + ') hue-rotate(180deg)}img,picture,video{filter:invert(' + DARK_INVERT_STRENGTH + ') hue-rotate(180deg)}</style>';
         const headMatch = emailHtml.match(/<head[^>]*>/i);
         const doctypeMatch = emailHtml.match(/^\s*<!doctype[^>]*>/i);
         if (headMatch) {
@@ -2430,7 +2454,7 @@
       $mailRead.innerHTML = '';
       const err = document.createElement('div');
       err.className = 'mail-read-empty';
-      err.textContent = '读取失败: ' + (e && e.message || e);
+      err.textContent = TEXT_READ_ERROR + ': ' + (e && e.message || e);
       $mailRead.appendChild(err);
     }
   }
@@ -2475,15 +2499,15 @@
             subject: $composeSubject.value,
             body: $composeBody.value
           };
-      const res = await fetch('/office-ui/mail/' + (composeMode === 'reply' ? 'reply' : 'send'), {
+      const res = await apiFetch('/mail/' + (composeMode === 'reply' ? 'reply' : 'send'), {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify(payload)
       });
       const json = await res.json();
       if (json && json.ok) {
         closeCompose();
-        setMailStatus('已发送 ✓');
+        setStatus($mailStatus, '已发送 ✓');
         loadMailList(mailDir, '', false);
       } else {
         $composeError.textContent = (json && json.error && json.error.message) || '发送失败';
@@ -2499,36 +2523,11 @@
 
   // ---------- 邮箱视图开关 ----------
   function toggleMail() {
-    mailViewOpen = !mailViewOpen;
-    $body.hidden = mailViewOpen;
-    // 若配置视图开着，一并关掉
-    if (showingConfig) {
-      showingConfig = false;
-      $configBtn.textContent = '⚙︎';
-      $configBtn.title = '配置';
-    }
-    $config.hidden = true;
-    // 与飞书 / 会议视图互斥
-    if (mailViewOpen && feishuViewOpen) {
-      feishuViewOpen = false;
-      $feishuView.hidden = true;
-      $feishuBtn.style.background = '';
-    }
-    if (mailViewOpen && calendarViewOpen) {
-      calendarViewOpen = false;
-      $calendarView.hidden = true;
-      $calendarBtn.style.background = '';
-    }
-    $mailView.hidden = !mailViewOpen;
-    $mailBtn.style.background = mailViewOpen ? 'var(--card-hover)' : '';
-    $officeTitle.textContent = mailViewOpen ? '🏢 办公室 · 邮箱' : '🏢 办公室';
-    if (mailViewOpen) {
-      mailDir = 'inbox';
-      mailCursor = '';
-      mailHasMore = false;
-      loadMailIdentity();
-      loadMailList('inbox', '', false);
-    }
+    toggleView('mail',
+      () => mailViewOpen, (v) => { mailViewOpen = v; },
+      () => { mailDir = 'inbox'; mailCursor = ''; mailHasMore = false; },
+      () => { loadMailIdentity(); loadMailList('inbox', '', false); }
+    );
   }
   $mailBtn.addEventListener('click', toggleMail);
   $mailRefreshBtn.addEventListener('click', () => loadMailList(mailDir, '', false));
@@ -2565,11 +2564,6 @@
   let feishuSyncTimer = null;
   let feishuLazyFired = false;  // 惰性补同步：每次打开只触发一次
 
-  function setFeishuStatus(text) { 
-    $feishuStatus.textContent = text || '';
-    $feishuStatus.title = text || '';
-  }
-
   function formatLastSync(ls) {
     if (!ls) return '';
     return '上次同步 | 新增=' + ls.added + ' 跳过=' + ls.skipped + ' 总消息=' + ls.total + ' 耗时=' + ls.elapsed + 's';
@@ -2577,57 +2571,62 @@
 
   async function loadFeishuStatus() {
     try {
-      const res = await fetch('/office-ui/feishu/status', { cache: 'no-store' });
+      const res = await apiFetch('/feishu/status', { cache: 'no-store' });
       const json = await res.json();
-      if (!json || !json.ok || !json.data) { setFeishuStatus('状态获取失败'); return; }
+      if (!json || !json.ok || !json.data) { setStatus($feishuStatus, TEXT_STATUS_ERROR); return; }
       const d = json.data;
       if (!d.configured) { renderFeishuGuide(); return; }
       $feishuSyncBtn.disabled = false;
       feishuMention = Array.isArray(d.mention) ? d.mention.filter((s) => s) : [];
       const auto = d.autoSync || {};
-      let base = d.syncing ? '同步中…' : formatLastSync(d.lastSync) || '尚未同步';
+      let base = d.syncing ? TEXT_SYNCING : formatLastSync(d.lastSync) || '尚未同步';
       if (auto.enabled && base && !d.syncing) base += ' · 每' + auto.intervalMin + '分钟自动同步';
-      setFeishuStatus(base);
+      setStatus($feishuStatus, base);
       if (feishuMessages.length) renderFeishuCards(feishuMessages);  // 关键词到位后刷新卡片状态
       // ③ 惰性补同步：autoSync 开启且数据过期（stale）→ 打开时自动触发一次
       if (auto.enabled && d.stale && !d.syncing && !feishuLazyFired) {
         feishuLazyFired = true;
         syncFeishu('incr');
+        // 不等同步完成，立即加载已有消息（用户先看到旧数据）
+        loadFeishuMessages();
       }
     } catch (e) {
-      setFeishuStatus('状态获取失败');
+      setStatus($feishuStatus, TEXT_STATUS_ERROR);
     }
   }
 
   async function loadFeishuMessages() {
+    // 首次加载时显示 loading 提示（列表为空时），后续刷新不闪烁
+    if (!$feishuList.children.length) {
+      $feishuList.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:var(--font-sub)">' + TEXT_LOADING + '</div>';
+    }
     try {
-      const res = await fetch('/office-ui/feishu/messages?per-chat=20', { cache: 'no-store' });
+      const res = await apiFetch('/feishu/messages?per-chat=' + FEISHU_PER_CHAT, { cache: 'no-store' });
       const json = await res.json();
       if (!json || !json.ok) {
         const code = json && json.error && json.error.code;
         if (code === 'FEISHU_CONFIG_REQUIRED') { renderFeishuGuide(); return; }
-        setFeishuStatus((json && json.error && json.error.message) || '读取失败');
+        setStatus($feishuStatus, (json && json.error && json.error.message) || TEXT_READ_ERROR);
         return;
       }
       feishuMessages = (json.data && json.data.chats) || [];
       feishuSince = (json.data && json.data.since) || '';
       renderFeishuCards(feishuMessages);
     } catch (e) {
-      setFeishuStatus('读取失败：' + (e && e.message ? e.message : e));
+      setStatus($feishuStatus, TEXT_READ_ERROR + '：' + (e && e.message ? e.message : e));
     }
   }
 
   // 正文预览：图片占位符转 📷，压缩空白
   function feishuPreview(m) {
     const t = (m && m.text) || '';
-    return t.replace(/!\[[^\]]*\]\([^)]*\)/g, '📷 图片').replace(/\s+/g, ' ').trim() || '（无正文）';
+    return t.replace(/!\[[^\]]*\]\([^)]*\)/g, '📷 图片').replace(/\s+/g, ' ').trim() || TEXT_NO_BODY;
   }
   function chatTypeLabel(t) { return t === 'p2p' ? '私聊' : '群聊'; }
   function shortTime(created) {
     if (!created) return '';
     const [date, time] = String(created).split(' ');
     const d = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
     const today = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
     return date === today ? (time || '') : date.slice(5);
   }
@@ -2638,7 +2637,7 @@
   // 卡片状态：yellow（最近 10 条提到关键词）> blue（6 小时内活跃）> gray（超 3 天）
   function feishuCardState(c) {
     if (feishuMention.length) {
-      const recent10 = (c.messages || []).slice(0, 10);
+      const recent10 = (c.messages || []).slice(0, FEISHU_PREVIEW_COUNT);
       for (const m of recent10) {
         const t = (m && m.text) || '';
         if (feishuMention.some((k) => t.includes(k))) return 'yellow';
@@ -2649,8 +2648,8 @@
       const t = new Date(String(lastAt).replace(' ', 'T')).getTime();
       if (!isNaN(t)) {
         const diff = Date.now() - t;
-        if (diff <= 6 * 3600 * 1000) return 'blue';
-        if (diff > 3 * 24 * 3600 * 1000) return 'gray';
+        if (diff <= FEISHU_ACTIVE_HOURS * 3600 * 1000) return 'blue';
+        if (diff > FEISHU_STALE_DAYS * 24 * 3600 * 1000) return 'gray';
       }
     }
     return 'normal';
@@ -2726,7 +2725,7 @@
 
     const preview = document.createElement('div');
     preview.className = 'f-preview';
-    const prevMsgs = (c.messages || []).slice(0, 10);   // 卡片内预览最多 10 条
+    const prevMsgs = (c.messages || []).slice(0, FEISHU_PREVIEW_COUNT);   // 卡片内预览最多 10 条
     if (!prevMsgs.length) {
       const row = document.createElement('div');
       row.className = 'fp-row';
@@ -2801,10 +2800,10 @@
     btn.textContent = '加载更早消息（' + ctx.loaded + '/' + ctx.total + '）';
     btn.addEventListener('click', async () => {
       btn.disabled = true;
-      btn.textContent = '加载中…';
+      btn.textContent = TEXT_LOADING;
       try {
-        const res = await fetch('/office-ui/feishu/messages?chat=' + encodeURIComponent(ctx.chat.chat_id) +
-          '&offset=' + ctx.loaded + '&per-chat=20', { cache: 'no-store' });
+        const res = await apiFetch('/feishu/messages?chat=' + encodeURIComponent(ctx.chat.chat_id) +
+          '&offset=' + ctx.loaded + '&per-chat=' + FEISHU_PER_CHAT, { cache: 'no-store' });
         const json = await res.json();
         if (!json || !json.ok) {
           btn.disabled = false;
@@ -2872,7 +2871,6 @@
 
     const steps = document.createElement('ol');
     steps.className = 'ms-steps';
-    const mkStep = (html) => { const li = document.createElement('li'); li.innerHTML = html; return li; };
     steps.appendChild(mkStep('创建配置文件：<code>~/.dsh/office/feishu-config.json</code>'));
     steps.appendChild(mkStep('填入你的同步脚本与读取脚本的<strong>绝对路径</strong>（见模板）'));
     steps.appendChild(mkStep('点「重新检测」'));
@@ -2891,27 +2889,23 @@
     copyBtn.className = 'icon-btn';
     copyBtn.textContent = '复制配置模板';
     copyBtn.addEventListener('click', () => {
-      const text = tplText.textContent;
-      const done = () => setFeishuStatus('已复制 ✓');
-      const fail = () => setFeishuStatus('复制失败');
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(done).catch(fail);
-      } else {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand('copy'); done(); } catch (_) { fail(); }
-        document.body.removeChild(ta);
-      }
+      copyToClipboard(tplText.textContent,
+        () => setStatus($feishuStatus, TEXT_COPY_OK),
+        () => setStatus($feishuStatus, TEXT_COPY_FAIL));
     });
     const retryBtn = document.createElement('button');
     retryBtn.className = 'icon-btn';
-    retryBtn.textContent = '重新检测';
+    retryBtn.textContent = TEXT_RETRY;
     retryBtn.addEventListener('click', () => {
-      setFeishuStatus('检测中…');
-      loadFeishuStatus();
-      loadFeishuMessages();
+      setStatus($feishuStatus, '检测中…');
+      // 清除后端配置缓存，让 loadFeishuStatus 重新读取磁盘
+      apiFetch('/feishu/status?refresh=1', { cache: 'no-store' }).then(() => {
+        loadFeishuStatus();
+        loadFeishuMessages();
+      }).catch(() => {
+        loadFeishuStatus();
+        loadFeishuMessages();
+      });
     });
     actions.appendChild(copyBtn);
     actions.appendChild(retryBtn);
@@ -2938,77 +2932,58 @@
   // ---------- 同步（手动深捞 / 惰性增量；异步执行 + 轮询状态） ----------
   async function syncFeishu(mode) {
     const incr = mode === 'incr';
-    setFeishuStatus(incr ? '增量同步中…' : '深捞同步中…（最近30天）');
+    setStatus($feishuStatus, incr ? '增量同步中…' : '深捞同步中…（最近30天）');
     $feishuSyncBtn.disabled = true;
     try {
-      const res = await fetch('/office-ui/feishu/sync' + (incr ? '?mode=incr' : ''), { method: 'POST' });
+      const res = await apiFetch('/feishu/sync' + (incr ? '?mode=incr' : ''), { method: 'POST' });
       const json = await res.json();
       if (!json || !json.ok) {
         const code = json && json.error && json.error.code;
         if (code === 'FEISHU_CONFIG_REQUIRED') { renderFeishuGuide(); return; }
-        setFeishuStatus((json && json.error && json.error.message) || '同步失败');
+        setStatus($feishuStatus, (json && json.error && json.error.message) || '同步失败');
         $feishuSyncBtn.disabled = false;
         return;
       }
       // 轮询 /status 直到同步结束（最长 ~5 分钟）
       let attempts = 0;
-      if (feishuSyncTimer) clearInterval(feishuSyncTimer);
-      feishuSyncTimer = setInterval(async () => {
-        attempts++;
-        try {
-          const r = await fetch('/office-ui/feishu/status', { cache: 'no-store' });
-          const j = await r.json();
-          const d = j && j.ok && j.data;
-          if (d && !d.syncing) {
-            clearInterval(feishuSyncTimer);
-            feishuSyncTimer = null;
-            $feishuSyncBtn.disabled = false;
-            setFeishuStatus(formatLastSync(d.lastSync) || '同步完成');
-            loadFeishuMessages();
-          } else if (attempts > 100) {
-            clearInterval(feishuSyncTimer);
-            feishuSyncTimer = null;
-            $feishuSyncBtn.disabled = false;
-            setFeishuStatus('同步超时，请稍后查看');
-          }
-        } catch (e) { /* 网络抖动，继续轮询 */ }
-      }, 3000);
+      if (feishuSyncTimer) clearTimeout(feishuSyncTimer);
+      function scheduleFeishuSync() {
+        feishuSyncTimer = setTimeout(async () => {
+          attempts++;
+          try {
+            const r = await apiFetch('/feishu/status', { cache: 'no-store' });
+            const j = await r.json();
+            const d = j && j.ok && j.data;
+            if (d && !d.syncing) {
+              feishuSyncTimer = null;
+              $feishuSyncBtn.disabled = false;
+              setStatus($feishuStatus, formatLastSync(d.lastSync) || '同步完成');
+              loadFeishuMessages();
+              return; // 同步完成，不再调度
+            } else if (attempts > FEISHU_SYNC_MAX_POLL) {
+              feishuSyncTimer = null;
+              $feishuSyncBtn.disabled = false;
+              setStatus($feishuStatus, '同步超时，请稍后查看');
+              return; // 超时，不再调度
+            }
+          } catch (e) { /* 网络抖动，继续轮询 */ }
+          scheduleFeishuSync(); // 仍在同步或网络异常，调度下一次
+        }, POLL_INTERVAL_MS);
+      }
+      scheduleFeishuSync();
     } catch (e) {
-      setFeishuStatus('同步失败：' + (e && e.message ? e.message : e));
+      setStatus($feishuStatus, '同步失败：' + (e && e.message ? e.message : e));
       $feishuSyncBtn.disabled = false;
     }
   }
 
   // ---------- 飞书视图开关 ----------
   function toggleFeishu() {
-    feishuViewOpen = !feishuViewOpen;
-    $body.hidden = feishuViewOpen;
-    if (showingConfig) {
-      showingConfig = false;
-      $configBtn.textContent = '⚙︎';
-      $configBtn.title = '配置';
-    }
-    $config.hidden = true;
-    // 与邮箱 / 会议视图互斥
-    if (mailViewOpen) {
-      mailViewOpen = false;
-      $mailView.hidden = true;
-      $mailBtn.style.background = '';
-    }
-    if (calendarViewOpen) {
-      calendarViewOpen = false;
-      $calendarView.hidden = true;
-      $calendarBtn.style.background = '';
-    }
-    $feishuView.hidden = !feishuViewOpen;
-    $feishuBtn.style.background = feishuViewOpen ? 'var(--card-hover)' : '';
-    $officeTitle.textContent = feishuViewOpen ? '🏢 办公室 · 飞书' : '🏢 办公室';
-    if (!feishuViewOpen) closeFeishuModal();
-    if (feishuViewOpen) {
-      feishuLazyFired = false;
-      loadFeishuStatus();
-      loadFeishuMessages();
-    }
+    toggleView('feishu',
+      () => feishuViewOpen, (v) => { feishuViewOpen = v; },
+      () => { closeFeishuModal(); feishuLazyFired = false; },
+      () => { loadFeishuStatus(); loadFeishuMessages(); }
+    );
   }
   $feishuBtn.addEventListener('click', toggleFeishu);
   $feishuRefreshBtn.addEventListener('click', () => { loadFeishuStatus(); loadFeishuMessages(); });
@@ -3032,11 +3007,6 @@
   let calendarEvents = [];       // 全部日程（按开始时间升序）
   let calendarFetchedAt = '';    // 缓存拉取时间
 
-  function setCalendarStatus(text) {
-    $calendarStatus.textContent = text || '';
-    $calendarStatus.title = text || '';
-  }
-
   function calMinLeft(e) {
     if (typeof e.start_ts !== 'number' || !isFinite(e.start_ts)) return null;
     return Math.round((e.start_ts - Date.now()) / 60000);
@@ -3049,25 +3019,24 @@
     const ended = typeof e.end_ts === 'number' && isFinite(e.end_ts) && e.end_ts < Date.now();
     if (ended) return 'done';
     if (min <= 0) return 'live';
-    if (min <= 120) return 'soon';
+    if (min <= MEETING_SOON_MINUTES) return 'soon';
     return '';
   }
 
-  // 倒计时文案：已结束 → "已结束"；进行中 → "进行中"；即将开始 → "还剩 X 分钟" / "X 小时后"
+  // 倒计时文案：已结束 → "已结束"；进行中 → "进行中"；即将开始 → "x分后有会议" / "x时x分后有会议"
   function calCountdown(e) {
     const min = calMinLeft(e);
     if (min == null) return '';
     const ended = typeof e.end_ts === 'number' && isFinite(e.end_ts) && e.end_ts < Date.now();
     if (ended) return '已结束';
     if (min <= 0) return '进行中';
-    if (min < 60) return '还剩 ' + min + ' 分钟';
+    if (min < 60) return min + '分后有会议';
     const h = Math.floor(min / 60), m = min % 60;
-    return '还剩 ' + h + ' 小时' + (m ? ' ' + m + ' 分' : '');
+    return m ? h + '时' + m + '分后有会议' : h + '时有会议';
   }
 
   // 日期标签：今天 · 8月17日（高亮） / 明天 · 8月18日 / 8月14日 · 周五
   function calDateLabel(dateStr) {
-    const pad = (n) => String(n).padStart(2, '0');
     const today = new Date();
     const tKey = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
     const tom = new Date(today); tom.setDate(tom.getDate() + 1);
@@ -3080,15 +3049,6 @@
     return isNaN(d.getTime()) ? dateStr : fmt(d);
   }
 
-  // 日期分组是否「过去 3 天前」（默认折叠）
-  function calGroupCollapsed(day) {
-    const pad = (n) => String(n).padStart(2, '0');
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 3);
-    const cKey = cutoff.getFullYear() + '-' + pad(cutoff.getMonth() + 1) + '-' + pad(cutoff.getDate());
-    return day < cKey;
-  }
-
   // 纪要/妙记入口：有任一 token 就返回 { url, label }；否则 null
   // 优先级：AI 智能纪要文档 > 手动绑定纪要 > 妙记
   function calMinutesLink(e) {
@@ -3099,7 +3059,6 @@
   }
 
   function renderCalendarCards(events) {
-    $calendarList.classList.remove('guide');
     $calendarList.innerHTML = '';
     if (!events.length) {
       const empty = document.createElement('div');
@@ -3137,12 +3096,6 @@
     cols.appendChild(mkCol('⏳ 未开始', upcoming));
     cols.appendChild(mkCol('✅ 已结束', past));
     $calendarList.appendChild(cols);
-  }
-
-  function calTodayKey() {
-    const pad = (n) => String(n).padStart(2, '0');
-    const d = new Date();
-    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
 
   function buildCalCard(e) {
@@ -3210,7 +3163,6 @@
   }
 
   function renderCalendarGuide() {
-    $calendarList.classList.add('guide');
     $calendarList.innerHTML = '';
     const wrap = document.createElement('div');
     wrap.className = 'calendar-setup';
@@ -3250,28 +3202,28 @@
 
   async function loadCalendarStatus() {
     try {
-      const res = await fetch('/office-ui/calendar/status', { cache: 'no-store' });
+      const res = await apiFetch('/calendar/status', { cache: 'no-store' });
       const json = await res.json();
-      if (!json || !json.ok || !json.data) { setCalendarStatus('状态获取失败'); return; }
+      if (!json || !json.ok || !json.data) { setStatus($calendarStatus, TEXT_STATUS_ERROR); return; }
       const d = json.data;
       if (!d.configured) { renderCalendarGuide(); return; }
       $calendarSyncBtn.disabled = false;
-      let base = d.syncing ? '同步中…' : (d.fetchedAt ? '上次同步 ' + d.fetchedAt + (d.total ? ' · ' + d.total + ' 条' : '') : '尚未同步');
+      let base = d.syncing ? TEXT_SYNCING : (d.fetchedAt ? '上次同步 ' + d.fetchedAt + (d.total ? ' · ' + d.total + ' 条' : '') : '尚未同步');
       if (d.stale && !d.syncing) base += ' · 数据已过期';
-      setCalendarStatus(base);
+      setStatus($calendarStatus, base);
     } catch (e) {
-      setCalendarStatus('状态获取失败');
+      setStatus($calendarStatus, TEXT_STATUS_ERROR);
     }
   }
 
   async function loadCalendarEvents() {
     try {
-      const res = await fetch('/office-ui/calendar/events', { cache: 'no-store' });
+      const res = await apiFetch('/calendar/events', { cache: 'no-store' });
       const json = await res.json();
       if (!json || !json.ok) {
         const code = json && json.error && json.error.code;
         if (code === 'CALENDAR_CONFIG_REQUIRED') { renderCalendarGuide(); return; }
-        setCalendarStatus((json && json.error && json.error.message) || '读取失败');
+        setStatus($calendarStatus, (json && json.error && json.error.message) || TEXT_READ_ERROR);
         return;
       }
       calendarEvents = (json.data && json.data.events) || [];
@@ -3279,26 +3231,26 @@
       renderCalendarCards(calendarEvents);
       loadCalendarStatus();
     } catch (e) {
-      setCalendarStatus('读取失败：' + (e && e.message ? e.message : e));
+      setStatus($calendarStatus, TEXT_READ_ERROR + '：' + (e && e.message ? e.message : e));
     }
   }
 
   async function syncCalendarManual() {
     $calendarSyncBtn.disabled = true;
-    $calendarSyncBtn.textContent = '同步中…';
-    setCalendarStatus('同步中…');
+    $calendarSyncBtn.textContent = TEXT_SYNCING;
+    setStatus($calendarStatus, TEXT_SYNCING);
     try {
-      const res = await fetch('/office-ui/calendar/sync', { cache: 'no-store', method: 'POST' });
+      const res = await apiFetch('/calendar/sync', { cache: 'no-store', method: 'POST' });
       const json = await res.json();
       if (json && json.ok) {
-        setCalendarStatus('同步完成' + (json.data && json.data.total != null ? ' · ' + json.data.total + ' 条' : ''));
+        setStatus($calendarStatus, '同步完成' + (json.data && json.data.total != null ? ' · ' + json.data.total + ' 条' : ''));
         loadCalendarEvents();
       } else {
-        setCalendarStatus((json && json.error && json.error.message) || '同步失败');
+        setStatus($calendarStatus, (json && json.error && json.error.message) || '同步失败');
         $calendarSyncBtn.disabled = false;
       }
     } catch (e) {
-      setCalendarStatus('同步失败：' + (e && e.message ? e.message : e));
+      setStatus($calendarStatus, '同步失败：' + (e && e.message ? e.message : e));
       $calendarSyncBtn.disabled = false;
     } finally {
       $calendarSyncBtn.textContent = '同步';
@@ -3307,41 +3259,26 @@
 
   // ---------- 会议视图开关 ----------
   function toggleCalendar() {
-    calendarViewOpen = !calendarViewOpen;
-    $body.hidden = calendarViewOpen;
-    if (showingConfig) {
-      showingConfig = false;
-      $configBtn.textContent = '⚙︎';
-      $configBtn.title = '配置';
-    }
-    $config.hidden = true;
-    // 与邮箱 / 飞书视图互斥
-    if (mailViewOpen) {
-      mailViewOpen = false;
-      $mailView.hidden = true;
-      $mailBtn.style.background = '';
-    }
-    if (feishuViewOpen) {
-      feishuViewOpen = false;
-      $feishuView.hidden = true;
-      $feishuBtn.style.background = '';
-    }
-    $calendarView.hidden = !calendarViewOpen;
-    $calendarBtn.style.background = calendarViewOpen ? 'var(--card-hover)' : '';
-    $officeTitle.textContent = calendarViewOpen ? '🏢 办公室 · 会议' : '🏢 办公室';
-    if (calendarViewOpen) {
-      loadCalendarStatus();
-      loadCalendarEvents();
-      // 打开时启动 60s 倒计时刷新（数据仍由后端缓存 / 5 分钟提醒轮询驱动）
-      if (calendarTimer) clearInterval(calendarTimer);
-      calendarTimer = setInterval(() => {
-        if (!calendarViewOpen) { clearInterval(calendarTimer); calendarTimer = null; return; }
-        renderCalendarCards(calendarEvents);
-      }, 30000);
-    } else if (calendarTimer) {
-      clearInterval(calendarTimer);
-      calendarTimer = null;
-    }
+    toggleView('calendar',
+      () => calendarViewOpen, (v) => { calendarViewOpen = v; },
+      () => { if (calendarTimer) { clearInterval(calendarTimer); calendarTimer = null; } },
+      () => {
+        loadCalendarStatus();
+        loadCalendarEvents();
+        if (calendarTimer) clearInterval(calendarTimer);
+        calendarTimer = setInterval(() => {
+          if (!calendarViewOpen) { clearInterval(calendarTimer); calendarTimer = null; return; }
+          document.querySelectorAll('.cal-card[data-id]').forEach(function(card) {
+            var eventId = card.dataset.id;
+            var evt = calendarEvents.find(function(ev) { return ev.event_id === eventId; });
+            if (!evt) return;
+            var cdEl = card.querySelector('.ct-countdown');
+            if (!cdEl) return;
+            cdEl.textContent = calCountdown(evt);
+          });
+        }, CALENDAR_COUNTDOWN_MS);
+      }
+    );
   }
   let calendarTimer = null;
   $calendarBtn.addEventListener('click', toggleCalendar);
@@ -3370,26 +3307,12 @@
   }
   async function refresh() {
     if (mailViewOpen || feishuViewOpen || calendarViewOpen) return;  // 邮箱/飞书/会议视图打开时不轮询办公室数据
-    if (hasPendingChanges) return;  // 有未保存更改时不拉取新数据，避免覆盖编辑状态
     try {
       await fetchData();
       // 合并快照实时状态：客户端 useSessions 比服务端 agents.list() 更快知道 running/pending
       // 只"提升"不"降级"——快照说 active 但服务端说 idle → 以快照为准；反之不改
       if (_snapshotStatus) {
-        var cols = DATA.columns || [];
-        for (var ci = 0; ci < cols.length; ci++) {
-          var wsList = (cols[ci] && cols[ci].workspaces) || [];
-          for (var wi = 0; wi < wsList.length; wi++) {
-            var sessions = wsList[wi].sessions || [];
-            for (var si = 0; si < sessions.length; si++) {
-              var snap = _snapshotStatus[String(sessions[si].id)];
-              if (snap) {
-                if (snap.active) sessions[si].active = true;
-                if (snap.pending) sessions[si].pending = true;
-              }
-            }
-          }
-        }
+        mergeSnapshotStatus();
         _snapshotMerged = true; // 合并后强制渲染一次，防止 getDataKey 去重跳过
       }
       if (showingConfig) return;  // 配置中不重渲染，离开时刷新
@@ -3409,7 +3332,7 @@
     if (el._tw) { clearTimeout(el._tw); el._tw = null; }
     let i = 0;
     el.textContent = '';
-    const speed = 50;
+    const speed = TYPEWRITER_SPEED_MS;
     (function tick() {
       if (i > text.length) { el._tw = null; return; }
       el.textContent = text.slice(0, i);
@@ -3454,12 +3377,13 @@
 
   // P1-3: timer tracking for cleanup
   let refreshTimer = null;
-  const bubbleTimers = new Array(6).fill(null);
-  const animFrames = [];
+  const bubbleTimers = new Array(COLUMN_COUNT).fill(null);
 
   // 接收父窗口传入的会话快照（OfficeFab 的 useSessions 数据），即时渲染
   // 零额外轮询/监听：只在 iframe 加载时收一次
   window.addEventListener('message', function handler(evt) {
+    // 安全：校验 origin，拒绝非本源的 postMessage
+    if (evt.origin !== window.location.origin) return;
     var msg = evt && evt.data;
     // 父窗口 ⏰ 会议提醒按钮点击 → 打开会议视图
     if (msg && msg.type === 'office-open-calendar') {
@@ -3481,20 +3405,7 @@
 
       if (dataLoaded && Object.keys(_snapshotStatus).length > 0) {
         // 服务端数据已到：只 merge 状态到现有 DATA，不覆盖 workspace 结构
-        var cols = DATA.columns || [];
-        for (var ci = 0; ci < cols.length; ci++) {
-          var wsList = (cols[ci] && cols[ci].workspaces) || [];
-          for (var wi = 0; wi < wsList.length; wi++) {
-            var sessions = wsList[wi].sessions || [];
-            for (var si = 0; si < sessions.length; si++) {
-              var snap = _snapshotStatus[String(sessions[si].id)];
-              if (snap) {
-                if (snap.active) sessions[si].active = true;
-                if (snap.pending) sessions[si].pending = true;
-              }
-            }
-          }
-        }
+        mergeSnapshotStatus();
         _snapshotMerged = true;
         lastDataKey = ''; // 强制 key 不匹配，触发 renderColumns
         renderColumns();
@@ -3515,7 +3426,7 @@
           assignments: {},
           columns: (function() {
             var cols = [];
-            for (var i = 0; i < 6; i++) cols.push({ index: i, workspaces: [] });
+            for (var i = 0; i < COLUMN_COUNT; i++) cols.push({ index: i, workspaces: [] });
             cols[0].workspaces.push({
               id: '__snapshot__',
               title: '',
@@ -3542,10 +3453,11 @@
 
   // setTimeout 链替代 setInterval：等 refresh 完成后再调度下一次，避免请求堆积
   function scheduleRefresh() {
+    var interval = document.hidden ? POLL_INTERVAL_HIDDEN_MS : POLL_INTERVAL_MS; // 后台标签页 30s，前台 3s
     refreshTimer = setTimeout(async () => {
       await refresh();
       scheduleRefresh();
-    }, 3000);
+    }, interval);
   }
 
   (async function start() {
@@ -3553,10 +3465,10 @@
     renderColumns();
     // 给父窗口 postMessage 150ms 窗口，确保快照先到、_snapshotStatus 先设置
     // 避免 fetchData 比快照快时，服务端旧缓存覆盖客户端已知状态
-    await new Promise(r => setTimeout(r, 150));
+    await new Promise(r => setTimeout(r, SNAPSHOT_WAIT_MS));
     await refresh();
     scheduleRefresh();
-    for (let i = 0; i < 6; i++) scheduleColumnBubble(i);  // 每列按自己 MBTI 的 E/I 频率轮换
+    for (let i = 0; i < COLUMN_COUNT; i++) scheduleColumnBubble(i);  // 每列按自己 MBTI 的 E/I 频率轮换
   })();
 
   // P1-3: cleanup on page unload
@@ -3564,7 +3476,6 @@
     if (refreshTimer) clearTimeout(refreshTimer);
     if (calendarTimer) clearInterval(calendarTimer);
     bubbleTimers.forEach(t => { if (t) clearTimeout(t); });
-    animFrames.forEach(id => cancelAnimationFrame(id));
   });
 </script>
 </body>

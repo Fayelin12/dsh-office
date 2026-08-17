@@ -36,6 +36,7 @@ token 用量、子代理、Agent 邮箱**变成一屏 6 列精灵办公室，一
 ## Features / 特性
 
 - 📧 **Agent 邮箱页签** / Agent Mail tab（收件箱 / 已发送 / 读信 / 写信 / 回复，基于 `agently-cli`，不离开面板）
+- 📅 **会议日程视图 + ⏰ 悬浮提醒** / Meetings & reminders（与飞书消息共用 lark-cli 授权，提前 1 小时提醒、每 5 分钟刷新倒计时，已开完会议自动关联妙记/纪要）
 - 🏢 6-column sprite office / 6 列精灵办公室
 - 🔵 悬浮入口 + 一键开关 / floating FAB + toggle
 - 🧠 MBTI 角色 + 个性化气泡 / MBTI characters + idle bubble texts
@@ -88,6 +89,33 @@ agently-cli auth login
 - 也可以让 Agent 代为安装配置，直接把下面这句发给 Agent：
   > 请阅读 https://agent.qq.com/doc/cli-setup.md 文档，按照步骤为我安装并配置 Agent Mail CLI。
 - 完整安装文档：<https://agent.qq.com/doc/cli-setup.md>
+
+## 📅 会议日程 + ⏰ 提醒 / Meetings & reminders
+
+会议功能与飞书消息**共用同一套 lark-cli 授权**：在 `feishu-config.json` 的 `scripts` 里加一个
+`calendar` 脚本（拉取日程的 Node 脚本，输出 `{ ok, events }`），消息同步完成时会**顺带拉取日程**，
+缓存到 `~/.dsh/office/calendar-cache.json`。
+
+```jsonc
+// ~/.dsh/office/feishu-config.json
+{
+  "scripts": {
+    "sync": "<ingestor.js 绝对路径>",
+    "latest": "<latest.js 绝对路径>",
+    "calendar": "<calendar.js 绝对路径>"   // ← 新增：会议日程脚本（可选）
+  }
+}
+```
+
+- **面板 📅 会议视图**：按日期分组的日程卡片（左时间轴 + 中标题/组织者 + 右倒计时），
+  即将开始橙色描边、进行中绿色描边、已结束灰色淡化；过去 3 天前的组默认折叠。
+- **⏰ 悬浮提醒按钮**：办公室按钮旁，会议开始前 **1 小时**出现，每 **5 分钟**轮询刷新倒计时，
+  点击直接打开面板会议视图。
+- **📝 妙记/纪要**：已开完的会议自动尝试关联 AI 智能纪要 / 妙记（需授权
+  `vc:meeting.meetingevent:read` + `vc:record:readonly`，`lark-cli auth login --scope "vc:meeting.meetingevent:read vc:record:readonly"`），
+  有产物时卡片显示可点击的「📝 纪要 / 妙记」入口。
+
+> 未配置 `scripts.calendar` 时，会议视图显示引导卡，不影响其它功能。
 
 ## Why dsh-office? / 解决什么问题
 

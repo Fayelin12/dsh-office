@@ -2505,7 +2505,7 @@
 
     const preview = document.createElement('div');
     preview.className = 'f-preview';
-    const prevMsgs = (c.messages || []).slice(0, 3);
+    const prevMsgs = (c.messages || []).slice(0, 10);   // 卡片内预览最多 10 条
     if (!prevMsgs.length) {
       const row = document.createElement('div');
       row.className = 'fp-row';

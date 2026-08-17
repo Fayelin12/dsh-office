@@ -126,7 +126,10 @@ async function fetchVcDetails(profile, meetingIds) {
       const res = await lark(['--profile', profile, 'vc', '+detail', '--meeting-ids', batch.join(','), '--format', 'json']);
       const meetings = (res && res.ok && res.data && res.data.meetings) || [];
       for (const m of meetings) {
-        if (m && m.meeting_id) out.set(String(m.meeting_id), { note_id: (m.note && m.note.note_id) || '', minute_token: m.minute_token || '' });
+        if (m && m.meeting_id) {
+          // vc +detail 返回的 note_id 是平铺字段（m.note_id），兼容嵌套旧结构
+          out.set(String(m.meeting_id), { note_id: (m.note && m.note.note_id) || m.note_id || '', minute_token: m.minute_token || '' });
+        }
       }
     } catch (e) { /* 无 vc scope 或失败：跳过 */ }
   }
@@ -141,7 +144,11 @@ async function fetchNoteTokens(profile, noteIds) {
     try {
       const res = await lark(['--profile', profile, 'note', '+detail', '--note-id', id, '--format', 'json']);
       const d = res && res.ok && res.data;
-      if (d) out.set(id, { note_doc_token: d.note_doc_token || '', verbatim_doc_token: d.verbatim_doc_token || '' });
+      if (d) {
+        // note +detail 返回结构为 data.note.{note_doc_token, verbatim_doc_token}（嵌套），兼容平铺旧结构
+        const note = d.note || d;
+        out.set(id, { note_doc_token: note.note_doc_token || '', verbatim_doc_token: note.verbatim_doc_token || '' });
+      }
     } catch (e) { /* 单个失败跳过 */ }
   }
   return out;
@@ -165,6 +172,23 @@ function normalizeEvents(raw) {
       busy: e.free_busy_status || 'busy',
     };
   }).sort((a, b) => (a.start_ts || 0) - (b.start_ts || 0));
+}
+
+// vc +detail 拿不到 minute_token 时的 fallback：读纪要文档正文，穿透提取「相关链接」里的妙记 URL
+//（纪要文档通常嵌有妙记链接，形如 https://*.feishu.cn/minutes/<token>）
+async function fetchMinuteFromNote(profile, noteDocTokens) {
+  const out = new Map();
+  const tokens = [...new Set(noteDocTokens.filter(Boolean))];
+  for (const docToken of tokens) {
+    try {
+      const res = await lark(['--profile', profile, 'docs', '+fetch',
+        '--api-version', 'v2', '--doc', docToken, '--doc-format', 'markdown']);
+      const text = typeof res === 'string' ? res : JSON.stringify(res);
+      const m = text.match(/\/minutes\/([a-zA-Z0-9]+)/);
+      if (m && m[1]) out.set(docToken, m[1]);
+    } catch (e) { /* 单个失败跳过 */ }
+  }
+  return out;
 }
 
 async function main() {
@@ -199,6 +223,12 @@ async function main() {
     const vcMap = meetingIds.length ? await fetchVcDetails(profile, meetingIds) : new Map();
     const noteIds = [...vcMap.values()].map((v) => v.note_id || '').filter(Boolean);
     const noteMap = noteIds.length ? await fetchNoteTokens(profile, noteIds) : new Map();
+    // 穿透：vc 未返回 minute_token 的会议，从纪要文档正文提取妙记 token（fallback，逐字稿链路依赖）
+    const noteDocTokens = pastEvents
+      .filter((e) => !((vcMap.get(String((meetingMap.get(e.event_id) || {}).meeting_id)) || {}).minute_token))
+      .map((e) => (noteMap.get((vcMap.get(String((meetingMap.get(e.event_id) || {}).meeting_id)) || {}).note_id) || {}).note_doc_token || '')
+      .filter(Boolean);
+    const minuteFromNote = noteDocTokens.length ? await fetchMinuteFromNote(profile, noteDocTokens) : new Map();
 
     for (const e of pastEvents) {
       const m = meetingMap.get(e.event_id) || {};
@@ -209,6 +239,7 @@ async function main() {
       e.note_doc_token = nt.note_doc_token || '';
       e.verbatim_doc_token = nt.verbatim_doc_token || '';
       e.minute_token = vc.minute_token || '';
+      if (!e.minute_token) e.minute_token = minuteFromNote.get(nt.note_doc_token) || '';
     }
   }
 

@@ -37,6 +37,7 @@ token 用量、子代理、Agent 邮箱**变成一屏 6 列精灵办公室，一
 
 - 📧 **Agent 邮箱页签** / Agent Mail tab（收件箱 / 已发送 / 读信 / 写信 / 回复，基于 `agently-cli`，不离开面板）
 - 📅 **会议日程视图 + ⏰ 悬浮提醒** / Meetings & reminders（与飞书消息共用 lark-cli 授权，提前 1 小时提醒、每 5 分钟刷新倒计时，已开完会议自动关联妙记/纪要）
+- 📄 **妙记逐字稿 + 一键保存** / Transcripts（自动拉取已结束会议逐字稿到本地缓存，卡片提醒「逐字稿已生成」，点【保存】移动到目标目录）
 - 🏢 6-column sprite office / 6 列精灵办公室
 - 🔵 悬浮入口 + 一键开关 / floating FAB + toggle
 - 🧠 MBTI 角色 + 个性化气泡 / MBTI characters + idle bubble texts
@@ -102,7 +103,9 @@ agently-cli auth login
   "scripts": {
     "sync": "<ingestor.js 绝对路径>",
     "latest": "<latest.js 绝对路径>",
-    "calendar": "<calendar.js 绝对路径>"   // ← 新增：会议日程脚本（可选）
+    "calendar": "<calendar.js 绝对路径>",      // ← 可选：会议日程脚本
+    "transcript": "<transcript.js 绝对路径>",   // ← 可选：妙记逐字稿脚本
+    "permission": "<permission.js 绝对路径>"    // ← 可选：妙记权限申请脚本
   }
 }
 ```
@@ -114,8 +117,15 @@ agently-cli auth login
 - **📝 妙记/纪要**：已开完的会议自动尝试关联 AI 智能纪要 / 妙记（需授权
   `vc:meeting.meetingevent:read` + `vc:record:readonly`，`lark-cli auth login --scope "vc:meeting.meetingevent:read vc:record:readonly"`），
   有产物时卡片显示可点击的「📝 纪要 / 妙记」入口。
+- **📄 逐字稿 + 一键保存**：配置 `scripts.transcript`（仓库 `scripts/transcript.js` 开箱示例，依赖
+  `minutes:minutes.basic:read` 授权）后，日历同步时对比新旧日程，**只对「新出现的妙记」自动生成逐字稿**
+  （历史会议可点【转逐字稿】手动转换），暂存到 `~/.dsh/office/transcripts/`；会议卡片显示「✅ 逐字稿已生成」，
+  点【保存】输入目标目录即可把逐字稿**移动**到该目录（记忆上次保存目录；拉取失败 30 分钟后自动重试，
+  卡片可手动重试）。
+- **🔑 妙记权限申请**：配置 `scripts.permission`（仓库 `scripts/permission.js`，依赖 `minutes:permission:apply`
+  授权）后，无妙记查看权限的会议卡片显示【申请权限】按钮，一键向妙记 owner 发起查看申请。
 
-> 未配置 `scripts.calendar` 时，会议视图显示引导卡，不影响其它功能。
+> 未配置 `scripts.calendar` 时，会议视图显示引导卡，不影响其它功能；未配置 `scripts.transcript` 时，逐字稿功能不显示。
 
 ## Why dsh-office? / 解决什么问题
 

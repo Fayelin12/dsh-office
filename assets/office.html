@@ -1010,7 +1010,7 @@
     flex: none;
     align-self: flex-start;
     font-size: var(--font-sm);
-    font-weight: 600;
+    font-weight: normal;
     color: var(--tier-mid);
     text-decoration: none;
     border: 1px solid var(--tier-mid);
@@ -1019,6 +1019,72 @@
     margin-top: 2px;
   }
   .cal-minutes:hover { background: rgba(103, 158, 254, 0.12); }
+  /* 逐字稿状态行 */
+  .cal-tr {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .cal-tr-badge {
+    font-size: var(--font-sm);
+    font-weight: normal;
+    color: var(--text-dim);
+    border-radius: var(--radius-pill);
+    padding: 2px 10px;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+  }
+  .cal-tr-badge.done {
+    color: rgb(41, 203, 81);
+    border-color: rgba(41, 203, 81, 0.4);
+    background: rgba(41, 203, 81, 0.08);
+  }
+  .cal-tr-badge.err {
+    color: var(--color-error);
+    border-color: rgba(255, 69, 58, 0.4);
+    background: rgba(255, 69, 58, 0.08);
+  }
+  .cal-tr-btn {
+    flex: none;
+    font-size: var(--font-sm);
+    font-weight: normal;
+    color: var(--tier-mid);
+    border: 1px solid var(--tier-mid);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    padding: 2px 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .cal-tr-btn:hover { background: rgba(103, 158, 254, 0.12); }
+  .cal-tr-path {
+    font-size: var(--font-sm);
+    color: var(--text-faint);
+    word-break: break-all;
+  }
+  /* 轻量 toast 提示 */
+  .office-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 40px;
+    transform: translateX(-50%) translateY(16px);
+    background: rgba(28, 28, 30, 0.92);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    font-size: var(--font-sub);
+    max-width: 82%;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .office-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
   /* 右栏：倒计时徽标 */
   .cal-right {
     flex: none;
@@ -1328,6 +1394,21 @@
         <div class="compose-foot">
           <span class="compose-error" id="composeError"></span>
           <button class="icon-btn" id="composeSendBtn" style="width:auto;padding:0 18px;font-size:var(--font-body);font-weight:600">发送</button>
+        </div>
+      </div>
+    </div>
+    <div class="compose-modal modal-overlay" id="saveModal" hidden>
+      <div class="compose-card modal-card">
+        <div class="compose-head">
+          <span>💾 保存逐字稿</span>
+          <button class="icon-btn" id="saveClose" title="关闭">✕</button>
+        </div>
+        <div class="compose-body">
+          <input id="saveDir" placeholder="目标目录（Windows 绝对路径，如 D:\会议纪要）" autocomplete="off" />
+        </div>
+        <div class="compose-foot">
+          <span class="compose-error" id="saveError"></span>
+          <button class="icon-btn" id="saveConfirmBtn" style="width:auto;padding:0 18px;font-size:var(--font-body);font-weight:600">保存</button>
         </div>
       </div>
     </div>
@@ -2468,6 +2549,16 @@
   $composeClose.addEventListener('click', closeCompose);
   $composeModal.addEventListener('click', (e) => { if (e.target === $composeModal) closeCompose(); });
 
+  // 逐字稿保存对话框
+  const $saveModal = document.getElementById('saveModal');
+  const $saveDir = document.getElementById('saveDir');
+  const $saveError = document.getElementById('saveError');
+  const $saveConfirmBtn = document.getElementById('saveConfirmBtn');
+  const $saveClose = document.getElementById('saveClose');
+  $saveClose.addEventListener('click', closeSaveDialog);
+  $saveConfirmBtn.addEventListener('click', confirmSaveTranscript);
+  $saveModal.addEventListener('click', (e) => { if (e.target === $saveModal) closeSaveDialog(); });
+
   async function submitMail() {
     $composeSendBtn.disabled = true;
     $composeError.textContent = '';
@@ -3032,9 +3123,10 @@
   // 纪要/妙记入口：有任一 token 就返回 { url, label }；否则 null
   // 优先级：AI 智能纪要文档 > 手动绑定纪要 > 妙记
   function calMinutesLink(e) {
+    // 妙记优先（用户偏好妙记产物）；无妙记才退而求其次显示纪要
+    if (e && e.minute_token) return { url: 'https://feishu.cn/minutes/' + e.minute_token, label: '📝 妙记' };
     if (e && e.note_doc_token) return { url: 'https://feishu.cn/docx/' + e.note_doc_token, label: '📝 纪要' };
     if (e && e.meeting_note) return { url: 'https://feishu.cn/docx/' + e.meeting_note, label: '📝 纪要' };
-    if (e && e.minute_token) return { url: 'https://feishu.cn/minutes/' + e.minute_token, label: '📝 妙记' };
     return null;
   }
 
@@ -3118,16 +3210,10 @@
     if (e.busy === 'busy') bits.push('忙碌');
     meta.textContent = bits.join(' · ');
     main.appendChild(meta);
-    const ml = calMinutesLink(e);
-    if (ml) {
-      const link = document.createElement('a');
-      link.className = 'cal-minutes';
-      link.textContent = ml.label;
-      link.href = ml.url;
-      link.target = '_blank';
-      link.rel = 'noopener';
-      main.appendChild(link);
-    }
+    const actions = buildCalActions(e);
+    if (actions) main.appendChild(actions);
+    const status = buildTranscriptStatus(e);
+    if (status) main.appendChild(status);
     card.appendChild(main);
 
     // 右栏：倒计时徽标
@@ -3140,6 +3226,174 @@
     card.appendChild(right);
 
     return card;
+  }
+
+  // ---------- 逐字稿状态行（✅ 已生成+保存 / 已保存 / 拉取中 / 失败重试） ----------
+  function trBadge(text, cls) {
+    const el = document.createElement('span');
+    el.className = 'cal-tr-badge' + (cls ? ' ' + cls : '');
+    el.textContent = text;
+    return el;
+  }
+
+  function trBtn(text, onClick) {
+    const el = document.createElement('button');
+    el.className = 'cal-tr-btn';
+    el.textContent = text;
+    el.addEventListener('click', onClick);
+    return el;
+  }
+
+  // 操作行：📝 妙记/纪要链接 + 转逐字稿按钮（并排）
+  function buildCalActions(e) {
+    const row = document.createElement('div');
+    row.className = 'cal-tr';
+    const ml = calMinutesLink(e);
+    if (ml) {
+      const link = document.createElement('a');
+      link.className = 'cal-minutes';
+      link.textContent = ml.label;
+      link.href = ml.url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      row.appendChild(link);
+    }
+    const conv = buildConvertBtn(e);
+    if (conv) row.appendChild(conv);
+    return row.children.length ? row : null;
+  }
+
+  // 转逐字稿按钮：有妙记且未生成（无状态或 failed 重试）时显示；done/saved/pending/new 不显示
+  function buildConvertBtn(e) {
+    if (!e || !e.minute_token) return null;
+    const st = e.transcript;
+    if (st && (st.status === 'done' || st.status === 'saved' || st.status === 'pending' || st.status === 'new')) return null;
+    return trBtn('转逐字稿', () => convertTranscript(e.event_id));
+  }
+
+  // 状态行：done（已生成+保存）/ saved / failed（附申请权限）/ pending / new
+  function buildTranscriptStatus(e) {
+    const tr = e && e.transcript;
+    if (!tr || !tr.status) return null;
+    const row = document.createElement('div');
+    row.className = 'cal-tr';
+    if (tr.status === 'done') {
+      row.appendChild(trBadge('✅ 逐字稿已生成' + (tr.chars ? '（' + tr.chars + ' 字）' : ''), 'done'));
+      row.appendChild(trBtn('保存', () => openSaveDialog(e)));
+    } else if (tr.status === 'saved') {
+      row.appendChild(trBadge('✅ 已保存', 'done'));
+      const path = document.createElement('span');
+      path.className = 'cal-tr-path';
+      path.textContent = tr.savedTo || '';
+      row.appendChild(path);
+    } else if (tr.status === 'failed') {
+      // 失败原因由 toast 一次性提示，卡片不常驻失败文案；无权限时保留申请入口
+      if (tr.errorCode === 'NO_PERMISSION') {
+        const applyBtn = trBtn('申请权限', async () => {
+          applyBtn.disabled = true;
+          const ok = await applyPermission(e.event_id);
+          toast(ok ? '已向妙记 owner 发出查看申请' : '申请失败，请稍后重试');
+          applyBtn.disabled = false;
+        });
+        row.appendChild(applyBtn);
+      }
+    } else if (tr.status === 'pending') {
+      row.appendChild(trBadge('⏳ 逐字稿拉取中…'));
+    } else if (tr.status === 'new') {
+      row.appendChild(trBadge('📥 新妙记，自动拉取中'));
+    }
+    return row.children.length ? row : null;
+  }
+
+  // ---------- 保存对话框（目标目录输入，记忆上次目录） ----------
+  let saveEventId = null;
+
+  function openSaveDialog(e) {
+    saveEventId = e.event_id;
+    $saveError.textContent = '';
+    $saveDir.value = localStorage.getItem('office.lastSaveDir') || '';
+    $saveModal.hidden = false;
+    $saveDir.focus();
+  }
+
+  function closeSaveDialog() {
+    $saveModal.hidden = true;
+    saveEventId = null;
+  }
+
+  async function confirmSaveTranscript() {
+    const dir = $saveDir.value.trim();
+    if (!dir) { $saveError.textContent = '请填写目标目录'; return; }
+    $saveConfirmBtn.disabled = true;
+    try {
+      const res = await apiFetch('/transcript/save', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ event_id: saveEventId, target_dir: dir })
+      });
+      const json = await res.json();
+      if (json && json.ok) {
+        localStorage.setItem('office.lastSaveDir', dir);
+        closeSaveDialog();
+        loadCalendarEvents();
+      } else {
+        $saveError.textContent = (json && json.error && json.error.message) || '保存失败';
+      }
+    } catch (err) {
+      $saveError.textContent = '保存失败：' + (err && err.message ? err.message : err);
+    } finally {
+      $saveConfirmBtn.disabled = false;
+    }
+  }
+
+  async function convertTranscript(eventId) {
+    try {
+      const res = await apiFetch('/transcript/fetch', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ event_id: eventId })
+      });
+      const json = await res.json();
+      if (json && json.ok) {
+        toast('✅ 逐字稿已生成');
+      } else {
+        toast('逐字稿拉取失败：' + ((json && json.error && json.error.message) || '未知错误'));
+      }
+      loadCalendarEvents();
+    } catch (err) {
+      toast('逐字稿拉取失败：' + (err && err.message ? err.message : err));
+    }
+  }
+
+  // 申请妙记查看权限：返回是否已发出申请（等待 owner 批准）
+  async function applyPermission(eventId) {
+    try {
+      const res = await apiFetch('/transcript/apply-permission', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ event_id: eventId })
+      });
+      const json = await res.json();
+      return !!(json && json.ok);
+    } catch (err) {
+      return false;
+    }
+  }
+
+  // 轻量 toast 提示（一次性，几秒后消失）
+  let _toastTimer = null;
+  function toast(msg) {
+    let el = document.getElementById('officeToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'officeToast';
+      el.className = 'office-toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('show');
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
   }
 
   function renderCalendarGuide() {

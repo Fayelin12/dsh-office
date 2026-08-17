@@ -961,6 +961,20 @@
     word-break: break-word;
     color: var(--text);
   }
+  .fm-more {
+    display: block;
+    margin: 12px auto;
+    padding: 6px 18px;
+    border: 1px dashed var(--glass-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .fm-more:hover { background: var(--card-hover); }
+  .fm-more:disabled { cursor: default; opacity: 0.7; }
   /* 写信 / 回复弹窗 */
   .compose-modal {
     position: absolute;
@@ -2530,10 +2544,89 @@
   }
 
   // ---------- 会话弹窗（点击卡片打开） ----------
+  let feishuModalCtx = null;   // 弹窗分页上下文 { chat, loaded, total }
+
+  function buildFeishuMsgRow(m) {
+    const row = document.createElement('div');
+    row.className = 'fm-msg';
+    row.dataset.id = m.message_id || '';
+
+    const head = document.createElement('div');
+    head.className = 'fm-msg-head';
+    const isNew = feishuSince && m.created_at && m.created_at > feishuSince;
+    if (isNew) {
+      const dot = document.createElement('span');
+      dot.className = 'fm-msg-new';
+      dot.title = '同步后新增';
+      head.appendChild(dot);
+    }
+    const who = document.createElement('span');
+    who.className = 'fm-msg-who';
+    who.textContent = feishuWho(m);
+    who.title = m.user_id || '';
+    const tm = document.createElement('span');
+    tm.className = 'fm-msg-time';
+    tm.textContent = shortTime(m.created_at);
+    head.appendChild(who); head.appendChild(tm);
+
+    const text = document.createElement('div');
+    text.className = 'fm-msg-text';
+    text.textContent = feishuPreview(m);
+
+    row.appendChild(head); row.appendChild(text);
+    row.addEventListener('click', () => {
+      // 点击行：展开/收起完整正文（同一时间只展开一条）
+      const opened = row.classList.contains('open');
+      $fmBody.querySelectorAll('.fm-msg.open').forEach((el) => el.classList.remove('open'));
+      if (!opened) row.classList.add('open');
+    });
+    return row;
+  }
+
+  // 弹窗底部的「加载更早消息」按钮（按 offset 翻页）
+  function renderFeishuMoreBtn() {
+    const old = $fmBody.querySelector('.fm-more');
+    if (old) old.remove();
+    const ctx = feishuModalCtx;
+    if (!ctx || ctx.loaded >= ctx.total) return;
+    const btn = document.createElement('button');
+    btn.className = 'fm-more';
+    btn.textContent = '加载更早消息（' + ctx.loaded + '/' + ctx.total + '）';
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = '加载中…';
+      try {
+        const res = await fetch('/office-ui/feishu/messages?chat=' + encodeURIComponent(ctx.chat.chat_id) +
+          '&offset=' + ctx.loaded + '&per-chat=20', { cache: 'no-store' });
+        const json = await res.json();
+        if (!json || !json.ok) {
+          btn.disabled = false;
+          btn.textContent = '加载失败，点此重试';
+          return;
+        }
+        const one = json.data && json.data.chats && json.data.chats[0];
+        const more = (one && one.messages) || [];
+        for (const m of more) $fmBody.appendChild(buildFeishuMsgRow(m));
+        ctx.loaded += more.length;
+        if (one && typeof one.count === 'number') ctx.total = one.count;
+        renderFeishuMoreBtn();
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = '加载失败，点此重试';
+      }
+    });
+    $fmBody.appendChild(btn);
+  }
+
   function openFeishuChat(c, expandMsgId) {
     $fmTitle.textContent = (c.chat_name || c.chat_id || '') +
       ' · ' + chatTypeLabel(c.chat_type) + ' · ' + (c.count || (c.messages || []).length) + ' 条消息';
     $fmBody.innerHTML = '';
+    feishuModalCtx = {
+      chat: c,
+      loaded: (c.messages || []).length,
+      total: c.count || (c.messages || []).length
+    };
     const msgs = c.messages || [];
     if (!msgs.length) {
       const empty = document.createElement('div');
@@ -2541,42 +2634,8 @@
       empty.textContent = '该会话暂无文字消息';
       $fmBody.appendChild(empty);
     }
-    for (const m of msgs) {
-      const row = document.createElement('div');
-      row.className = 'fm-msg';
-      row.dataset.id = m.message_id || '';
-
-      const head = document.createElement('div');
-      head.className = 'fm-msg-head';
-      const isNew = feishuSince && m.created_at && m.created_at > feishuSince;
-      if (isNew) {
-        const dot = document.createElement('span');
-        dot.className = 'fm-msg-new';
-        dot.title = '同步后新增';
-        head.appendChild(dot);
-      }
-      const who = document.createElement('span');
-      who.className = 'fm-msg-who';
-      who.textContent = feishuWho(m);
-      who.title = m.user_id || '';
-      const tm = document.createElement('span');
-      tm.className = 'fm-msg-time';
-      tm.textContent = shortTime(m.created_at);
-      head.appendChild(who); head.appendChild(tm);
-
-      const text = document.createElement('div');
-      text.className = 'fm-msg-text';
-      text.textContent = feishuPreview(m);
-
-      row.appendChild(head); row.appendChild(text);
-      row.addEventListener('click', () => {
-        // 点击行：展开/收起完整正文（同一时间只展开一条）
-        const opened = row.classList.contains('open');
-        $fmBody.querySelectorAll('.fm-msg.open').forEach((el) => el.classList.remove('open'));
-        if (!opened) row.classList.add('open');
-      });
-      $fmBody.appendChild(row);
-    }
+    for (const m of msgs) $fmBody.appendChild(buildFeishuMsgRow(m));
+    renderFeishuMoreBtn();
     $feishuModal.hidden = false;
     if (expandMsgId) {
       const target = $fmBody.querySelector('.fm-msg[data-id="' + expandMsgId + '"]');

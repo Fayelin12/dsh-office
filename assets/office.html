@@ -842,19 +842,22 @@
     border-color: transparent;
     background:
       var(--card-bg) padding-box,
-      var(--grad-yellow) border-box;
+      var(--grad-yellow) border-box,
+      var(--card-bg);
   }
   .f-card.blue {
     border-color: transparent;
     background:
       var(--card-bg) padding-box,
-      var(--grad-blue) border-box;
+      var(--grad-blue) border-box,
+      var(--card-bg);
   }
   .f-card.gray {
     border-color: transparent;
     background:
       var(--card-bg) padding-box,
-      var(--grad-gray) border-box;
+      var(--grad-gray) border-box,
+      var(--card-bg);
   }
   .f-card.gray .f-name,
   .f-card.gray .f-preview .fp-row { color: var(--text-faint); }
@@ -965,13 +968,15 @@
     border-color: transparent;
     background:
       var(--card-bg) padding-box,
-      var(--grad-yellow) border-box;
+      var(--grad-yellow) border-box,
+      var(--card-bg);
   }
   .cal-card.live {
     border-color: transparent;
     background:
       var(--card-bg) padding-box,
-      var(--grad-green) border-box;
+      var(--grad-green) border-box,
+      var(--card-bg);
   }
   .cal-card.done { opacity: .5; }
   /* 左栏时间线：日期（小字）→ 开始时间（大字）→ 至 结束时间（小字灰）
@@ -1655,12 +1660,12 @@
   const $officeTitle = document.getElementById('officeTitle');
 
   // ---------- 渲染 6 列 ----------
+  // FIX: renderColumns() no longer re-checks getDataKey() — refresh() already
+  // does the key comparison and updates lastDataKey before calling us.
+  // The old double-check (key !== lastDataKey) was always false here because
+  // refresh() had just set lastDataKey = key, so fullRender() never ran.
   function renderColumns() {
-    const key = getDataKey();
-    if (key !== lastDataKey || $body.children.length === 0) {
-      lastDataKey = key;
-      fullRender();
-    }
+    fullRender();
   }
 
   function colStats(col) {

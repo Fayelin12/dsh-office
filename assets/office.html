@@ -1262,6 +1262,7 @@
   // 快照实时状态：客户端 useSessions 的 active/pending 比服务端 agents.list() 更快
   // fetchData 返回后用此映射覆盖服务端数据，避免"客户端已知 running 但面板显示 idle"的竞态
   let _snapshotStatus = null;
+  let _snapshotMerged = false; // 快照合并后强制渲染一次
 
   async function fetchData() {
     try {
@@ -2370,7 +2371,7 @@
       // ③ 惰性补同步：autoSync 开启且数据过期（stale）→ 打开时自动触发一次
       if (auto.enabled && d.stale && !d.syncing && !feishuLazyFired) {
         feishuLazyFired = true;
-        syncFeishu();
+        syncFeishu('incr');
       }
     } catch (e) {
       setFeishuStatus('状态获取失败');
@@ -2659,12 +2660,13 @@
     closeFeishuModal();
   }
 
-  // ---------- 同步（手动触发，异步执行 + 轮询状态） ----------
-  async function syncFeishu() {
-    setFeishuStatus('同步中…');
+  // ---------- 同步（手动深捞 / 惰性增量；异步执行 + 轮询状态） ----------
+  async function syncFeishu(mode) {
+    const incr = mode === 'incr';
+    setFeishuStatus(incr ? '增量同步中…' : '深捞同步中…（最近30天）');
     $feishuSyncBtn.disabled = true;
     try {
-      const res = await fetch('/office-ui/feishu/sync', { method: 'POST' });
+      const res = await fetch('/office-ui/feishu/sync' + (incr ? '?mode=incr' : ''), { method: 'POST' });
       const json = await res.json();
       if (!json || !json.ok) {
         const code = json && json.error && json.error.code;
@@ -2730,7 +2732,7 @@
   }
   $feishuBtn.addEventListener('click', toggleFeishu);
   $feishuRefreshBtn.addEventListener('click', () => { loadFeishuStatus(); loadFeishuMessages(); });
-  $feishuSyncBtn.addEventListener('click', syncFeishu);
+  $feishuSyncBtn.addEventListener('click', () => syncFeishu('manual'));
   $fmClose.addEventListener('click', closeFeishuModal);
   $feishuModal.addEventListener('click', (e) => { if (e.target === $feishuModal) closeFeishuModal(); });
 
@@ -2776,11 +2778,13 @@
             }
           }
         }
+        _snapshotMerged = true; // 合并后强制渲染一次，防止 getDataKey 去重跳过
       }
       if (showingConfig) return;  // 配置中不重渲染，离开时刷新
       const key = getDataKey();
-      if (key !== lastDataKey) {
+      if (key !== lastDataKey || _snapshotMerged) {
         lastDataKey = key;
+        _snapshotMerged = false;
         renderColumns();
       }
       hideLoading();

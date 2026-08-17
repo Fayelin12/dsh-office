@@ -813,25 +813,25 @@
   }
   .f-card:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10); }
   /* 状态边框：黄（提到我）> 蓝（6 小时内活跃）> 灰（超 3 天弱化）
-     用不透明底（--card-solid）盖住 padding-box，渐变只出现在 1.5px 边框环上，
-     不会把整张卡片染上背景色 */
+     内部背景与普通卡片一致：直接用 --card-bg（毛玻璃半透明，随浅/深主题），
+     彩色渐变只画在 1.5px 边框环上（border-box 层），卡片内部不染色 */
   .f-card.yellow {
     border-color: transparent;
     background:
-      linear-gradient(var(--card-solid), var(--card-solid)) padding-box,
-      linear-gradient(135deg, rgb(255, 214, 10), rgb(255, 159, 10)) border-box;
+      linear-gradient(135deg, rgb(255, 214, 10), rgb(255, 159, 10)) border-box,
+      var(--card-bg) padding-box;
   }
   .f-card.blue {
     border-color: transparent;
     background:
-      linear-gradient(var(--card-solid), var(--card-solid)) padding-box,
-      linear-gradient(135deg, rgb(103, 158, 254), rgb(65, 118, 230)) border-box;
+      linear-gradient(135deg, rgb(103, 158, 254), rgb(65, 118, 230)) border-box,
+      var(--card-bg) padding-box;
   }
   .f-card.gray {
     border-color: transparent;
     background:
-      linear-gradient(var(--card-solid), var(--card-solid)) padding-box,
-      linear-gradient(135deg, rgb(142, 142, 147), rgb(199, 199, 204)) border-box;
+      linear-gradient(135deg, rgb(142, 142, 147), rgb(199, 199, 204)) border-box,
+      var(--card-bg) padding-box;
   }
   .f-card.gray .f-name,
   .f-card.gray .f-preview .fp-row,
@@ -899,80 +899,84 @@
     gap: 10px;
     padding-right: 2px;
   }
-  .cal-date-group {
-    flex: none;
+  /* 双列：左 = 未开始，右 = 已结束 */
+  .cal-columns {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .cal-col {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0;
   }
-  .cal-date-label-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 2px 4px 0;
-    cursor: default;
-    user-select: none;
-  }
-  .cal-date-label-row.collapsed { cursor: pointer; }
-  .cal-date-label {
-    font-size: 11px;
+  .cal-col-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    font-size: 12px;
     font-weight: 700;
+    letter-spacing: .3px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
     color: var(--text-dim);
-    letter-spacing: .4px;
-    text-transform: uppercase;
+    backdrop-filter: blur(6px);
   }
-  .cal-date-label.today { color: var(--tier-mid); }
-  .cal-date-count {
-    font-size: 10px;
-    color: var(--text-faint);
-    font-variant-numeric: tabular-nums;
-  }
-  .cal-date-label-row.collapsed::after {
-    content: '▸ 点击展开';
-    font-size: 10px;
-    color: var(--text-faint);
-  }
-  .cal-date-label-row.collapsed:hover::after { color: var(--tier-mid); }
-  .cal-group-body { display: flex; flex-direction: column; gap: 8px; }
+  .cal-col.past .cal-col-head { color: var(--text-faint); }
   .cal-card {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
     border: 1.5px solid var(--glass-border);
-    border-radius: 14px;
+    border-radius: 12px;
     background: var(--card-bg);
-    padding: 12px 14px;
+    padding: 10px 12px;
     transition: box-shadow .15s ease, transform .1s ease;
   }
   .cal-card:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10); }
   .cal-card.soon {
     border-color: transparent;
     background:
-      linear-gradient(var(--card-solid), var(--card-solid)) padding-box,
-      linear-gradient(135deg, rgb(255, 214, 10), rgb(255, 159, 10)) border-box;
+      linear-gradient(135deg, rgb(255, 214, 10), rgb(255, 159, 10)) border-box,
+      var(--card-bg) padding-box;
   }
   .cal-card.live {
     border-color: transparent;
     background:
-      linear-gradient(var(--card-solid), var(--card-solid)) padding-box,
-      linear-gradient(135deg, rgb(48, 209, 88), rgb(34, 197, 94)) border-box;
+      linear-gradient(135deg, rgb(48, 209, 88), rgb(34, 197, 94)) border-box,
+      var(--card-bg) padding-box;
   }
-  .cal-card.done { opacity: .55; }
-  /* 左栏：开始时间大字 + ── 结束时间小字 */
+  .cal-card.done { opacity: .5; }
+  /* 左栏时间线：日期（小字）→ 开始时间（大字）→ 至 结束时间（小字灰）
+     自适应宽度 + 左对齐，紧贴卡片左缘，不留大空白 */
   .cal-time {
     flex: none;
-    width: 92px;
+    min-width: 64px;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
+    align-items: flex-start;
+    gap: 1px;
     font-variant-numeric: tabular-nums;
+    line-height: 1.25;
   }
+  .cal-time .ct-date {
+    font-size: 10px;
+    color: var(--tier-mid);
+    font-weight: 600;
+    margin-bottom: 2px;
+    white-space: nowrap;
+  }
+  .cal-card.done .cal-time .ct-date { color: var(--text-faint); }
   .cal-time .ct-start {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--text);
-    line-height: 1.2;
     white-space: nowrap;
   }
   .cal-time .ct-end {
@@ -986,7 +990,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
   }
   .cal-title {
     font-size: 13px;
@@ -1017,7 +1021,7 @@
   /* 右栏：倒计时徽标 */
   .cal-right {
     flex: none;
-    min-width: 86px;
+    min-width: 72px;
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
@@ -2916,6 +2920,15 @@
     card.appendChild(desc);
     card.appendChild(steps);
     card.appendChild(tpl);
+    // 可复制提示词：发给 AI 代配（在线文档链接后续补充）
+    const prompt = document.createElement('div');
+    prompt.className = 'ms-prompt';
+    prompt.appendChild(document.createTextNode('也可以把下面这句发给你的 AI，让它帮你完成配置：'));
+    const promptText = document.createElement('div');
+    promptText.className = 'ms-prompt-text';
+    promptText.textContent = '请按照「飞书消息 + 会议日程 从 0 到 1 配置指南」文档，为我安装并配置 lark-cli（含用户授权），准备消息同步脚本与读取脚本（ingestor.js / latest.js），并写入 ~/.dsh/office/feishu-config.json。';
+    card.appendChild(prompt);
+    card.appendChild(promptText);
     card.appendChild(actions);
     wrap.appendChild(card);
     $feishuList.appendChild(wrap);
@@ -3040,10 +3053,12 @@
     return '';
   }
 
-  // 倒计时文案：进行中 → "进行中"；即将开始 → "还剩 X 分钟" / "X 小时后"
+  // 倒计时文案：已结束 → "已结束"；进行中 → "进行中"；即将开始 → "还剩 X 分钟" / "X 小时后"
   function calCountdown(e) {
     const min = calMinLeft(e);
     if (min == null) return '';
+    const ended = typeof e.end_ts === 'number' && isFinite(e.end_ts) && e.end_ts < Date.now();
+    if (ended) return '已结束';
     if (min <= 0) return '进行中';
     if (min < 60) return '还剩 ' + min + ' 分钟';
     const h = Math.floor(min / 60), m = min % 60;
@@ -3093,50 +3108,35 @@
       $calendarList.appendChild(empty);
       return;
     }
-    // 按日期分组（start 前 10 位是 YYYY-MM-DD），组按日期倒序（最新日期在前）
-    const groups = new Map();
-    for (const e of events) {
-      const day = (e.start || '').slice(0, 10) || '未知日期';
-      if (!groups.has(day)) groups.set(day, []);
-      groups.get(day).push(e);
-    }
-    const days = [...groups.keys()].sort().reverse();
-    for (const day of days) {
-      const list = groups.get(day).slice().sort((a, b) => (b.start_ts || 0) - (a.start_ts || 0));
-      const group = document.createElement('div');
-      group.className = 'cal-date-group';
+    const now = Date.now();
+    const isEnded = (e) => typeof e.end_ts === 'number' && isFinite(e.end_ts) && e.end_ts < now;
+    const upcoming = events.filter((e) => !isEnded(e)).sort((a, b) => (a.start_ts || 0) - (b.start_ts || 0));
+    const past = events.filter(isEnded).sort((a, b) => (b.end_ts || 0) - (a.end_ts || 0));
 
-      const labelRow = document.createElement('div');
-      labelRow.className = 'cal-date-label-row';
-      const label = document.createElement('span');
-      label.className = 'cal-date-label' + (day === calTodayKey() ? ' today' : '');
-      label.textContent = calDateLabel(day);
-      const count = document.createElement('span');
-      count.className = 'cal-date-count';
-      count.textContent = list.length + ' 场';
-      labelRow.appendChild(label);
-      labelRow.appendChild(count);
+    // 双列容器：左 = 未开始（含进行中），右 = 已结束
+    const cols = document.createElement('div');
+    cols.className = 'cal-columns';
 
-      // 过去 3 天前的组默认折叠：整组收起，只留一个可展开的行
-      if (calGroupCollapsed(day)) {
-        labelRow.classList.add('collapsed');
-        const body = document.createElement('div');
-        body.className = 'cal-group-body';
-        body.hidden = true;
-        for (const e of list) body.appendChild(buildCalCard(e));
-        labelRow.addEventListener('click', () => {
-          const open = !body.hidden;
-          body.hidden = open;
-          labelRow.classList.toggle('collapsed', open);
-        });
-        group.appendChild(labelRow);
-        group.appendChild(body);
+    const mkCol = (title, list) => {
+      const col = document.createElement('div');
+      col.className = 'cal-col' + (list === past ? ' past' : '');
+      const head = document.createElement('div');
+      head.className = 'cal-col-head';
+      head.textContent = title + '（' + list.length + '）';
+      col.appendChild(head);
+      if (!list.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = list === past ? '没有已结束的会议' : '没有待开始的会议';
+        col.appendChild(empty);
       } else {
-        group.appendChild(labelRow);
-        for (const e of list) group.appendChild(buildCalCard(e));
+        for (const e of list) col.appendChild(buildCalCard(e));
       }
-      $calendarList.appendChild(group);
-    }
+      return col;
+    };
+    cols.appendChild(mkCol('⏳ 未开始', upcoming));
+    cols.appendChild(mkCol('✅ 已结束', past));
+    $calendarList.appendChild(cols);
   }
 
   function calTodayKey() {
@@ -3150,15 +3150,21 @@
     card.className = 'cal-card ' + calCardClass(e);
     card.dataset.id = e.event_id || '';
 
-    // 左栏：开始时间（大字）+ ── 结束时间（小字灰）
+    // 左栏：日期（今天/明天/具体日期）+ 开始时间（大字）+ 结束时间（小字灰）
     const timeCol = document.createElement('div');
     timeCol.className = 'cal-time';
+    const date = document.createElement('span');
+    date.className = 'ct-date';
+    const dayKey = (e.start || '').slice(0, 10);
+    const dLabel = calDateLabel(dayKey);
+    date.textContent = dLabel === '今天' || dLabel === '明天' ? dLabel : (e.start || '').slice(5, 10);
     const start = document.createElement('span');
     start.className = 'ct-start';
     start.textContent = ((e.start || '').slice(11) || '');
     const end = document.createElement('span');
     end.className = 'ct-end';
-    end.textContent = ((e.end || '').slice(11) ? '── ' + (e.end || '').slice(11) : '');
+    end.textContent = ((e.end || '').slice(11) ? '至 ' + (e.end || '').slice(11) : '');
+    timeCol.appendChild(date);
     timeCol.appendChild(start);
     timeCol.appendChild(end);
     card.appendChild(timeCol);
@@ -3214,26 +3220,30 @@
     h.textContent = '📅 会议日程未配置';
     const p1 = document.createElement('div');
     p1.className = 'cs-step';
-    p1.textContent = '会议日程与飞书消息共用同一套 lark-cli 授权。配置后，消息同步时会顺带拉取日程，并在办公室按钮旁显示 ⏰ 会议提醒（提前 1 小时，每 5 分钟刷新倒计时）。';
+    p1.textContent = '会议日程与飞书消息共用同一套 lark-cli 授权与配置（feishu-config.json），只是脚本不同。配置一次，两个功能都能用。完整「从 0 到 1」指南见下方文档。';
     const p2 = document.createElement('div');
     p2.className = 'cs-step';
-    p2.textContent = '1. 准备日历拉取脚本（复用消息的 lark-cli 封装，输出 { ok, events }）：';
-    const code = document.createElement('code');
-    code.textContent = '// calendar.js 核心调用\n' +
-      "larkCli.run(['--profile', profile, 'calendar', '+agenda',\n" +
-      "  '--as', 'user', '--start', since, '--end', end, '--format', 'json'])\n" +
-      '// → { ok: true, events: [{ event_id, summary, start_ts, end_ts,\n' +
-      "//     start, end, meeting_url, app_link, organizer, rsvp, busy }] }";
+    p2.textContent = '1. 安装并授权 lark-cli（用户身份，需 calendar / vc / minutes scope）';
     const p3 = document.createElement('div');
     p3.className = 'cs-step';
-    p3.textContent = '2. 在 ~/.dsh/office/feishu-config.json 的 scripts 里加一行：';
-    const code2 = document.createElement('code');
-    code2.textContent = '"calendar": "D:\\\\飞书\\\\ingestor\\\\calendar.js"';
+    p3.textContent = '2. 准备日历脚本（仓库 scripts/calendar.js 是开箱示例，含妙记/纪要链路）';
     const p4 = document.createElement('div');
     p4.className = 'cs-step';
-    p4.textContent = '3. 刷新页面，点右上角「同步」即可拉取日程。';
+    p4.textContent = '3. 在 ~/.dsh/office/feishu-config.json 的 scripts 里加一行：';
+    const code2 = document.createElement('code');
+    code2.textContent = '"calendar": "<你的calendar.js绝对路径>"';
+    const p5 = document.createElement('div');
+    p5.className = 'cs-step';
+    p5.textContent = '4. 刷新页面，点右上角「同步」即可拉取日程。';
+    // 可复制提示词：发给 AI 代配（在线文档链接后续补充）
+    const prompt = document.createElement('div');
+    prompt.className = 'cs-step';
+    prompt.textContent = '也可以把下面这句发给你的 AI，让它帮你完成配置：';
+    const promptText = document.createElement('code');
+    promptText.textContent = '请按照「飞书消息 + 会议日程 从 0 到 1 配置指南」文档，为我安装并配置 lark-cli（含用户授权，scope 需含 calendar / vc / minutes），准备 calendar.js 脚本并写入 ~/.dsh/office/feishu-config.json 的 scripts.calendar。';
     card.appendChild(h); card.appendChild(p1); card.appendChild(p2);
-    card.appendChild(code); card.appendChild(p3); card.appendChild(code2); card.appendChild(p4);
+    card.appendChild(p3); card.appendChild(p4); card.appendChild(code2); card.appendChild(p5);
+    card.appendChild(prompt); card.appendChild(promptText);
     wrap.appendChild(card);
     $calendarList.appendChild(wrap);
   }

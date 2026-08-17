@@ -42,11 +42,8 @@
     --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.10);
     /* 边框 */
     --border-subtle: 1px solid rgba(0, 0, 0, 0.10);
-    /* 渐变色 */
-    --grad-yellow: linear-gradient(135deg, rgb(255, 214, 10), rgb(255, 159, 10));
+    /* 渐变色（仅 --grad-blue 用于 .f-new badge） */
     --grad-blue: linear-gradient(135deg, rgb(103, 158, 254), rgb(65, 118, 230));
-    --grad-green: linear-gradient(135deg, rgb(48, 209, 88), rgb(34, 197, 94));
-    --grad-gray: linear-gradient(135deg, rgb(142, 142, 147), rgb(199, 199, 204));
     /* 强调色 */
     --color-error: #ff453a;
     --color-loading: #4f46e5;
@@ -835,29 +832,15 @@
     transition: box-shadow .15s ease, transform .1s ease, opacity .15s ease;
   }
   .f-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
-  /* 状态边框：黄（提到我）> 蓝（6 小时内活跃）> 灰（超 3 天弱化）
-     内部背景与普通卡片一致：直接用 --card-bg（毛玻璃半透明，随浅/深主题），
-     彩色渐变只画在 1.5px 边框环上（border-box 层），卡片内部不染色 */
+  /* 状态边框：黄（提到我）> 蓝（6 小时内活跃）> 灰（超 3 天弱化） */
   .f-card.yellow {
-    border-color: transparent;
-    background:
-      var(--card-bg) padding-box,
-      var(--grad-yellow) border-box,
-      var(--card-bg);
+    border-color: rgb(255, 179, 10);
   }
   .f-card.blue {
-    border-color: transparent;
-    background:
-      var(--card-bg) padding-box,
-      var(--grad-blue) border-box,
-      var(--card-bg);
+    border-color: rgb(84, 138, 242);
   }
   .f-card.gray {
-    border-color: transparent;
-    background:
-      var(--card-bg) padding-box,
-      var(--grad-gray) border-box,
-      var(--card-bg);
+    border-color: rgb(170, 170, 175);
   }
   .f-card.gray .f-name,
   .f-card.gray .f-preview .fp-row { color: var(--text-faint); }
@@ -965,18 +948,10 @@
   }
   .cal-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
   .cal-card.soon {
-    border-color: transparent;
-    background:
-      var(--card-bg) padding-box,
-      var(--grad-yellow) border-box,
-      var(--card-bg);
+    border-color: rgb(255, 179, 10);
   }
   .cal-card.live {
-    border-color: transparent;
-    background:
-      var(--card-bg) padding-box,
-      var(--grad-green) border-box,
-      var(--card-bg);
+    border-color: rgb(41, 203, 81);
   }
   .cal-card.done { opacity: .5; }
   /* 左栏时间线：日期（小字）→ 开始时间（大字）→ 至 结束时间（小字灰）

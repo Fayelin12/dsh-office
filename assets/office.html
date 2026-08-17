@@ -1332,7 +1332,7 @@
           <button class="icon-btn" id="calendarSyncBtn" title="同步日程" style="width:auto;padding:0 12px;font-size:12px">同步</button>
         </div>
       </div>
-      <div class="feishu-cards" id="calendarList"></div>
+      <div class="calendar-list" id="calendarList"></div>
     </div>
     <div class="compose-modal" id="composeModal" hidden>
       <div class="compose-card">
@@ -3093,16 +3093,16 @@
       $calendarList.appendChild(empty);
       return;
     }
-    // 按日期分组（start 前 10 位是 YYYY-MM-DD），组按日期升序
+    // 按日期分组（start 前 10 位是 YYYY-MM-DD），组按日期倒序（最新日期在前）
     const groups = new Map();
     for (const e of events) {
       const day = (e.start || '').slice(0, 10) || '未知日期';
       if (!groups.has(day)) groups.set(day, []);
       groups.get(day).push(e);
     }
-    const days = [...groups.keys()].sort();
+    const days = [...groups.keys()].sort().reverse();
     for (const day of days) {
-      const list = groups.get(day);
+      const list = groups.get(day).slice().sort((a, b) => (b.start_ts || 0) - (a.start_ts || 0));
       const group = document.createElement('div');
       group.className = 'cal-date-group';
 

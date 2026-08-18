@@ -1378,6 +1378,53 @@
     word-break: break-word;
     color: var(--text);
   }
+  /* 飞书消息资源（图片/文件）——2026-08-18 */
+  .fm-resource {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    padding: 8px 10px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    background: var(--card-bg);
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .fm-resource-img {
+    max-width: 220px;
+    max-height: 160px;
+    border-radius: var(--radius-sm);
+    display: block;
+    cursor: zoom-in;
+    object-fit: cover;
+  }
+  .fm-resource-img.open { max-width: 100%; max-height: 420px; cursor: zoom-out; }
+  .fm-resource-ic { flex: none; font-size: 20px; line-height: 1; }
+  .fm-resource-name {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--font-body);
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fm-resource-dl {
+    flex: none;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--tier-mid);
+    color: var(--tier-mid);
+    background: transparent;
+    font-size: var(--font-sm);
+    cursor: pointer;
+  }
+  .fm-resource-dl:hover { background: var(--card-hover); }
+  .fm-resource-err {
+    font-size: var(--font-sm);
+    color: var(--danger, #e5534b);
+  }
   .fm-more {
     display: block;
     margin: 12px auto;
@@ -3019,8 +3066,13 @@
     }
   }
 
-  // 正文预览：图片占位符转 📷，压缩空白
+  // 正文预览：图片占位符转 📷，压缩空白；资源消息显示类型占位（📷 图片 / 📎 文件 / 📁 文件夹）
   function feishuPreview(m) {
+    if (m && m.resource_type) {
+      if (m.resource_type === 'image') return '📷 图片';
+      if (m.resource_type === 'folder') return '📁 ' + (m.file_name || '文件夹');
+      return '📎 ' + (m.file_name || '文件');
+    }
     const t = (m && m.text) || '';
     return t.replace(/!\[[^\]]*\]\([^)]*\)/g, '📷 图片').replace(/\s+/g, ' ').trim() || TEXT_NO_BODY;
   }
@@ -3182,13 +3234,88 @@
     text.textContent = feishuPreview(m);
 
     row.appendChild(head); row.appendChild(text);
+    // 资源消息（图片/文件/文件夹）：渲染资源块（图片缩略图 / 文件下载卡片）
+    const resEl = buildFeishuResource(m);
+    if (resEl) row.appendChild(resEl);
     row.addEventListener('click', () => {
-      // 点击行：展开/收起完整正文（同一时间只展开一条）
+      // 点击行：展开/收起完整正文（同一时间只展开一条）；资源区点击不冒泡（在 buildFeishuResource 内 stopPropagation）
       const opened = row.classList.contains('open');
       $fmBody.querySelectorAll('.fm-msg.open').forEach((el) => el.classList.remove('open'));
       if (!opened) row.classList.add('open');
     });
     return row;
+  }
+
+  // 资源消息块：image → 缩略图（点击放大/缩小）；file/folder → 图标 + 文件名 + 下载按钮（folder 只展示）
+  function buildFeishuResource(m) {
+    const type = m && m.resource_type;
+    if (!type || !m.resource_key) return null;
+    const box = document.createElement('div');
+    box.className = 'fm-resource';
+    box.addEventListener('click', (e) => e.stopPropagation());   // 不触发行展开
+
+    if (type === 'image') {
+      const img = document.createElement('img');
+      img.className = 'fm-resource-img';
+      img.alt = '图片';
+      img.loading = 'lazy';
+      img.src = '/office-ui/feishu/resource?msg=' + encodeURIComponent(m.message_id || '') +
+        '&key=' + encodeURIComponent(m.resource_key) + '&type=image';
+      img.addEventListener('click', () => img.classList.toggle('open'));
+      img.addEventListener('error', () => {
+        // 下载失败（缺权限/过期）：显示占位 + 错误提示
+        img.remove();
+        const err = document.createElement('span');
+        err.className = 'fm-resource-err';
+        err.textContent = '⚠️ 图片不可用（可能无权限或已过期）';
+        box.appendChild(err);
+      });
+      box.appendChild(img);
+      return box;
+    }
+
+    // file / folder
+    const ic = document.createElement('span');
+    ic.className = 'fm-resource-ic';
+    ic.textContent = type === 'folder' ? '📁' : '📎';
+    const name = document.createElement('span');
+    name.className = 'fm-resource-name';
+    name.textContent = m.file_name || (type === 'folder' ? '文件夹' : '文件');
+    name.title = m.file_name || m.resource_key || '';
+    box.appendChild(ic); box.appendChild(name);
+    if (type === 'file') {
+      const dl = document.createElement('button');
+      dl.className = 'fm-resource-dl';
+      dl.textContent = '下载';
+      dl.addEventListener('click', async () => {
+        try {
+          const res = await apiFetch('/feishu/resource?msg=' + encodeURIComponent(m.message_id || '') +
+            '&key=' + encodeURIComponent(m.resource_key) + '&type=file', { cache: 'no-store' });
+          if (!res.ok) {
+            const j = await res.json().catch(() => null);
+            toast((j && j.error && j.error.message) || '下载失败');
+            return;
+          }
+          const blob = await res.blob();
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = m.file_name || (m.resource_key + (blob.type === 'application/zip' ? '.zip' : ''));
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+        } catch (e) {
+          toast('下载失败：' + (e && e.message ? e.message : e));
+        }
+      });
+      box.appendChild(dl);
+    } else {
+      // folder 是容器，不支持下载（lark-cli 无 folder 类型下载）
+      const tip = document.createElement('span');
+      tip.className = 'fm-resource-err';
+      tip.textContent = '文件夹';
+      box.appendChild(tip);
+    }
+    return box;
   }
 
   // 弹窗底部的「加载更早消息」按钮（按 offset 翻页）

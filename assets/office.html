@@ -1207,10 +1207,6 @@
     transform: translateX(-50%);
     width: max-content;
     max-width: 280px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
     padding: 6px 10px;
     background: rgba(28, 28, 30, 0.95);
     color: #fff;
@@ -1226,11 +1222,6 @@
     pointer-events: auto;
     user-select: text;
   }
-  .cal-tr-tip-path {
-    min-width: 0;
-    word-break: break-all;
-  }
-  .cal-tr-tip .cal-tr-btn { align-self: flex-start; }
   /* 轻量 toast 提示 */
   .office-toast {
     position: fixed;
@@ -3604,21 +3595,13 @@
       els.push(trBtn('保存', () => openSaveDialog(e)));
     } else if (tr.status === 'saved') {
       els.push(trBadge('✅ 已保存', 'done'));
-      // 保存地址不固定回显：小问号悬停展示，可移入选中/复制
+      // 保存地址不固定回显：小问号悬停展示，可移入选中复制
       const hint = document.createElement('span');
       hint.className = 'cal-tr-hint';
       hint.textContent = '?';
       const tip = document.createElement('span');
       tip.className = 'cal-tr-tip';
-      const pathText = document.createElement('span');
-      pathText.className = 'cal-tr-tip-path';
-      pathText.textContent = tr.savedTo || '';
-      const copyBtn = trBtn('复制', (ev) => {
-        ev.stopPropagation();
-        copyToClipboard(tr.savedTo || '', () => toast(TEXT_COPY_OK), () => toast(TEXT_COPY_FAIL));
-      });
-      tip.appendChild(pathText);
-      tip.appendChild(copyBtn);
+      tip.textContent = tr.savedTo || '';
       hint.appendChild(tip);
       // 显隐由 JS 控制：hint 悬停显示；移出延迟隐藏（覆盖 6px 间隙），tip 自身悬停取消隐藏
       let tipHideTimer = null;

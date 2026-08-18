@@ -1439,6 +1439,223 @@
   }
   .fm-more:hover { background: var(--card-hover); }
   .fm-more:disabled { cursor: default; opacity: 0.7; }
+  /* ============ 💡 洞察视图（左右布局） ============ */
+  .insights-layout {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .insights-main {
+    flex: 0 0 62%;
+    min-width: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 2px;
+  }
+  .insights-aside {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .insights-aside-hint {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--glass-border);
+    border-radius: var(--radius-sm);
+    color: var(--text-faint);
+    font-size: var(--font-body);
+    text-align: center;
+    line-height: 1.8;
+    user-select: none;
+  }
+  .insights-summary-card {
+    flex: none;
+    padding: 12px 14px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    font-size: var(--font-body);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .insights-section {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .insights-sec-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-body);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .insights-sec-count {
+    font-size: var(--font-sm);
+    font-weight: 500;
+    color: var(--text-faint);
+    padding: 2px 8px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
+  }
+  .insights-card {
+    padding: 10px 12px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .insights-card:hover { background: var(--card-hover); }
+  .insights-card-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    min-width: 0;
+  }
+  .insights-card-head b { color: var(--text); font-weight: 600; }
+  .insights-card-text {
+    font-size: var(--font-body);
+    color: var(--text);
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .insights-card-meta {
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .insights-card-meta .ins-i-reason { color: var(--text-dim); }
+  .insights-prio {
+    flex: none;
+    font-size: var(--font-sm);
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: var(--radius-pill);
+    line-height: 1.6;
+  }
+  .insights-prio.high { background: rgba(255, 149, 0, 0.16); color: #e89b3c; }
+  .insights-prio.mid  { background: rgba(10, 132, 255, 0.14); color: #4aa3ff; }
+  .insights-prio.low  { background: rgba(142, 142, 147, 0.16); color: var(--text-dim); }
+  .insights-llm-badge {
+    flex: none;
+    font-size: var(--font-sm);
+    color: var(--text-faint);
+    padding: 1px 8px;
+    border: 1px dashed var(--glass-border);
+    border-radius: var(--radius-pill);
+    line-height: 1.6;
+  }
+  .insights-llm-badge.ok { color: #34c759; border-style: solid; opacity: 0.9; }
+  .insights-empty {
+    padding: 18px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: var(--font-body);
+  }
+  .insights-unreplied-why {
+    flex: none;
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    padding: 1px 8px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 149, 0, 0.12);
+    line-height: 1.6;
+  }
+  .insights-hl-msg {
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    line-height: 1.5;
+    padding-left: 8px;
+    border-left: 2px solid var(--glass-border);
+    margin-top: 2px;
+  }
+  .insights-hl-msg b { color: var(--text); font-weight: 600; }
+  /* 洞察引导卡 */
+  .insights-guide {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+  }
+  .insights-guide-title { font-size: var(--font-body); font-weight: 600; color: var(--text); }
+  .insights-guide-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: var(--font-body);
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .insights-guide-item .st { flex: none; }
+  .insights-guide-item .st.ok { color: #34c759; }
+  .insights-guide-item .st.warn { color: #e89b3c; }
+  .insights-guide-item .st.bad { color: #ff453a; }
+  .insights-guide-note {
+    font-size: var(--font-sm);
+    color: var(--text-faint);
+    line-height: 1.7;
+    padding: 8px 10px;
+    border-left: 3px solid var(--glass-border);
+    background: var(--card-hover);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .insights-guide-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .insights-embed-form {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+  }
+  .insights-embed-form .ef-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .insights-embed-form label {
+    flex: 0 0 92px;
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+  }
+  .insights-embed-form input,
+  .insights-embed-form select {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 6px 8px;
+  }
+  .insights-embed-form .ef-status { font-size: var(--font-sm); color: var(--text-dim); }
+  .insights-embed-form .ef-status.ok { color: #34c759; }
+  .insights-embed-form .ef-status.bad { color: #ff453a; }
   /* 写信 / 回复弹窗 */
   .compose-modal {
     z-index: 20;
@@ -1545,6 +1762,7 @@
         <button class="icon-btn save-btn" id="saveBtn" title="保存更改">保存</button>
         <button class="header-btn" id="feishuBtn" title="飞书消息">💬 飞书</button>
         <button class="header-btn" id="calendarBtn" title="会议日程">📅 会议</button>
+        <button class="header-btn" id="insightsBtn" title="每日洞察">💡 洞察</button>
         <button class="header-btn" id="mailBtn" title="邮箱">📧 邮箱</button>
         <button class="header-btn" id="helpBtn" title="数据口径">❓ 帮助</button>
         <button class="header-btn" id="configBtn" title="配置">⚙️ 配置</button>
@@ -1605,6 +1823,22 @@
         </div>
       </div>
       <div class="calendar-list" id="calendarList"></div>
+    </div>
+    <div class="mail-view" id="insightsView" hidden>
+      <div class="mail-toolbar">
+        <span class="mail-identity" id="insightsIdentity">💡 洞察</span>
+        <div class="mail-actions">
+          <span class="mail-status" id="insightsStatus"></span>
+          <button class="icon-btn" id="insightsRefreshBtn" title="刷新">⟳</button>
+          <button class="icon-btn" id="insightsGenBtn" title="生成今日洞察" style="width:auto;padding:0 12px;font-size:var(--font-body)">生成今日洞察</button>
+        </div>
+      </div>
+      <div class="insights-layout">
+        <div class="insights-main" id="insightsMain"></div>
+        <div class="insights-aside" id="insightsAside">
+          <div class="insights-aside-hint">预留区<br/>（将来放别的东西）</div>
+        </div>
+      </div>
     </div>
     <div class="compose-modal modal-overlay" id="composeModal" hidden>
       <div class="compose-card modal-card">
@@ -2370,6 +2604,9 @@
     });
 
     $config.appendChild(grid);
+
+    // Embedding API 配置区（💡 洞察用；独立保存，不参与列分配的 dirty 机制）
+    appendEmbedConfig($config);
   }
 
   // ---------- P2-4: 公共视图切换（互斥逻辑） ----------
@@ -2386,11 +2623,13 @@
     mailViewOpen = false;
     feishuViewOpen = false;
     calendarViewOpen = false;
+    insightsViewOpen = false;
     showingConfig = false;
     $body.hidden = false;
     $mailView.hidden = true;
     $feishuView.hidden = true;
     $calendarView.hidden = true;
+    $insightsView.hidden = true;
     $config.hidden = true;
     // 重置所有按钮状态
     document.querySelectorAll('.office-actions .icon-btn').forEach(function(btn) {
@@ -2420,6 +2659,12 @@
       $body.hidden = true;
       $calendarBtn.classList.add('active');
       $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u4F1A\u8BAE';
+    } else if (viewName === 'insights') {
+      insightsViewOpen = true;
+      $insightsView.hidden = false;
+      $body.hidden = true;
+      $insightsBtn.classList.add('active');
+      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u6D1E\u5BDF';
     } else if (viewName === 'config') {
       showingConfig = true;
       $config.hidden = false;
@@ -3885,6 +4130,384 @@
 
   // 轻量 toast 提示（一次性，几秒后消失）
   let _toastTimer = null;
+  // ============================================================
+  // 💡 洞察视图（每日洞察：scripts.insights 脚本接入，配置驱动）
+  // 数据：GET /insights/status（前置条件+最近生成）· GET /insights/data（完整结果）· POST /insights/generate（异步生成）
+  // ============================================================
+  const $insightsBtn = document.getElementById('insightsBtn');
+  const $insightsView = document.getElementById('insightsView');
+  const $insightsIdentity = document.getElementById('insightsIdentity');
+  const $insightsStatus = document.getElementById('insightsStatus');
+  const $insightsRefreshBtn = document.getElementById('insightsRefreshBtn');
+  const $insightsGenBtn = document.getElementById('insightsGenBtn');
+  const $insightsMain = document.getElementById('insightsMain');
+
+  let insightsViewOpen = false;
+  let insightsGenerating = false;   // 前端生成轮询标志
+  let insightsLazyFired = false;    // 本次打开是否已惰性触发（防重复）
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function insightsTimeText(createdAt) {
+    if (!createdAt) return '';
+    return String(createdAt);
+  }
+
+  function insightsPrioClass(p) { return p === '高' ? 'high' : (p === '低' ? 'low' : 'mid'); }
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  // ---------- 引导卡（前置条件检测清单） ----------
+  function renderInsightsGuide(prereq) {
+    const wrap = document.createElement('div');
+    wrap.className = 'insights-guide';
+    wrap.appendChild(el('div', 'insights-guide-title', '💡 洞察 / 每日洞察视图'));
+
+    const items = [
+      { ok: !!prereq.msgConnected, text: '① 飞书消息已接入（未接入先去 💬 飞书视图配置消息流）' },
+      { ok: !!prereq.vectorized, warn: !!prereq.vectorizedUnknown, text: '② 消息已向量化（同步时调用 Embedding API 把消息变成向量，语义洞察依赖它）' },
+      { ok: !!prereq.embedConfigured, warn: !!prereq.embedEndpoint, text: '③ Embedding API 已配置（未配置去 ⚙️ 配置 → Embedding API 填写）' },
+      { ok: !!prereq.llmConfigured, warn: true, text: '④ LLM 精判（未配置时洞察降级为规则判定，不影响使用）' },
+    ];
+    for (const it of items) {
+      const row = document.createElement('div');
+      row.className = 'insights-guide-item';
+      const st = document.createElement('span');
+      st.className = 'st ' + (it.ok ? 'ok' : (it.warn ? 'warn' : 'bad'));
+      st.textContent = it.ok ? '✅' : (it.warn ? '⚠️' : '❌');
+      row.appendChild(st);
+      row.appendChild(el('span', '', it.text));
+      wrap.appendChild(row);
+    }
+
+    const note = document.createElement('div');
+    note.className = 'insights-guide-note';
+    note.textContent = '「Embedding（向量化）」把消息文本变成数学向量，用于语义召回——找出「这个 Q 我们周五对一下」这类形不似而神似的待办/高价值消息。它调用你填写的 Embedding 接口：消息文本会发送到该接口做向量化（联网，与聊天 LLM 是两个不同的接口）。key 仅保存在本机 dsh 凭据库，不会上传、不会随插件分发。';
+    wrap.appendChild(note);
+
+    const actions = document.createElement('div');
+    actions.className = 'insights-guide-actions';
+    const goCfg = el('button', 'icon-btn', '去配置 Embedding');
+    goCfg.style.cssText = 'width:auto;padding:0 12px;font-size:var(--font-body)';
+    goCfg.addEventListener('click', () => { toggleConfig(); setTimeout(scrollEmbedConfigIntoView, 60); });
+    const recheck = el('button', 'icon-btn', '重新检测');
+    recheck.style.cssText = 'width:auto;padding:0 12px;font-size:var(--font-body)';
+    recheck.addEventListener('click', () => loadInsights(true));
+    actions.appendChild(goCfg);
+    actions.appendChild(recheck);
+    wrap.appendChild(actions);
+
+    $insightsMain.innerHTML = '';
+    $insightsMain.appendChild(wrap);
+  }
+
+  function scrollEmbedConfigIntoView() {
+    const f = document.getElementById('embedConfigForm');
+    if (f) f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ---------- 三区块渲染 ----------
+  function renderInsightsData(d) {
+    const secs = d.sections || {};
+    $insightsMain.innerHTML = '';
+
+    // 今日摘要
+    const summary = el('div', 'insights-summary-card', d.summary || '今日暂无洞察');
+    $insightsMain.appendChild(summary);
+
+    // 📋 重要待办
+    const todos = secs.todos || [];
+    const tSec = el('div', 'insights-section');
+    const tHead = el('div', 'insights-sec-head', '📋 重要待办');
+    tHead.appendChild(el('span', 'insights-sec-count', String(todos.length)));
+    tSec.appendChild(tHead);
+    if (todos.length === 0) {
+      tSec.appendChild(el('div', 'insights-empty', '今日暂无待办'));
+    } else {
+      for (const t of todos) {
+        const card = el('div', 'insights-card');
+        const head = el('div', 'insights-card-head');
+        head.appendChild(el('span', 'insights-prio ' + insightsPrioClass(t.priority), '[' + (t.priority || '中') + ']'));
+        head.appendChild(el('b', '', t.chat_name || t.chat_id || ''));
+        if (t.sender_name) head.appendChild(el('span', '', t.sender_name));
+        if (t.created_at) head.appendChild(el('span', '', insightsTimeText(t.created_at)));
+        const badge = el('span', 'insights-llm-badge' + (t.llm ? ' ok' : ''), t.llm ? 'LLM 判定' : '未经 LLM 判定');
+        head.appendChild(badge);
+        card.appendChild(head);
+        if (t.text) card.appendChild(el('div', 'insights-card-text', t.text));
+        const meta = el('div', 'insights-card-meta');
+        if (t.action) meta.appendChild(el('div', '', '→ 要做：' + t.action));
+        if (t.reason) meta.appendChild(el('div', 'ins-i-reason', '💬 ' + t.reason));
+        if (meta.children.length > 0) card.appendChild(meta);
+        tSec.appendChild(card);
+      }
+    }
+    $insightsMain.appendChild(tSec);
+
+    // 📩 未回复消息
+    const unreplied = secs.unreplied || [];
+    const uSec = el('div', 'insights-section');
+    const uHead = el('div', 'insights-sec-head', '📩 未回复消息');
+    uHead.appendChild(el('span', 'insights-sec-count', String(unreplied.length)));
+    uSec.appendChild(uHead);
+    if (unreplied.length === 0) {
+      uSec.appendChild(el('div', 'insights-empty', '都已回复 👍'));
+    } else {
+      for (const u of unreplied) {
+        const card = el('div', 'insights-card');
+        const head = el('div', 'insights-card-head');
+        head.appendChild(el('b', '', u.chat_name || u.chat_id || ''));
+        head.appendChild(el('span', 'insights-unreplied-why', u.why || ''));
+        if (u.since_hours != null) head.appendChild(el('span', '', String(Math.round(u.since_hours * 10) / 10) + ' 小时前'));
+        card.appendChild(head);
+        const lm = u.last_message || {};
+        if (lm.sender_name || lm.text) {
+          card.appendChild(el('div', 'insights-card-text', (lm.sender_name ? lm.sender_name + '：' : '') + (lm.text || '')));
+        }
+        uSec.appendChild(card);
+      }
+    }
+    $insightsMain.appendChild(uSec);
+
+    // 🔥 高价值讨论
+    const highlights = secs.highlights || [];
+    const hSec = el('div', 'insights-section');
+    const hHead = el('div', 'insights-sec-head', '🔥 高价值讨论');
+    hHead.appendChild(el('span', 'insights-sec-count', String(highlights.length)));
+    hSec.appendChild(hHead);
+    if (highlights.length === 0) {
+      hSec.appendChild(el('div', 'insights-empty', '今日暂无高价值讨论'));
+    } else {
+      for (const h of highlights) {
+        const card = el('div', 'insights-card');
+        const head = el('div', 'insights-card-head');
+        head.appendChild(el('b', '', h.chat_name || h.chat_id || ''));
+        const msgs = h.messages || [];
+        if (msgs.length > 0) head.appendChild(el('span', '', msgs.length + ' 条消息'));
+        const badge = el('span', 'insights-llm-badge' + (h.llm ? ' ok' : ''), h.llm ? 'LLM 判定' : '未经 LLM 判定');
+        head.appendChild(badge);
+        card.appendChild(head);
+        if (h.summary) card.appendChild(el('div', 'insights-card-text', '💬 ' + h.summary));
+        for (const m of msgs.slice(0, 3)) {
+          const row = el('div', 'insights-hl-msg');
+          row.appendChild(el('b', '', m.sender_name ? m.sender_name + '：' : ''));
+          row.appendChild(document.createTextNode(m.text || ''));
+          card.appendChild(row);
+        }
+        hSec.appendChild(card);
+      }
+    }
+    $insightsMain.appendChild(hSec);
+  }
+
+  // ---------- 生成（异步：先增量同步再洞察；前端轮询 status） ----------
+  async function insightsGenerate() {
+    if (insightsGenerating) return;
+    insightsGenerating = true;
+    $insightsGenBtn.disabled = true;
+    $insightsGenBtn.textContent = '生成中…';
+    $insightsStatus.textContent = '⏳ 正在生成…（先增量同步再分析）';
+    try {
+      await apiFetch('/feishu/insights/generate', { method: 'POST' });
+      pollInsightsDone();
+    } catch (e) {
+      insightsGenerating = false;
+      $insightsGenBtn.disabled = false;
+      $insightsGenBtn.textContent = '生成今日洞察';
+      $insightsStatus.textContent = '⚠️ 生成失败：' + (e && e.message || e);
+      try { toast('洞察生成失败'); } catch (_) {}
+    }
+  }
+
+  function pollInsightsDone() {
+    const timer = setInterval(async () => {
+      try {
+        const res = await apiFetch('/feishu/insights/status?refresh=1');
+        const j = await res.json();
+        if (j && j.data && !j.data.generating) {
+          clearInterval(timer);
+          insightsGenerating = false;
+          $insightsGenBtn.disabled = false;
+          $insightsGenBtn.textContent = '生成今日洞察';
+          loadInsights(false, true);
+        }
+      } catch (_) { /* 网络抖动继续轮询 */ }
+    }, 3000);
+  }
+
+  // ---------- 加载：status（前置条件/惰性触发）→ data（渲染） ----------
+  async function loadInsights(forceRefresh, skipLazy) {
+    try {
+      const res = await apiFetch('/feishu/insights/status' + (forceRefresh ? '?refresh=1' : ''));
+      const j = await res.json();
+      const d = j && j.data;
+      if (!d) { $insightsStatus.textContent = '⚠️ 状态获取失败'; return; }
+      $insightsStatus.textContent = '';
+
+      if (!d.configured) {
+        // 未配置洞察脚本：显示引导卡
+        renderInsightsGuide(d.prereq || {});
+        return;
+      }
+      if (!(d.prereq && d.prereq.msgConnected)) {
+        // 消息流未接入：显示引导卡（先接消息流）
+        renderInsightsGuide(d.prereq || {});
+        return;
+      }
+
+      // 惰性触发：打开时若今日未生成 → 自动生成（每天最多一次）
+      const lastDate = d.last && d.last.date;
+      if (!skipLazy && !insightsLazyFired && d.configured && (!lastDate || lastDate !== todayStr())) {
+        insightsLazyFired = true;
+        insightsGenerate();
+        return;   // 生成完成后由轮询回调刷新
+      }
+
+      // 有结果 → 渲染数据
+      if (d.last) {
+        const dataRes = await apiFetch('/feishu/insights/data');
+        const dj = await dataRes.json();
+        if (dj && dj.ok && dj.data) {
+          const st = dj.data.stats || {};
+          const llmTxt = st.llm === 'ok' ? 'LLM 判定 ✅' : (st.llm === 'fallback' ? 'LLM 判定 ⚠️（回退规则）' : '规则判定（未配 LLM key）');
+          $insightsStatus.textContent = (d.last.date || '') + ' · 扫描 ' + (st.scanned != null ? st.scanned : '?') + ' 条 · ' + llmTxt;
+          renderInsightsData(dj.data);
+          return;
+        }
+      }
+      // 无 last（未生成过）→ 引导卡
+      renderInsightsGuide(d.prereq || {});
+    } catch (e) {
+      $insightsStatus.textContent = '⚠️ 加载失败';
+      try { toast('洞察加载失败'); } catch (_) {}
+    }
+  }
+
+  function toggleInsights() {
+    toggleView('insights',
+      () => insightsViewOpen, (v) => { insightsViewOpen = v; },
+      () => { insightsLazyFired = false; },
+      () => { loadInsights(false, false); }
+    );
+  }
+  $insightsBtn.addEventListener('click', toggleInsights);
+  $insightsRefreshBtn.addEventListener('click', () => loadInsights(true, true));
+  $insightsGenBtn.addEventListener('click', () => insightsGenerate());
+
+  // ---------- ⚙️ 配置界面：Embedding API 配置区（独立保存，走 /insights/config；key 存 dsh 凭据库） ----------
+  function appendEmbedConfig(parent) {
+    const form = document.createElement('div');
+    form.className = 'insights-embed-form';
+    form.id = 'embedConfigForm';
+
+    const title = el('div', 'insights-guide-title', 'Embedding API（💡 洞察用）');
+    form.appendChild(title);
+
+    const mkRow = (label, input) => {
+      const row = document.createElement('div');
+      row.className = 'ef-row';
+      row.appendChild(el('label', '', label));
+      row.appendChild(input);
+      return row;
+    };
+
+    const provSel = document.createElement('select');
+    for (const p of ['dashscope', 'openai-compatible']) {
+      const opt = document.createElement('option');
+      opt.value = p;
+      opt.textContent = p === 'dashscope' ? '阿里云百炼 dashscope' : 'OpenAI 兼容';
+      provSel.appendChild(opt);
+    }
+    const endpointInput = document.createElement('input');
+    endpointInput.placeholder = 'https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings';
+    endpointInput.value = 'https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings';
+    const modelInput = document.createElement('input');
+    modelInput.placeholder = 'text-embedding-v4';
+    modelInput.value = 'text-embedding-v4';
+    const dimInput = document.createElement('input');
+    dimInput.placeholder = '1024';
+    dimInput.value = '1024';
+    dimInput.type = 'number';
+    const keyInput = document.createElement('input');
+    keyInput.placeholder = 'sk-…（已配置可不填，填写则覆盖）';
+    keyInput.type = 'password';
+
+    form.appendChild(mkRow('Provider', provSel));
+    form.appendChild(mkRow('Endpoint', endpointInput));
+    form.appendChild(mkRow('Model', modelInput));
+    form.appendChild(mkRow('Dimensions', dimInput));
+    form.appendChild(mkRow('API Key', keyInput));
+
+    const statusRow = document.createElement('div');
+    statusRow.className = 'ef-row';
+    const statusSpan = el('span', 'ef-status bad', '检查中…');
+    statusRow.appendChild(statusSpan);
+    form.appendChild(statusRow);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'ef-row';
+    const saveBtn = el('button', 'icon-btn', '保存 Embedding 配置');
+    saveBtn.style.cssText = 'width:auto;padding:0 12px;font-size:var(--font-body)';
+    btnRow.appendChild(saveBtn);
+    form.appendChild(btnRow);
+
+    // 已配置状态（describe 驱动）
+    (async () => {
+      try {
+        const res = await apiFetch('/feishu/insights/status?refresh=1');
+        const j = await res.json();
+        const p = j && j.data && j.data.prereq || {};
+        if (p.embedConfigured) { statusSpan.textContent = '✅ 已配置（端点 + key 就绪）'; statusSpan.className = 'ef-status ok'; }
+        else if (p.embedEndpoint) { statusSpan.textContent = '⚠️ 端点已填，key 未配置'; statusSpan.className = 'ef-status'; }
+        else { statusSpan.textContent = '❌ 未配置'; statusSpan.className = 'ef-status bad'; }
+        if (p.llmConfigured) { const row = el('div', 'insights-guide-item', ''); }
+      } catch (_) { statusSpan.textContent = '⚠️ 状态不可用'; }
+    })();
+
+    saveBtn.addEventListener('click', async () => {
+      saveBtn.disabled = true;
+      statusSpan.textContent = '保存中…';
+      statusSpan.className = 'ef-status';
+      try {
+        const payload = {
+          embedEndpoint: endpointInput.value.trim(),
+          embedModel: modelInput.value.trim(),
+          embedDim: parseInt(dimInput.value, 10) || 0
+        };
+        if (keyInput.value.trim()) payload.apiKey = keyInput.value.trim();
+        const res = await apiFetch('/feishu/insights/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const j = await res.json();
+        if (j && j.ok) {
+          statusSpan.textContent = '✅ 已保存' + (payload.apiKey ? '（含 key）' : '');
+          statusSpan.className = 'ef-status ok';
+          keyInput.value = '';
+        } else {
+          statusSpan.textContent = '❌ ' + ((j && j.error && j.error.message) || '保存失败');
+          statusSpan.className = 'ef-status bad';
+        }
+      } catch (e) {
+        statusSpan.textContent = '❌ 保存失败：' + (e && e.message || e);
+        statusSpan.className = 'ef-status bad';
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+
+    parent.appendChild(form);
+  }
+
   function toast(msg) {
     let el = document.getElementById('officeToast');
     if (!el) {

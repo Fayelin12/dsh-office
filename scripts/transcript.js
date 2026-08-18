@@ -11,7 +11,7 @@
  *
  * 输出：单行 JSON（stdout 只有这一行 JSON）：
  *   { ok: true, file, title, chars, lines }
- *     file：逐字稿本地文件绝对路径（{out-dir}/{日期}-{清洗后标题}-{token}.txt）
+ *     file：逐字稿本地文件绝对路径（{out-dir}/{日期}-{清洗后标题}-{token}.md）
  *     chars / lines：逐字稿字符数 / 行数
  *   失败时：{ ok: false, error: { code, message } }
  *     code：AUTH_REQUIRED（lark-cli 未授权）| NO_PERMISSION（无妙记查看权限）
@@ -97,7 +97,7 @@ async function main() {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const date = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
-  const target = join(outDir, date + '-' + sanitizeTitle(title) + '-' + token + '.txt');
+  const target = join(outDir, date + '-' + sanitizeTitle(title) + '-' + token + '.md');
 
   try {
     renameSync(srcFile, target);

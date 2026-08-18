@@ -3246,7 +3246,14 @@
     return row;
   }
 
-  // 资源消息块：image → 缩略图（点击放大/缩小）；file/folder → 图标 + 文件名 + 下载按钮（folder 只展示）
+  // 资源接口 URL 拼接（统一入口：图片内联/打开原图/文件打开共用）
+  function buildResourceUrl(m, type, action) {
+    const base = action === 'open' ? '/feishu/resource/open' : '/feishu/resource';
+    return base + '?msg=' + encodeURIComponent(m.message_id || '') +
+      '&key=' + encodeURIComponent(m.resource_key) + '&type=' + encodeURIComponent(type);
+  }
+
+  // 资源消息块：image → 缩略图（点击放大/缩小）+ 打开原图；file → 图标 + 文件名 + 打开按钮；folder → 只展示
   function buildFeishuResource(m) {
     const type = m && m.resource_type;
     if (!type || !m.resource_key) return null;
@@ -3259,17 +3266,8 @@
       img.className = 'fm-resource-img';
       img.alt = '图片';
       img.loading = 'lazy';
-      img.src = '/office-ui/feishu/resource?msg=' + encodeURIComponent(m.message_id || '') +
-        '&key=' + encodeURIComponent(m.resource_key) + '&type=image';
+      img.src = buildResourceUrl(m, 'image');
       img.addEventListener('click', () => img.classList.toggle('open'));
-      img.addEventListener('error', () => {
-        // 获取失败（缺权限/过期）：显示占位 + 错误提示
-        img.remove();
-        const err = document.createElement('span');
-        err.className = 'fm-resource-err';
-        err.textContent = '⚠️ 图片不可用（可能无权限或已过期）';
-        box.appendChild(err);
-      });
       box.appendChild(img);
       // 打开原图：新标签页直接渲染本地缓存图（无需下载）
       const view = document.createElement('button');
@@ -3279,6 +3277,15 @@
         window.open(img.src, '_blank', 'noopener');
       });
       box.appendChild(view);
+      img.addEventListener('error', () => {
+        // 获取失败（缺权限/过期）：移除图片与打开按钮，显示占位错误
+        img.remove();
+        view.remove();
+        const err = document.createElement('span');
+        err.className = 'fm-resource-err';
+        err.textContent = '⚠️ 图片不可用（可能无权限或已过期）';
+        box.appendChild(err);
+      });
       return box;
     }
 
@@ -3300,8 +3307,7 @@
         openBtn.disabled = true;
         openBtn.textContent = '打开中…';
         try {
-          const res = await apiFetch('/feishu/resource/open?msg=' + encodeURIComponent(m.message_id || '') +
-            '&key=' + encodeURIComponent(m.resource_key) + '&type=file', { cache: 'no-store' });
+          const res = await apiFetch(buildResourceUrl(m, 'file', 'open'), { cache: 'no-store' });
           const j = await res.json().catch(() => null);
           if (!res.ok || !j || !j.ok) {
             toast((j && j.error && j.error.message) || '打开失败');

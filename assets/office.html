@@ -142,6 +142,25 @@
     letter-spacing: 0.2px;
   }
   .office-actions { display: flex; gap: 8px; }
+  .header-btn {
+    width: auto;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 10px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    color: var(--text-dim);
+    font-size: var(--font-body);
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .header-btn:hover { background: var(--card-hover); color: var(--text); }
+  .header-btn:active { transform: scale(0.94); }
+  .header-btn.active { background: var(--card-hover); color: var(--text); }
   .icon-btn {
     width: 30px; height: 30px;
     display: grid; place-items: center;
@@ -925,17 +944,31 @@
     position: sticky;
     top: 0;
     z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 2px 8px;
     font-size: var(--font-body);
     font-weight: 700;
     letter-spacing: .3px;
-    padding: 6px 10px;
-    border-radius: var(--radius-sm);
-    background: var(--card-bg);
-    border: 1px solid var(--glass-border);
-    color: var(--text-dim);
+    color: var(--text);
+    border-bottom: 1px solid var(--glass-border);
+    background: var(--panel-gradient);
     backdrop-filter: blur(6px);
   }
+  .cal-head-count {
+    flex: none;
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--text-dim);
+    padding: 1px 10px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+  }
   .cal-col.past .cal-col-head { color: var(--text-faint); }
+  .cal-col.past .cal-head-count { color: var(--text-faint); }
   .cal-card {
     display: flex;
     align-items: flex-start;
@@ -953,7 +986,6 @@
   .cal-card.live {
     border-color: rgb(41, 203, 81);
   }
-  .cal-card.done { opacity: .5; }
   /* 左栏时间线：日期（小字）→ 开始时间（大字）→ 至 结束时间（小字灰）
      自适应宽度 + 左对齐，紧贴卡片左缘，不留大空白 */
   .cal-time {
@@ -1008,33 +1040,34 @@
   }
   .cal-minutes {
     flex: none;
-    align-self: flex-start;
     font-size: var(--font-sm);
     font-weight: normal;
     color: var(--tier-mid);
     text-decoration: none;
     border: 1px solid var(--tier-mid);
     border-radius: var(--radius-pill);
-    padding: 2px 10px;
-    margin-top: 2px;
+    padding: 3px 12px;
+    white-space: nowrap;
   }
   .cal-minutes:hover { background: rgba(103, 158, 254, 0.12); }
-  /* 逐字稿状态行 */
-  .cal-tr {
+  /* 操作行：统一 pill 按钮/徽标排版，不随意换行 */
+  .cal-actions {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px 8px;
     margin-top: 8px;
   }
   .cal-tr-badge {
+    flex: none;
     font-size: var(--font-sm);
     font-weight: normal;
     color: var(--text-dim);
     border-radius: var(--radius-pill);
-    padding: 2px 10px;
+    padding: 3px 12px;
     border: 1px solid var(--glass-border);
     background: var(--card-bg);
+    white-space: nowrap;
   }
   .cal-tr-badge.done {
     color: rgb(41, 203, 81);
@@ -1054,15 +1087,52 @@
     border: 1px solid var(--tier-mid);
     border-radius: var(--radius-pill);
     background: transparent;
-    padding: 2px 12px;
+    padding: 3px 12px;
     cursor: pointer;
     font-family: inherit;
+    white-space: nowrap;
   }
   .cal-tr-btn:hover { background: rgba(103, 158, 254, 0.12); }
-  .cal-tr-path {
-    font-size: var(--font-sm);
+  /* 已保存路径的小问号：悬停浮出保存地址，不固定回显 */
+  .cal-tr-hint {
+    position: relative;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border);
     color: var(--text-faint);
+    font-size: var(--font-sm);
+    cursor: help;
+  }
+  .cal-tr-hint:hover .cal-tr-tip,
+  .cal-tr-hint:focus .cal-tr-tip {
+    visibility: visible;
+    opacity: 1;
+  }
+  .cal-tr-tip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 280px;
+    padding: 6px 10px;
+    background: rgba(28, 28, 30, 0.95);
+    color: #fff;
+    font-size: var(--font-sm);
+    line-height: 1.5;
+    border-radius: var(--radius-sm);
+    white-space: normal;
     word-break: break-all;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity .15s ease;
+    z-index: 20;
+    pointer-events: none;
   }
   /* 轻量 toast 提示 */
   .office-toast {
@@ -1319,11 +1389,11 @@
       <div class="office-actions">
         <span class="dirty-badge" id="dirtyBadge"><span class="dirty-dot"></span>有未保存的更改</span>
         <button class="icon-btn save-btn" id="saveBtn" title="保存更改">保存</button>
-        <button class="icon-btn" id="feishuBtn" title="飞书消息">💬</button>
-        <button class="icon-btn" id="calendarBtn" title="会议日程">📅</button>
-        <button class="icon-btn" id="mailBtn" title="邮箱">📧</button>
-        <button class="icon-btn" id="helpBtn" title="数据口径">?</button>
-        <button class="icon-btn" id="configBtn" title="配置">⚙︎</button>
+        <button class="header-btn" id="feishuBtn" title="飞书消息">💬 飞书</button>
+        <button class="header-btn" id="calendarBtn" title="会议日程">📅 会议</button>
+        <button class="header-btn" id="mailBtn" title="邮箱">📧 邮箱</button>
+        <button class="header-btn" id="helpBtn" title="数据口径">❓ 帮助</button>
+        <button class="header-btn" id="configBtn" title="配置">⚙️ 配置</button>
       </div>
     </header>
 
@@ -2154,7 +2224,7 @@
       btn.classList.remove('active');
     });
     // 重置配置按钮文本
-    $configBtn.textContent = '\u2699\uFE0E';
+    $configBtn.textContent = '\u2699\uFE0F \u914D\u7F6E';
     $configBtn.title = '配置';
     // 重置标题
     $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4';
@@ -2181,7 +2251,7 @@
       showingConfig = true;
       $config.hidden = false;
       $body.hidden = true;
-      $configBtn.textContent = '\u2713';
+      $configBtn.textContent = '\u2713 \u5B8C\u6210';
       $configBtn.title = '完成';
       $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u914D\u7F6E';
     }
@@ -3153,7 +3223,14 @@
       col.className = 'cal-col' + (list === past ? ' past' : '');
       const head = document.createElement('div');
       head.className = 'cal-col-head';
-      head.textContent = title + '（' + list.length + '）';
+      const headTitle = document.createElement('span');
+      headTitle.className = 'cal-head-title';
+      headTitle.textContent = title;
+      const headCount = document.createElement('span');
+      headCount.className = 'cal-head-count';
+      headCount.textContent = String(list.length);
+      head.appendChild(headTitle);
+      head.appendChild(headCount);
       col.appendChild(head);
       if (!list.length) {
         const empty = document.createElement('div');
@@ -3212,8 +3289,6 @@
     main.appendChild(meta);
     const actions = buildCalActions(e);
     if (actions) main.appendChild(actions);
-    const status = buildTranscriptStatus(e);
-    if (status) main.appendChild(status);
     card.appendChild(main);
 
     // 右栏：倒计时徽标
@@ -3244,10 +3319,10 @@
     return el;
   }
 
-  // 操作行：📝 妙记/纪要链接 + 转逐字稿按钮（并排）
+  // 操作行：📝 妙记/纪要链接 + 转逐字稿 + 逐字稿状态，统一排进单个 .cal-actions 行（不随意换行）
   function buildCalActions(e) {
     const row = document.createElement('div');
-    row.className = 'cal-tr';
+    row.className = 'cal-actions';
     const ml = calMinutesLink(e);
     if (ml) {
       const link = document.createElement('a');
@@ -3260,6 +3335,7 @@
     }
     const conv = buildConvertBtn(e);
     if (conv) row.appendChild(conv);
+    for (const el of buildTranscriptStatus(e)) row.appendChild(el);
     return row.children.length ? row : null;
   }
 
@@ -3271,21 +3347,26 @@
     return trBtn('转逐字稿', () => convertTranscript(e.event_id));
   }
 
-  // 状态行：done（已生成+保存）/ saved / failed（附申请权限）/ pending / new
+  // 状态元素：done（已生成+保存）/ saved / failed（附申请权限）/ pending / new
+  // 返回元素数组，由 buildCalActions 统一排入操作行
   function buildTranscriptStatus(e) {
     const tr = e && e.transcript;
-    if (!tr || !tr.status) return null;
-    const row = document.createElement('div');
-    row.className = 'cal-tr';
+    if (!tr || !tr.status) return [];
+    const els = [];
     if (tr.status === 'done') {
-      row.appendChild(trBadge('✅ 逐字稿已生成' + (tr.chars ? '（' + tr.chars + ' 字）' : ''), 'done'));
-      row.appendChild(trBtn('保存', () => openSaveDialog(e)));
+      els.push(trBadge('✅ 逐字稿已生成', 'done'));
+      els.push(trBtn('保存', () => openSaveDialog(e)));
     } else if (tr.status === 'saved') {
-      row.appendChild(trBadge('✅ 已保存', 'done'));
-      const path = document.createElement('span');
-      path.className = 'cal-tr-path';
-      path.textContent = tr.savedTo || '';
-      row.appendChild(path);
+      els.push(trBadge('✅ 已保存', 'done'));
+      // 保存地址不固定回显：小问号悬停展示
+      const hint = document.createElement('span');
+      hint.className = 'cal-tr-hint';
+      hint.textContent = '?';
+      const tip = document.createElement('span');
+      tip.className = 'cal-tr-tip';
+      tip.textContent = tr.savedTo || '';
+      hint.appendChild(tip);
+      els.push(hint);
     } else if (tr.status === 'failed') {
       // 失败原因由 toast 一次性提示，卡片不常驻失败文案；无权限时保留申请入口
       if (tr.errorCode === 'NO_PERMISSION') {
@@ -3295,14 +3376,14 @@
           toast(ok ? '已向妙记 owner 发出查看申请' : '申请失败，请稍后重试');
           applyBtn.disabled = false;
         });
-        row.appendChild(applyBtn);
+        els.push(applyBtn);
       }
     } else if (tr.status === 'pending') {
-      row.appendChild(trBadge('⏳ 逐字稿拉取中…'));
+      els.push(trBadge('⏳ 逐字稿拉取中…'));
     } else if (tr.status === 'new') {
-      row.appendChild(trBadge('📥 新妙记，自动拉取中'));
+      els.push(trBadge('📥 新妙记，自动拉取中'));
     }
-    return row.children.length ? row : null;
+    return els;
   }
 
   // ---------- 保存对话框（目标目录输入，记忆上次目录） ----------

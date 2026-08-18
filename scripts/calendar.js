@@ -191,6 +191,39 @@ async function fetchMinuteFromNote(profile, noteDocTokens) {
   return out;
 }
 
+// 标题搜索兜底：vc/纪要穿透都拿不到 minute_token 时，按会议标题搜索妙记
+//（需 scope minutes:minutes.search:read；只接受标题匹配的妙记，避免误匹配）
+async function fetchMinuteByTitle(profile, events) {
+  const out = new Map(); // event_id -> minute_token
+  const targets = events.filter((e) => !e.minute_token && e.summary && e.summary !== '（无标题）');
+  for (const e of targets) {
+    try {
+      const res = await lark(['--profile', profile, 'minutes', '+search',
+        '--query', e.summary, '--format', 'json']);
+      const data = (res && res.ok && res.data) || {};
+      // 兼容多种返回形态：data.items[]（minutes +search 实际形态）/ data.minutes[] / data 本身是数组
+      const list = Array.isArray(data) ? data
+        : Array.isArray(data.items) ? data.items
+        : Array.isArray(data.minutes) ? data.minutes
+        : [];
+      // 标题匹配：items 无 title 字段，标题在 display_info 里（可能带 <h>/<b> 标签）；
+      // 提取纯文本后做「会议标题是妙记标题子串」或「妙记标题包含会议标题」的宽松匹配
+      const hit = list.find((m) => {
+        if (!m) return false;
+        const token = m.token || m.minute_token;
+        if (!token) return false;
+        const info = typeof m.display_info === 'string' ? m.display_info.replace(/<[^>]+>/g, '') : (m.title || '');
+        const firstLine = String(info).split('\n')[0] || '';
+        return firstLine === e.summary || String(info).includes(e.summary) || e.summary.includes(firstLine);
+      });
+      if (hit) {
+        out.set(e.event_id, hit.token || hit.minute_token);
+      }
+    } catch (e) { /* 无 search scope 或失败：跳过，不致命 */ }
+  }
+  return out;
+}
+
 async function main() {
   const argv = process.argv.slice(2);
   const days = parseArg(argv, '--days', 7);
@@ -230,6 +263,9 @@ async function main() {
       .filter(Boolean);
     const minuteFromNote = noteDocTokens.length ? await fetchMinuteFromNote(profile, noteDocTokens) : new Map();
 
+    // 标题搜索兜底：vc / 纪要穿透都拿不到 token 的会议，按标题搜妙记（需 minutes:minutes.search:read scope）
+    const minuteByTitle = await fetchMinuteByTitle(profile, pastEvents);
+
     for (const e of pastEvents) {
       const m = meetingMap.get(e.event_id) || {};
       e.meeting_id = m.meeting_id || '';
@@ -240,6 +276,7 @@ async function main() {
       e.verbatim_doc_token = nt.verbatim_doc_token || '';
       e.minute_token = vc.minute_token || '';
       if (!e.minute_token) e.minute_token = minuteFromNote.get(nt.note_doc_token) || '';
+      if (!e.minute_token) e.minute_token = minuteByTitle.get(e.event_id) || '';
     }
   }
 

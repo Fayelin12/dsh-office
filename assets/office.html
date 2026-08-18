@@ -4151,11 +4151,6 @@
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
-  function insightsTimeText(createdAt) {
-    if (!createdAt) return '';
-    return String(createdAt);
-  }
-
   function insightsPrioClass(p) { return p === '高' ? 'high' : (p === '低' ? 'low' : 'mid'); }
 
   function el(tag, cls, text) {
@@ -4238,7 +4233,7 @@
         head.appendChild(el('span', 'insights-prio ' + insightsPrioClass(t.priority), '[' + (t.priority || '中') + ']'));
         head.appendChild(el('b', '', t.chat_name || t.chat_id || ''));
         if (t.sender_name) head.appendChild(el('span', '', t.sender_name));
-        if (t.created_at) head.appendChild(el('span', '', insightsTimeText(t.created_at)));
+        if (t.created_at) head.appendChild(el('span', '', t.created_at));
         const badge = el('span', 'insights-llm-badge' + (t.llm ? ' ok' : ''), t.llm ? 'LLM 判定' : '未经 LLM 判定');
         head.appendChild(badge);
         card.appendChild(head);
@@ -4419,13 +4414,6 @@
       return row;
     };
 
-    const provSel = document.createElement('select');
-    for (const p of ['dashscope', 'openai-compatible']) {
-      const opt = document.createElement('option');
-      opt.value = p;
-      opt.textContent = p === 'dashscope' ? '阿里云百炼 dashscope' : 'OpenAI 兼容';
-      provSel.appendChild(opt);
-    }
     const endpointInput = document.createElement('input');
     endpointInput.placeholder = 'https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings';
     endpointInput.value = 'https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings';
@@ -4440,7 +4428,6 @@
     keyInput.placeholder = 'sk-…（已配置可不填，填写则覆盖）';
     keyInput.type = 'password';
 
-    form.appendChild(mkRow('Provider', provSel));
     form.appendChild(mkRow('Endpoint', endpointInput));
     form.appendChild(mkRow('Model', modelInput));
     form.appendChild(mkRow('Dimensions', dimInput));
@@ -4468,7 +4455,6 @@
         if (p.embedConfigured) { statusSpan.textContent = '✅ 已配置（端点 + key 就绪）'; statusSpan.className = 'ef-status ok'; }
         else if (p.embedEndpoint) { statusSpan.textContent = '⚠️ 端点已填，key 未配置'; statusSpan.className = 'ef-status'; }
         else { statusSpan.textContent = '❌ 未配置'; statusSpan.className = 'ef-status bad'; }
-        if (p.llmConfigured) { const row = el('div', 'insights-guide-item', ''); }
       } catch (_) { statusSpan.textContent = '⚠️ 状态不可用'; }
     })();
 

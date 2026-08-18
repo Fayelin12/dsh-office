@@ -128,6 +128,8 @@ agently-cli auth login
 
 > 未配置 `scripts.calendar` 时，会议视图显示引导卡，不影响其它功能；未配置 `scripts.transcript` 时，逐字稿功能不显示。
 
+> 📖 **从 0 到 1 配置指南**：飞书消息流 + 会议日程 + 妙记/逐字稿的完整搭建步骤（安装 lark-cli、授权 scope、脚本契约、配置示例）见 [`docs/feishu-setup.md`](docs/feishu-setup.md)。
+
 ## Why dsh-office? / 解决什么问题
 
 - **Before / 之前**：工作区多、会话散、token 不可见、子代理混在主列表里。

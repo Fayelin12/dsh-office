@@ -58,7 +58,6 @@
     "lib",
     "assets",
     "scripts",
-    "docs",
     "cordis.patch.yml",
     "README.md",
     "llms.txt",

@@ -38,6 +38,7 @@ token 用量、子代理、Agent 邮箱**变成一屏 6 列精灵办公室，一
 - 📧 **Agent 邮箱页签** / Agent Mail tab（收件箱 / 已发送 / 读信 / 写信 / 回复，基于 `agently-cli`，不离开面板）
 - 📅 **会议日程视图 + ⏰ 悬浮提醒** / Meetings & reminders（与飞书消息共用 lark-cli 授权，提前 1 小时提醒、每 5 分钟刷新倒计时，已开完会议自动关联妙记/纪要）
 - 📄 **妙记逐字稿 + 一键保存** / Transcripts（自动拉取已结束会议逐字稿到本地缓存，卡片提醒「逐字稿已生成」，点【保存】移动到目标目录）
+- 🪵 **办公室日志** / Office logs（帮助弹窗内 tab：实时查看加载 / 调用 / 同步等全部动作，排查问题）
 - 🏢 6-column sprite office / 6 列精灵办公室
 - 🔵 悬浮入口 + 一键开关 / floating FAB + toggle
 - 🧠 MBTI 角色 + 个性化气泡 / MBTI characters + idle bubble texts

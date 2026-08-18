@@ -233,6 +233,94 @@
   .help-body ul { margin: 4px 0 4px 16px; }
   .help-body li { margin: 2px 0; }
   .help-body b { color: var(--text); font-weight: 600; }
+  /* 弹窗 tab 切换（数据口径 / 办公室日志） */
+  .help-tabs {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px 0;
+  }
+  .help-tab {
+    padding: 4px 14px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: var(--font-body);
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .help-tab:hover { background: var(--card-hover); color: var(--text); }
+  .help-tab.active {
+    background: var(--card-bg);
+    border-color: var(--tier-mid);
+    color: var(--tier-mid);
+    font-weight: 600;
+  }
+  /* 办公室日志：工具行 + 滚动列表 */
+  .help-body.logs-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+    padding-top: 12px;
+  }
+  .log-toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .log-status {
+    font-size: var(--font-sm);
+    color: var(--text-faint);
+  }
+  .log-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    padding: 6px 10px;
+    font-size: var(--font-sm);
+    line-height: 1.5;
+  }
+  .log-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 2px 0;
+  }
+  .log-time {
+    flex: none;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .log-level {
+    flex: none;
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    font-size: 10px;
+    line-height: 16px;
+  }
+  .log-level.info  { color: var(--tier-mid);  background: rgba(10, 132, 255, 0.10); }
+  .log-level.warn  { color: var(--tier-high); background: rgba(255, 159, 10, 0.12); }
+  .log-level.error { color: var(--color-error); background: rgba(255, 69, 58, 0.10); }
+  .log-msg {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-dim);
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+  .log-empty {
+    color: var(--text-faint);
+    text-align: center;
+    padding: 28px 0;
+  }
 
   /* ============ 主体：6 列 ============ */
   .office-body {
@@ -1093,7 +1181,7 @@
     white-space: nowrap;
   }
   .cal-tr-btn:hover { background: rgba(103, 158, 254, 0.12); }
-  /* 已保存路径的小问号：悬停浮出保存地址，不固定回显 */
+  /* 已保存路径的小问号：悬停浮出保存地址（可移入选中/复制），不固定回显 */
   .cal-tr-hint {
     position: relative;
     flex: none;
@@ -1108,8 +1196,7 @@
     font-size: var(--font-sm);
     cursor: help;
   }
-  .cal-tr-hint:hover .cal-tr-tip,
-  .cal-tr-hint:focus .cal-tr-tip {
+  .cal-tr-hint.show .cal-tr-tip {
     visibility: visible;
     opacity: 1;
   }
@@ -1120,6 +1207,10 @@
     transform: translateX(-50%);
     width: max-content;
     max-width: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
     padding: 6px 10px;
     background: rgba(28, 28, 30, 0.95);
     color: #fff;
@@ -1132,8 +1223,14 @@
     opacity: 0;
     transition: opacity .15s ease;
     z-index: 20;
-    pointer-events: none;
+    pointer-events: auto;
+    user-select: text;
   }
+  .cal-tr-tip-path {
+    min-width: 0;
+    word-break: break-all;
+  }
+  .cal-tr-tip .cal-tr-btn { align-self: flex-start; }
   /* 轻量 toast 提示 */
   .office-toast {
     position: fixed;
@@ -1485,10 +1582,14 @@
     <div class="help-modal modal-overlay" id="helpModal" hidden>
       <div class="help-card modal-card">
         <div class="help-head">
-          <span>数据口径说明</span>
+          <span>帮助</span>
           <button class="icon-btn" id="helpClose" title="关闭">✕</button>
         </div>
-        <div class="help-body">
+        <div class="help-tabs">
+          <button class="help-tab active" id="helpTabCaliber">数据口径</button>
+          <button class="help-tab" id="helpTabLogs">办公室日志</button>
+        </div>
+        <div class="help-body" id="helpPanelCaliber">
           <h4>会话状态</h4>
           <ul>
             <li><b>进行中</b>（🔵 转圈）：该会话的 agent 正在运行。</li>
@@ -1512,6 +1613,13 @@
           </ul>
           <h4>对话气泡</h4>
           <p>按状态 / 最近调用工具 / 会话标题关键词，匹配一句随机文案。</p>
+        </div>
+        <div class="help-body logs-body" id="helpPanelLogs" hidden>
+          <div class="log-toolbar">
+            <button class="cal-tr-btn" id="logToggleBtn">暂停</button>
+            <span class="log-status" id="logStatus">实时日志 · 自动滚动</span>
+          </div>
+          <div class="log-list" id="logList"></div>
         </div>
       </div>
     </div>
@@ -1542,6 +1650,9 @@
   const FEISHU_ACTIVE_HOURS = 6;          // 飞书卡片"6小时内活跃"
   const FEISHU_STALE_DAYS = 3;            // 飞书卡片"超3天弱化"
   const MEETING_SOON_MINUTES = 120;       // 会议"即将开始"阈值（分钟）
+  const LOG_POLL_INTERVAL_MS = 2500;      // 办公室日志轮询间隔
+  const LOG_MAX_ROWS = 300;               // 日志列表 DOM 保留上限
+  const LOG_NEAR_BOTTOM_PX = 24;          // 滚动条贴底判定阈值（px）
 
   /* ── 常量 ── */
   const API = '/office-ui';
@@ -2279,13 +2390,148 @@
   }
   $configBtn.addEventListener('click', toggleConfig);
 
-  // ---------- 数据口径帮助弹窗 ----------
+  // ---------- 帮助弹窗（数据口径 / 办公室日志 双 tab） ----------
   const $helpBtn = document.getElementById('helpBtn');
   const $helpModal = document.getElementById('helpModal');
   const $helpClose = document.getElementById('helpClose');
-  $helpBtn.addEventListener('click', () => { $helpModal.hidden = !$helpModal.hidden; });
-  $helpClose.addEventListener('click', () => { $helpModal.hidden = true; });
-  $helpModal.addEventListener('click', (e) => { if (e.target === $helpModal) $helpModal.hidden = true; });
+  const $helpTabCaliber = document.getElementById('helpTabCaliber');
+  const $helpTabLogs = document.getElementById('helpTabLogs');
+  const $helpPanelCaliber = document.getElementById('helpPanelCaliber');
+  const $helpPanelLogs = document.getElementById('helpPanelLogs');
+  const $logToggleBtn = document.getElementById('logToggleBtn');
+  const $logStatus = document.getElementById('logStatus');
+  const $logList = document.getElementById('logList');
+
+  // 日志轮询状态：仅弹窗打开且日志 tab 激活时运行
+  let logPollTimer = null;    // setInterval id
+  let logAutoScroll = true;   // 是否跟随新日志滚动到底
+  let logLastKey = '';        // 列表最后一行 key，防重复追加
+  let logEmptyShown = false;  // 占位文案是否已显示
+
+  function logKey(l) { return (l.t || '') + '|' + (l.level || '') + '|' + (l.msg || ''); }
+
+  function logNearBottom() {
+    return $logList.scrollHeight - $logList.scrollTop - $logList.clientHeight < LOG_NEAR_BOTTOM_PX;
+  }
+
+  function setLogEmpty(on) {
+    if (on === logEmptyShown) return;
+    logEmptyShown = on;
+    const el = $logList.querySelector('.log-empty');
+    if (on && !el) {
+      const d = document.createElement('div');
+      d.className = 'log-empty';
+      d.textContent = '暂无日志';
+      $logList.appendChild(d);
+    } else if (!on && el) {
+      el.remove();
+    }
+  }
+
+  function buildLogRow(l) {
+    const row = document.createElement('div');
+    row.className = 'log-item';
+    const time = document.createElement('span');
+    time.className = 'log-time';
+    time.textContent = l.t || '';
+    const level = document.createElement('span');
+    level.className = 'log-level ' + (l.level || 'info');
+    level.textContent = l.level || '';
+    const msg = document.createElement('span');
+    msg.className = 'log-msg';
+    msg.textContent = l.msg || '';
+    row.appendChild(time);
+    row.appendChild(level);
+    row.appendChild(msg);
+    return row;
+  }
+
+  function appendLogs(logs) {
+    if (!Array.isArray(logs) || !logs.length) {
+      if (!$logList.children.length) setLogEmpty(true);
+      return;
+    }
+    // 跳过已渲染过的行，兼容后端返回全量快照的情况
+    let start = 0;
+    if (logLastKey) {
+      const idx = logs.findIndex((l) => logKey(l) === logLastKey);
+      if (idx >= 0) start = idx + 1;
+    }
+    if (start >= logs.length) return;
+    const follow = logAutoScroll && logNearBottom();
+    const frag = document.createDocumentFragment();
+    for (let i = start; i < logs.length; i++) frag.appendChild(buildLogRow(logs[i]));
+    setLogEmpty(false);
+    $logList.appendChild(frag);
+    while ($logList.children.length > LOG_MAX_ROWS) $logList.removeChild($logList.firstChild);
+    logLastKey = logKey(logs[logs.length - 1]);
+    if (follow) $logList.scrollTop = $logList.scrollHeight;
+  }
+
+  async function fetchOfficeLogs() {
+    try {
+      const res = await apiFetch('/logs', { cache: 'no-store' });
+      const json = await res.json();
+      const data = json && json.ok ? json.data : null;
+      appendLogs(data && data.logs);
+    } catch (_) { /* 拉取失败静默，下一轮重试 */ }
+  }
+
+  function startLogPolling() {
+    if (logPollTimer) return;
+    fetchOfficeLogs();
+    logPollTimer = setInterval(fetchOfficeLogs, LOG_POLL_INTERVAL_MS);
+  }
+
+  function stopLogPolling() {
+    if (!logPollTimer) return;
+    clearInterval(logPollTimer);
+    logPollTimer = null;
+  }
+
+  function updateLogToolbar() {
+    $logToggleBtn.textContent = logAutoScroll ? '暂停' : '继续';
+    $logStatus.textContent = logAutoScroll ? '实时日志 · 自动滚动' : '实时日志 · 已暂停';
+  }
+
+  $logToggleBtn.addEventListener('click', () => {
+    logAutoScroll = !logAutoScroll;
+    updateLogToolbar();
+    if (logAutoScroll) $logList.scrollTop = $logList.scrollHeight;
+  });
+
+  // 仅当弹窗打开且日志 tab 激活时轮询
+  function syncLogPolling() {
+    if (!$helpModal.hidden && $helpTabLogs.classList.contains('active')) startLogPolling();
+    else stopLogPolling();
+  }
+
+  function switchHelpTab(name) {
+    const isLogs = name === 'logs';
+    $helpTabCaliber.classList.toggle('active', !isLogs);
+    $helpTabLogs.classList.toggle('active', isLogs);
+    $helpPanelCaliber.hidden = isLogs;
+    $helpPanelLogs.hidden = !isLogs;
+    syncLogPolling();
+  }
+
+  $helpTabCaliber.addEventListener('click', () => switchHelpTab('caliber'));
+  $helpTabLogs.addEventListener('click', () => switchHelpTab('logs'));
+
+  $helpBtn.addEventListener('click', () => {
+    $helpModal.hidden = !$helpModal.hidden;
+    syncLogPolling();
+  });
+  $helpClose.addEventListener('click', () => {
+    $helpModal.hidden = true;
+    syncLogPolling();
+  });
+  $helpModal.addEventListener('click', (e) => {
+    if (e.target === $helpModal) {
+      $helpModal.hidden = true;
+      syncLogPolling();
+    }
+  });
 
   // ============================================================
   // 邮箱视图（Agent Mail / agently-cli）
@@ -3358,14 +3604,36 @@
       els.push(trBtn('保存', () => openSaveDialog(e)));
     } else if (tr.status === 'saved') {
       els.push(trBadge('✅ 已保存', 'done'));
-      // 保存地址不固定回显：小问号悬停展示
+      // 保存地址不固定回显：小问号悬停展示，可移入选中/复制
       const hint = document.createElement('span');
       hint.className = 'cal-tr-hint';
       hint.textContent = '?';
       const tip = document.createElement('span');
       tip.className = 'cal-tr-tip';
-      tip.textContent = tr.savedTo || '';
+      const pathText = document.createElement('span');
+      pathText.className = 'cal-tr-tip-path';
+      pathText.textContent = tr.savedTo || '';
+      const copyBtn = trBtn('复制', (ev) => {
+        ev.stopPropagation();
+        copyToClipboard(tr.savedTo || '', () => toast(TEXT_COPY_OK), () => toast(TEXT_COPY_FAIL));
+      });
+      tip.appendChild(pathText);
+      tip.appendChild(copyBtn);
       hint.appendChild(tip);
+      // 显隐由 JS 控制：hint 悬停显示；移出延迟隐藏（覆盖 6px 间隙），tip 自身悬停取消隐藏
+      let tipHideTimer = null;
+      const showTip = () => {
+        if (tipHideTimer) { clearTimeout(tipHideTimer); tipHideTimer = null; }
+        hint.classList.add('show');
+      };
+      const hideTip = () => {
+        if (tipHideTimer) clearTimeout(tipHideTimer);
+        tipHideTimer = setTimeout(() => hint.classList.remove('show'), 200);
+      };
+      hint.addEventListener('mouseenter', showTip);
+      hint.addEventListener('mouseleave', hideTip);
+      tip.addEventListener('mouseenter', showTip);
+      tip.addEventListener('mouseleave', hideTip);
       els.push(hint);
     } else if (tr.status === 'failed') {
       // 失败原因由 toast 一次性提示，卡片不常驻失败文案；无权限时保留申请入口

@@ -3263,7 +3263,7 @@
         '&key=' + encodeURIComponent(m.resource_key) + '&type=image';
       img.addEventListener('click', () => img.classList.toggle('open'));
       img.addEventListener('error', () => {
-        // 下载失败（缺权限/过期）：显示占位 + 错误提示
+        // 获取失败（缺权限/过期）：显示占位 + 错误提示
         img.remove();
         const err = document.createElement('span');
         err.className = 'fm-resource-err';
@@ -3271,6 +3271,14 @@
         box.appendChild(err);
       });
       box.appendChild(img);
+      // 打开原图：新标签页直接渲染本地缓存图（无需下载）
+      const view = document.createElement('button');
+      view.className = 'fm-resource-dl';
+      view.textContent = '打开原图';
+      view.addEventListener('click', () => {
+        window.open(img.src, '_blank', 'noopener');
+      });
+      box.appendChild(view);
       return box;
     }
 
@@ -3284,32 +3292,30 @@
     name.title = m.file_name || m.resource_key || '';
     box.appendChild(ic); box.appendChild(name);
     if (type === 'file') {
-      const dl = document.createElement('button');
-      dl.className = 'fm-resource-dl';
-      dl.textContent = '下载';
-      dl.addEventListener('click', async () => {
+      // 文件已缓存本地，用系统默认程序打开（md→编辑器 / pptx→PowerPoint / zip→资源管理器），不走浏览器下载
+      const openBtn = document.createElement('button');
+      openBtn.className = 'fm-resource-dl';
+      openBtn.textContent = '打开';
+      openBtn.addEventListener('click', async () => {
+        openBtn.disabled = true;
+        openBtn.textContent = '打开中…';
         try {
-          const res = await apiFetch('/feishu/resource?msg=' + encodeURIComponent(m.message_id || '') +
+          const res = await apiFetch('/feishu/resource/open?msg=' + encodeURIComponent(m.message_id || '') +
             '&key=' + encodeURIComponent(m.resource_key) + '&type=file', { cache: 'no-store' });
-          if (!res.ok) {
-            const j = await res.json().catch(() => null);
-            toast((j && j.error && j.error.message) || '下载失败');
-            return;
+          const j = await res.json().catch(() => null);
+          if (!res.ok || !j || !j.ok) {
+            toast((j && j.error && j.error.message) || '打开失败');
           }
-          const blob = await res.blob();
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = m.file_name || (m.resource_key + (blob.type === 'application/zip' ? '.zip' : ''));
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
         } catch (e) {
-          toast('下载失败：' + (e && e.message ? e.message : e));
+          toast('打开失败：' + (e && e.message ? e.message : e));
+        } finally {
+          openBtn.disabled = false;
+          openBtn.textContent = '打开';
         }
       });
-      box.appendChild(dl);
+      box.appendChild(openBtn);
     } else {
-      // folder 是容器，不支持下载（lark-cli 无 folder 类型下载）
+      // folder 是容器，不支持打开（lark-cli 无 folder 类型资源）
       const tip = document.createElement('span');
       tip.className = 'fm-resource-err';
       tip.textContent = '文件夹';

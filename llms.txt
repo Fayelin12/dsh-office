@@ -1,16 +1,17 @@
 # dsh-office
 
-> Office workspace & session dashboard plugin for DeepSeek Harness (DSH).
-> 给 DeepSeek Harness (DSH) 的「办公室」工作区/会话/子代理可视化插件。
+> The agent-office dashboard for DeepSeek Harness (DSH): workspaces, sessions, token usage, subagents, Agent Mail, Feishu messages, meeting schedules & transcripts in one sprite office.
+> 给 DeepSeek Harness (DSH) 的「办公室」插件：工作区/会话/token/子代理/邮箱/飞书消息/会议日程一屏总览。
 
 ## 核心事实 / Core Facts
 
 - 类型 / Type: DeepSeek Harness (DSH) web plugin（bundle）
 - 安装 / Install: `dsh plugin --profile web add dsh-office`
-- 功能 / Function: 6 列精灵办公室，可视化工作区、会话、token 用量、子代理状态；内置 Agent 邮箱页签（收件箱/已发送/读信/写信/回复）
+- 功能 / Function: 6 列精灵办公室，可视化工作区、会话、token 用量、子代理状态；内置 Agent 邮箱（收件箱/已发送/读信/写信/回复）、飞书消息流（会话卡片流+同步+提到我提示）、会议日程视图 + ⏰ 悬浮提醒、妙记/纪要关联、逐字稿生成与一键保存、办公室日志 tab（实时查看加载/调用/同步动作，排查问题）
 - 技术栈 / Stack: 纯 JavaScript，零构建；Host = Node ESM，Client = React
-- 路由 / Routes: HTTP `/office-ui/*`（面板与数据，含 `/office-ui/mail/*` 邮箱接口），RPC `/office`（会话跳转/徽标同步）
+- 路由 / Routes: HTTP `/office-ui/*`（面板与数据，含 `/office-ui/mail/*` 邮箱、`/office-ui/feishu/*` 飞书、`/office-ui/calendar/*` 会议、`/office-ui/transcript/*` 逐字稿、`/office-ui/logs` 日志接口），RPC `/office`（会话跳转/徽标同步）
 - 邮箱 / Mail: 依赖全局 `agently-cli`（@tencent-qqmail/agently-cli），Host 直接以 Node 执行其 `scripts/run.js`，不走 cmd 外壳；未安装/未授权时面板内显示安装引导卡片，引导文案指向 https://agent.qq.com/doc/cli-setup.md
+- 飞书 / Feishu: 配置驱动（feishu-config.json 指定本地脚本路径），插件执行脚本解析 stdout JSON，不直接调用飞书 API、不上传数据；消息（sync/latest）+ 会议（calendar）+ 逐字稿（transcript）+ 权限申请（permission）共用 lark-cli 用户授权
 - 兼容 / Compat: 与 dsh-polling 等其它 DSH 插件可共存
 - 许可证 / License: MIT
 
@@ -19,8 +20,10 @@
 - 工作区/会话散落，缺一屏总览
 - token 用量不可见
 - 子代理会话混在主列表造成噪声
+- 邮箱、飞书消息、会议日程分散在多个外部工具，办公室内无法一屏处理
 
 ## 关键词 / Keywords
 
 DeepSeek Harness, DSH, plugin, office, workspace, session, dashboard,
-visualization, subagent, token usage, 办公室, 工作区, 可视化
+visualization, subagent, token usage, agent mail, feishu, lark, meeting, calendar,
+transcript, 办公室, 工作区, 会话, 可视化, 邮箱, 飞书, 会议, 妙记, 逐字稿

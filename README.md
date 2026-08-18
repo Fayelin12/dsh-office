@@ -1,14 +1,18 @@
 # 🏢 dsh-office
 
 > **一眼看穿你的每个 Agent 在忙什么。** The agent-office dashboard for **DeepSeek Harness (DSH)**:
-> workspaces, sessions, token usage and subagents, visualized as a living 6-column sprite office —
-> every agent, at a glance.
+> workspaces, sessions, token usage, subagents, **Agent Mail, Feishu/Lark messages, meeting schedules &
+> transcripts**, visualized as a living 6-column sprite office — every agent, at a glance.
 >
-> **📧 内置 Agent 邮箱**：收件箱 / 读信 / 写信 / 回复，不离开面板直接收发。
-> Built-in **Agent Mail** — read, send & reply to email right inside the panel.
+> **Aha moment**: open the panel and the *whole agent fleet* is one screen — who's working, who's
+> waiting for you, how many tokens each session burned, what tools they just called — plus your
+> Feishu messages & upcoming meetings, without opening a single session.
+>
+> **📧 内置 Agent 邮箱** / **💬 飞书消息流** / **📅 会议日程 + 妙记逐字稿** / **🪵 办公室日志**，
+> 全部在面板内完成，不离开办公室。
 >
 > DeepSeek Harness「办公室」插件：工作区 / 会话 / token 用量 / 子代理一屏总览，
-> 内置 Agent 邮箱收发，每个 agent 在忙什么，一眼就知道。
+> 内置 Agent 邮箱收发、飞书消息、会议日程与妙记逐字稿，每个 agent 在忙什么，一眼就知道。
 
 [![npm](https://img.shields.io/npm/v/dsh-office)](https://www.npmjs.com/package/dsh-office)
 [![npm downloads](https://img.shields.io/npm/dm/dsh-office)](https://www.npmjs.com/package/dsh-office)
@@ -20,22 +24,26 @@
 ## What is dsh-office? / 这是什么
 
 dsh-office is a floating **office panel** for DeepSeek Harness. It turns your
-**workspaces, sessions, token usage, subagents and Agent Mail** into a 6-column sprite office,
-so you can see what every agent is doing at a glance — without opening each session.
+**workspaces, sessions, token usage, subagents, Agent Mail, Feishu/Lark messages and meetings**
+into a 6-column sprite office, so you can see what every agent is doing at a glance —
+without opening each session.
 
 dsh-office 是 DeepSeek Harness 的一个悬浮「办公室」面板，把**工作区、会话、
-token 用量、子代理、Agent 邮箱**变成一屏 6 列精灵办公室，一眼看清每个 agent
-在忙什么，不用逐个点开会话。
+token 用量、子代理、Agent 邮箱、飞书消息、会议日程**变成一屏 6 列精灵办公室，
+一眼看清每个 agent 在忙什么，不用逐个点开会话。
 
 - **Workspace / 工作区**：6 列布局，一眼总览。
 - **Session / 会话**：活跃 / 待确认 / 已完成状态，彩色边框区分。
 - **Token / token 用量**：单次输入 vs 累计，活跃会话实时、历史会话冷读。
 - **Subagent / 子代理**：自动过滤子代理会话，父会话聚合显示「有子代理在跑」。
 - **Mail / 邮箱**：内置 Agent 邮箱页签，收件箱 / 已发送 / 读信 / 写信 / 回复，不离开面板。
+- **Feishu / 飞书**：本机飞书消息流会话卡片（群聊/私聊），一屏查看 + 同步。
+- **Meetings / 会议**：日程卡片 + 倒计时提醒 + 妙记/纪要 + 逐字稿一键保存。
 
 ## Features / 特性
 
 - 📧 **Agent 邮箱页签** / Agent Mail tab（收件箱 / 已发送 / 读信 / 写信 / 回复，基于 `agently-cli`，不离开面板）
+- 💬 **飞书消息流** / Feishu messages（本机消息库会话卡片流：群聊/私聊、新增徽标、最近 3 条预览、消息弹窗、同步/定时增量/提到我悬浮提示）
 - 📅 **会议日程视图 + ⏰ 悬浮提醒** / Meetings & reminders（与飞书消息共用 lark-cli 授权，提前 1 小时提醒、每 5 分钟刷新倒计时，已开完会议自动关联妙记/纪要）
 - 📄 **妙记逐字稿 + 一键保存** / Transcripts（自动拉取已结束会议逐字稿到本地缓存，卡片提醒「逐字稿已生成」，点【保存】移动到目标目录）
 - 🪵 **办公室日志** / Office logs（帮助弹窗内 tab：实时查看加载 / 调用 / 同步等全部动作，排查问题）
@@ -92,6 +100,21 @@ agently-cli auth login
   > 请阅读 https://agent.qq.com/doc/cli-setup.md 文档，按照步骤为我安装并配置 Agent Mail CLI。
 - 完整安装文档：<https://agent.qq.com/doc/cli-setup.md>
 
+## 💬 飞书消息流 / Feishu messages
+
+飞书消息视图把**本机消息库**（如飞书群聊/私聊消息）汇总到办公室面板一屏查看，
+由 `feishu-config.json` 的 `scripts.sync`（采集入库）与 `scripts.latest`（读取）两个本地脚本驱动：
+
+- 插件**不直接调用飞书 API、不上传任何数据**——只执行你配置的本地脚本并解析其 stdout JSON；
+- 面板以**会话卡片流**展示：会话名 + 群/私聊标签 + 新增徽标（+N）+ 最近 3 条预览 + 最后活跃时间，
+  点卡片打开消息弹窗，点消息行展开完整正文；
+- **同步**：手动点「同步」深捞最近 30 天（`manualWindowDays` 可调），或开启 `autoSync` 定时增量同步
+  （整点对齐，无后台守护进程）；
+- **「提到我」悬浮提示**：定时同步后若新消息提到 `mention` 关键词，办公室按钮旁闪过 📢 提示。
+
+> 未配置 `feishu-config.json` 时，💬 飞书视图显示引导卡（含步骤、配置模板、在线指南链接），不影响其它功能。
+> 完整「飞书消息 + 会议日程 从 0 到 1」配置指南见面板内 📖 指南链接。
+
 ## 📅 会议日程 + ⏰ 提醒 / Meetings & reminders
 
 会议功能与飞书消息**共用同一套 lark-cli 授权**：在 `feishu-config.json` 的 `scripts` 里加一个
@@ -143,6 +166,15 @@ A: 单次输入 = 最近一次请求的输入 token；累计 = 该会话历史�
 
 **Q: 子代理会话为什么看不到？**
 A: 子代理会话默认从列表 / 徽标 / 悬浮里过滤（避免噪声），但 token 仍计入父会话。
+
+**Q: 飞书消息 / 会议数据是怎么来的？会不会上传？**
+A: 插件不直接调用飞书 API。你在 `feishu-config.json` 里配置本地脚本（采集/读取），插件执行脚本并解析 stdout JSON——数据只在本机流转，不上传任何服务器。
+
+**Q: 怎么排查插件问题？**
+A: 帮助弹窗 → 「办公室日志」tab，实时查看加载 / 调用 / 同步等全部动作（`/office-ui/logs`）。
+
+**Q: 会议逐字稿保存在哪？**
+A: 拉取后暂存 `~/.dsh/office/transcripts/`；点卡片【保存】可输入目标目录移动过去（记忆上次目录）。
 
 ## Ecosystem / 生态
 

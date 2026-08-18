@@ -3298,7 +3298,7 @@
     prompt.appendChild(document.createTextNode('也可以把下面这句发给你的 AI，让它帮你完成配置：'));
     const promptText = document.createElement('div');
     promptText.className = 'ms-prompt-text';
-    promptText.textContent = '请按照「飞书消息 + 会议日程 从 0 到 1 配置指南」文档，为我安装并配置 lark-cli（含用户授权），准备消息同步脚本与读取脚本（ingestor.js / latest.js），并写入 ~/.dsh/office/feishu-config.json。';
+    promptText.textContent = '请按照「交付-飞书消息采集与Embedding-从0到1.md」文档（feishu-dsh-bridge 目录），为我安装并配置 lark-cli（含用户授权），准备消息同步脚本与读取脚本（ingestor.js / latest.js），并写入 ~/.dsh/office/feishu-config.json。';
     card.appendChild(prompt);
     card.appendChild(promptText);
     card.appendChild(actions);
@@ -3758,7 +3758,7 @@
     prompt.className = 'cs-step';
     prompt.textContent = '也可以把下面这句发给你的 AI，让它帮你完成配置：';
     const promptText = document.createElement('code');
-    promptText.textContent = '请按照「飞书消息 + 会议日程 从 0 到 1 配置指南」文档，为我安装并配置 lark-cli（含用户授权，scope 需含 calendar / vc / minutes），准备 calendar.js 脚本并写入 ~/.dsh/office/feishu-config.json 的 scripts.calendar。';
+    promptText.textContent = '请按照「交付-飞书消息采集与Embedding-从0到1.md」文档（feishu-dsh-bridge 目录），为我安装并配置 lark-cli（含用户授权，scope 需含 calendar / vc / minutes），准备 calendar.js 脚本并写入 ~/.dsh/office/feishu-config.json 的 scripts.calendar。';
     card.appendChild(h); card.appendChild(p1); card.appendChild(p2);
     card.appendChild(p3); card.appendChild(p4); card.appendChild(code2); card.appendChild(p5);
     card.appendChild(prompt); card.appendChild(promptText);

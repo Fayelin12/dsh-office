@@ -175,6 +175,25 @@
   .icon-btn:hover { background: var(--card-hover); }
   .icon-btn:active { transform: scale(0.94); }
   .icon-btn.active { background: var(--card-hover); }
+  /* 配置指南链接（工具栏常驻入口，未配置/失败场景也能找到文档） */
+  .guide-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    color: var(--text-dim);
+    font-size: var(--font-body);
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .guide-link:hover { background: var(--card-hover); color: var(--text); }
+  .guide-link:active { transform: scale(0.94); }
 
   /* ============ 通用浮层弹窗 ============ */
   .modal-overlay {
@@ -1512,6 +1531,7 @@
         <span class="mail-identity" id="feishuIdentity">💬 飞书</span>
         <div class="mail-actions">
           <span class="mail-status" id="feishuStatus"></span>
+          <a class="guide-link" href="https://qcn7nupmeook.feishu.cn/docx/GIMZdIJjooOenjxcoJicn5sEnGc" target="_blank" rel="noopener" title="飞书消息 + 会议日程 从 0 到 1 配置指南">📖 指南</a>
           <button class="icon-btn" id="feishuRefreshBtn" title="刷新">⟳</button>
           <button class="icon-btn" id="feishuSyncBtn" title="同步消息" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
         </div>
@@ -1532,6 +1552,7 @@
         <span class="mail-identity" id="calendarIdentity">📅 会议</span>
         <div class="mail-actions">
           <span class="mail-status" id="calendarStatus"></span>
+          <a class="guide-link" href="https://qcn7nupmeook.feishu.cn/docx/GIMZdIJjooOenjxcoJicn5sEnGc" target="_blank" rel="noopener" title="飞书消息 + 会议日程 从 0 到 1 配置指南">📖 指南</a>
           <button class="icon-btn" id="calendarRefreshBtn" title="刷新">⟳</button>
           <button class="icon-btn" id="calendarSyncBtn" title="同步日程" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
         </div>
@@ -1657,6 +1678,9 @@
   const TEXT_RETRY = '重新检测';
   const TEXT_COPY_OK = '已复制 ✓';
   const TEXT_COPY_FAIL = '复制失败';
+  // 飞书消息 + 会议日程 从 0 到 1 配置指南（在线文档，引导卡与提示词统一引用）
+  const GUIDE_URL = 'https://qcn7nupmeook.feishu.cn/docx/GIMZdIJjooOenjxcoJicn5sEnGc';
+  const GUIDE_LABEL = '📖 配置指南（在线文档）';
   const FEISHU_PER_CHAT = 20;
   const FEISHU_PREVIEW_COUNT = 10;
   const SNAPSHOT_WAIT_MS = 150;
@@ -3292,15 +3316,23 @@
     card.appendChild(desc);
     card.appendChild(steps);
     card.appendChild(tpl);
-    // 可复制提示词：发给 AI 代配（在线文档链接后续补充）
+    // 可复制提示词：发给 AI 代配（附带在线文档链接，AI 可打开阅读）
     const prompt = document.createElement('div');
     prompt.className = 'ms-prompt';
     prompt.appendChild(document.createTextNode('也可以把下面这句发给你的 AI，让它帮你完成配置：'));
     const promptText = document.createElement('div');
     promptText.className = 'ms-prompt-text';
-    promptText.textContent = '请按照「飞书消息 + 会议日程 从 0 到 1 配置指南」文档，为我安装并配置 lark-cli（含用户授权），准备消息同步脚本与读取脚本（ingestor.js / latest.js），并写入 ~/.dsh/office/feishu-config.json。';
+    promptText.textContent = '请阅读飞书配置指南（' + GUIDE_URL + '），按照文档为我安装并配置 lark-cli（含用户授权），准备消息同步脚本与读取脚本（ingestor.js / latest.js），并写入 ~/.dsh/office/feishu-config.json。';
     card.appendChild(prompt);
     card.appendChild(promptText);
+    // 显式文档链接入口
+    const guideLink = document.createElement('a');
+    guideLink.className = 'guide-link';
+    guideLink.href = GUIDE_URL;
+    guideLink.target = '_blank';
+    guideLink.rel = 'noopener';
+    guideLink.textContent = GUIDE_LABEL;
+    card.appendChild(guideLink);
     card.appendChild(actions);
     wrap.appendChild(card);
     $feishuList.appendChild(wrap);
@@ -3738,7 +3770,13 @@
     h.textContent = '📅 会议日程未配置';
     const p1 = document.createElement('div');
     p1.className = 'cs-step';
-    p1.textContent = '会议日程与飞书消息共用同一套 lark-cli 授权与配置（feishu-config.json），只是脚本不同。配置一次，两个功能都能用。完整「从 0 到 1」指南见下方文档。';
+    p1.textContent = '会议日程与飞书消息共用同一套 lark-cli 授权与配置（feishu-config.json），只是脚本不同。配置一次，两个功能都能用。';
+    const guideLink = document.createElement('a');
+    guideLink.className = 'guide-link';
+    guideLink.href = GUIDE_URL;
+    guideLink.target = '_blank';
+    guideLink.rel = 'noopener';
+    guideLink.textContent = GUIDE_LABEL;
     const p2 = document.createElement('div');
     p2.className = 'cs-step';
     p2.textContent = '1. 安装并授权 lark-cli（用户身份，需 calendar / vc / minutes scope）';
@@ -3753,13 +3791,13 @@
     const p5 = document.createElement('div');
     p5.className = 'cs-step';
     p5.textContent = '4. 刷新页面，点右上角「同步」即可拉取日程。';
-    // 可复制提示词：发给 AI 代配（在线文档链接后续补充）
+    // 可复制提示词：发给 AI 代配（附带在线文档链接，AI 可打开阅读）
     const prompt = document.createElement('div');
     prompt.className = 'cs-step';
     prompt.textContent = '也可以把下面这句发给你的 AI，让它帮你完成配置：';
     const promptText = document.createElement('code');
-    promptText.textContent = '请按照「飞书消息 + 会议日程 从 0 到 1 配置指南」文档，为我安装并配置 lark-cli（含用户授权，scope 需含 calendar / vc / minutes），准备 calendar.js 脚本并写入 ~/.dsh/office/feishu-config.json 的 scripts.calendar。';
-    card.appendChild(h); card.appendChild(p1); card.appendChild(p2);
+    promptText.textContent = '请阅读飞书配置指南（' + GUIDE_URL + '），按照文档为我安装并配置 lark-cli（含用户授权，scope 需含 calendar / vc / minutes），准备 calendar.js 脚本并写入 ~/.dsh/office/feishu-config.json 的 scripts.calendar。';
+    card.appendChild(h); card.appendChild(p1); card.appendChild(guideLink); card.appendChild(p2);
     card.appendChild(p3); card.appendChild(p4); card.appendChild(code2); card.appendChild(p5);
     card.appendChild(prompt); card.appendChild(promptText);
     wrap.appendChild(card);

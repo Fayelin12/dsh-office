@@ -3404,6 +3404,10 @@
       }
       feishuMessages = (json.data && json.data.chats) || [];
       feishuSince = (json.data && json.data.since) || '';
+      // latest.js 全量路径下 messages 已是「本次新入库」；卡片预览/详情要展示最近 N 条，改用 recent_messages
+      for (const c of feishuMessages) {
+        if (c && c.recent_messages) c.messages = c.recent_messages;
+      }
       renderFeishuCards(feishuMessages);
     } catch (e) {
       setStatus($feishuStatus, TEXT_READ_ERROR + '：' + (e && e.message ? e.message : e));

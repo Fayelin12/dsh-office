@@ -1656,6 +1656,49 @@
   .insights-embed-form .ef-status { font-size: var(--font-sm); color: var(--text-dim); }
   .insights-embed-form .ef-status.ok { color: #34c759; }
   .insights-embed-form .ef-status.bad { color: #ff453a; }
+  /* 💡 洞察：日期切换 + 卡片操作 + 转会话/确认弹窗 */
+  .insights-date-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 12px;
+    font-size: var(--font-body);
+    color: var(--text);
+  }
+  .insights-date-nav .icon-btn { padding: 2px 8px; }
+  .insights-date-label {
+    min-width: 96px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .insights-card-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .insights-card-actions .icon-btn {
+    width: auto;
+    padding: 0 8px;
+    font-size: var(--font-sm);
+  }
+  .insights-action-remove { color: #ff453a; }
+  .compose-body .confirm-message {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    font-size: var(--font-body);
+    color: var(--text);
+  }
+  .compose-body .confirm-message.danger { color: #ff453a; font-weight: 600; }
+  .compose-body select {
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-sub);
+    padding: 9px 12px;
+    width: 100%;
+  }
   /* 写信 / 回复弹窗 */
   .compose-modal {
     z-index: 20;
@@ -1827,6 +1870,11 @@
     <div class="mail-view" id="insightsView" hidden>
       <div class="mail-toolbar">
         <span class="mail-identity" id="insightsIdentity">💡 洞察</span>
+        <div class="insights-date-nav" id="insightsDateNav" hidden>
+          <button class="icon-btn" id="insightsDatePrev" title="前一天">‹</button>
+          <span class="insights-date-label" id="insightsDateLabel"></span>
+          <button class="icon-btn" id="insightsDateNext" title="后一天">›</button>
+        </div>
         <div class="mail-actions">
           <span class="mail-status" id="insightsStatus"></span>
           <button class="icon-btn" id="insightsRefreshBtn" title="刷新">⟳</button>
@@ -1854,6 +1902,37 @@
         <div class="compose-foot">
           <span class="compose-error" id="composeError"></span>
           <button class="icon-btn" id="composeSendBtn" style="width:auto;padding:0 18px;font-size:var(--font-body);font-weight:600">发送</button>
+        </div>
+      </div>
+    </div>
+    <div class="compose-modal modal-overlay" id="confirmModal" hidden>
+      <div class="compose-card modal-card">
+        <div class="compose-head">
+          <span id="confirmTitle">确认</span>
+          <button class="icon-btn" id="confirmClose" title="关闭">✕</button>
+        </div>
+        <div class="compose-body">
+          <div class="confirm-message danger" id="confirmMessage"></div>
+        </div>
+        <div class="compose-foot">
+          <span class="compose-error" id="confirmError"></span>
+          <button class="icon-btn" id="confirmOkBtn" style="width:auto;padding:0 18px;font-size:var(--font-body);font-weight:600">确认</button>
+        </div>
+      </div>
+    </div>
+    <div class="compose-modal modal-overlay" id="toSessionModal" hidden>
+      <div class="compose-card modal-card">
+        <div class="compose-head">
+          <span>↗ 转会话（新建任务）</span>
+          <button class="icon-btn" id="toSessionClose" title="关闭">✕</button>
+        </div>
+        <div class="compose-body">
+          <select id="toSessionWorkspace" title="目标工作区"></select>
+          <textarea id="toSessionPrompt" placeholder="任务指令：将作为新会话的第一条消息（已预填洞察内容，可编辑）"></textarea>
+        </div>
+        <div class="compose-foot">
+          <span class="compose-error" id="toSessionError"></span>
+          <button class="icon-btn" id="toSessionOkBtn" style="width:auto;padding:0 18px;font-size:var(--font-body);font-weight:600">创建会话并开工</button>
         </div>
       </div>
     </div>
@@ -4148,7 +4227,7 @@
   let _toastTimer = null;
   // ============================================================
   // 💡 洞察视图（每日洞察：scripts.insights 脚本接入，配置驱动）
-  // 数据：GET /insights/status（前置条件+最近生成）· GET /insights/data（完整结果）· POST /insights/generate（异步生成）
+  // 数据：GET /insights/status（前置条件+最近生成）· GET /insights/dates + /insights/history?date=（历史）· POST /insights/generate（异步生成）· POST /insights/delete|to-session
   // ============================================================
   const $insightsBtn = document.getElementById('insightsBtn');
   const $insightsView = document.getElementById('insightsView');
@@ -4157,10 +4236,28 @@
   const $insightsRefreshBtn = document.getElementById('insightsRefreshBtn');
   const $insightsGenBtn = document.getElementById('insightsGenBtn');
   const $insightsMain = document.getElementById('insightsMain');
+  const $insightsDateNav = document.getElementById('insightsDateNav');
+  const $insightsDateLabel = document.getElementById('insightsDateLabel');
+  const $insightsDatePrev = document.getElementById('insightsDatePrev');
+  const $insightsDateNext = document.getElementById('insightsDateNext');
+  const $confirmModal = document.getElementById('confirmModal');
+  const $confirmTitle = document.getElementById('confirmTitle');
+  const $confirmMessage = document.getElementById('confirmMessage');
+  const $confirmClose = document.getElementById('confirmClose');
+  const $confirmOkBtn = document.getElementById('confirmOkBtn');
+  const $toSessionModal = document.getElementById('toSessionModal');
+  const $toSessionWorkspace = document.getElementById('toSessionWorkspace');
+  const $toSessionPrompt = document.getElementById('toSessionPrompt');
+  const $toSessionError = document.getElementById('toSessionError');
+  const $toSessionClose = document.getElementById('toSessionClose');
+  const $toSessionOkBtn = document.getElementById('toSessionOkBtn');
 
   let insightsViewOpen = false;
   let insightsGenerating = false;   // 前端生成轮询标志
   let insightsLazyFired = false;    // 本次打开是否已惰性触发（防重复）
+  let insightsDate = null;          // 当前查看日期（YYYY-MM-DD）
+  let insightsDates = [];           // 已生成洞察的日期列表（新 → 旧）
+  let currentInsightsDay = null;    // 当前渲染的整日快照（转会话取条目文本用）
 
   function todayStr() {
     const d = new Date();
@@ -4223,11 +4320,26 @@
   // ---------- 三区块渲染 ----------
   function renderInsightsData(d) {
     const secs = d.sections || {};
+    currentInsightsDay = d;
+    const date = d.date || insightsDate || '';
     $insightsMain.innerHTML = '';
 
-    // 今日摘要
+    // 当日摘要
     const summary = el('div', 'insights-summary-card', d.summary || '今日暂无洞察');
     $insightsMain.appendChild(summary);
+
+    // 卡片操作（🗑 删除 / ↗ 转会话）——删除走二次确认，转会话新建任务
+    function appendCardActions(card, section, index) {
+      const acts = el('div', 'insights-card-actions');
+      const rm = el('button', 'icon-btn insight-action insights-action-remove', '🗑 删除');
+      const ts = el('button', 'icon-btn insight-action', '↗ 转会话');
+      rm.dataset.kind = 'remove';
+      ts.dataset.kind = 'to-session';
+      for (const b of [rm, ts]) { b.dataset.date = date; b.dataset.section = section; b.dataset.index = String(index); }
+      acts.appendChild(rm);
+      acts.appendChild(ts);
+      card.appendChild(acts);
+    }
 
     // 📋 重要待办
     const todos = secs.todos || [];
@@ -4238,7 +4350,7 @@
     if (todos.length === 0) {
       tSec.appendChild(el('div', 'insights-empty', '今日暂无待办'));
     } else {
-      for (const t of todos) {
+      todos.forEach((t, i) => {
         const card = el('div', 'insights-card');
         const head = el('div', 'insights-card-head');
         head.appendChild(el('span', 'insights-prio ' + insightsPrioClass(t.priority), '[' + (t.priority || '中') + ']'));
@@ -4253,8 +4365,9 @@
         if (t.action) meta.appendChild(el('div', '', '→ 要做：' + t.action));
         if (t.reason) meta.appendChild(el('div', 'ins-i-reason', '💬 ' + t.reason));
         if (meta.children.length > 0) card.appendChild(meta);
+        appendCardActions(card, 'todos', i);
         tSec.appendChild(card);
-      }
+      });
     }
     $insightsMain.appendChild(tSec);
 
@@ -4267,7 +4380,7 @@
     if (unreplied.length === 0) {
       uSec.appendChild(el('div', 'insights-empty', '都已回复 👍'));
     } else {
-      for (const u of unreplied) {
+      unreplied.forEach((u, i) => {
         const card = el('div', 'insights-card');
         const head = el('div', 'insights-card-head');
         head.appendChild(el('b', '', u.chat_name || u.chat_id || ''));
@@ -4278,8 +4391,9 @@
         if (lm.sender_name || lm.text) {
           card.appendChild(el('div', 'insights-card-text', (lm.sender_name ? lm.sender_name + '：' : '') + (lm.text || '')));
         }
+        appendCardActions(card, 'unreplied', i);
         uSec.appendChild(card);
-      }
+      });
     }
     $insightsMain.appendChild(uSec);
 
@@ -4292,7 +4406,7 @@
     if (highlights.length === 0) {
       hSec.appendChild(el('div', 'insights-empty', '今日暂无高价值讨论'));
     } else {
-      for (const h of highlights) {
+      highlights.forEach((h, i) => {
         const card = el('div', 'insights-card');
         const head = el('div', 'insights-card-head');
         head.appendChild(el('b', '', h.chat_name || h.chat_id || ''));
@@ -4308,10 +4422,147 @@
           row.appendChild(document.createTextNode(m.text || ''));
           card.appendChild(row);
         }
+        appendCardActions(card, 'highlights', i);
         hSec.appendChild(card);
-      }
+      });
     }
     $insightsMain.appendChild(hSec);
+  }
+
+  function renderInsightsEmpty(date) {
+    currentInsightsDay = null;
+    $insightsMain.innerHTML = '';
+    const wrap = el('div', 'insights-guide');
+    wrap.appendChild(el('div', 'insights-guide-title', '💡 洞察 · ' + (date || '')));
+    wrap.appendChild(el('div', 'insights-empty', '该日未生成洞察'));
+    $insightsMain.appendChild(wrap);
+  }
+
+  // ---------- 删除（二次确认 → 硬删除） ----------
+  let confirmOkAction = null;
+  function showConfirm(title, message, onOk) {
+    $confirmTitle.textContent = title;
+    $confirmMessage.textContent = message;
+    confirmOkAction = onOk;
+    $confirmModal.hidden = false;
+  }
+  $confirmClose.addEventListener('click', () => { $confirmModal.hidden = true; confirmOkAction = null; });
+  $confirmModal.addEventListener('click', (e) => { if (e.target === $confirmModal) { $confirmModal.hidden = true; confirmOkAction = null; } });
+  $confirmOkBtn.addEventListener('click', () => {
+    const fn = confirmOkAction;
+    $confirmModal.hidden = true;
+    confirmOkAction = null;
+    if (fn) fn();
+  });
+
+  function confirmDeleteInsight(loc) {
+    showConfirm('删除这条洞察？', '此操作不可恢复（硬删除），将从已保存的洞察记录中直接移除。', async () => {
+      try {
+        const res = await apiFetch('/feishu/insights/delete', {
+          method: 'POST',
+          headers: JSON_HEADERS,
+          body: JSON.stringify(loc)
+        });
+        const j = await res.json();
+        if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '删除失败');
+        toast('已删除');
+        loadInsights(false, true);
+      } catch (err) {
+        toast('删除失败：' + (err && err.message ? err.message : err));
+      }
+    });
+  }
+
+  // ---------- 转会话（新建会话任务：选工作区 + 初始指令 → client 执行 create/prompt/open） ----------
+  const DEFAULT_TO_SESSION_WORKSPACE_TITLE = '桌面';   // 转会话默认目标工作区（按标题匹配，无则第一个）
+
+  function buildWorkspaceOptions() {
+    let all = Array.isArray(DATA.workspaces) ? DATA.workspaces : [];
+    if (all.length === 0) {
+      all = [];
+      for (const col of (DATA.columns || [])) all.push(...(col.workspaces || []));
+    }
+    $toSessionWorkspace.innerHTML = '';
+    let defaultIdx = 0;
+    all.forEach((ws, i) => {
+      const opt = document.createElement('option');
+      opt.value = ws.id;
+      opt.textContent = ws.title;
+      $toSessionWorkspace.appendChild(opt);
+      if (ws.title === DEFAULT_TO_SESSION_WORKSPACE_TITLE) defaultIdx = i;
+    });
+    $toSessionWorkspace.selectedIndex = defaultIdx;
+  }
+
+  function openToSession(loc) {
+    const sec = currentInsightsDay && currentInsightsDay.sections && currentInsightsDay.sections[loc.section];
+    const item = sec && sec[loc.index];
+    if (!item) { toast('该条洞察不存在，请刷新'); return; }
+    let body = '请处理以下来自办公室洞察的事项：\n\n';
+    if (loc.section === 'todos') {
+      if (item.action) body += '要做什么：' + item.action + '\n';
+      if (item.reason) body += '理由：' + item.reason + '\n';
+      body += '\n原消息：\n' + (item.text || '');
+    } else if (loc.section === 'unreplied') {
+      const lm = item.last_message || {};
+      body += '有一条尚未回复的消息：\n' + (lm.sender_name ? lm.sender_name + '：' : '') + (lm.text || '') + '\n\n请处理这条消息。';
+    } else {
+      body += '有一场高价值讨论值得回顾：\n' + (item.summary || '') + '\n\n相关消息：\n' +
+        (item.messages || []).map((m) => (m.sender_name ? m.sender_name + '：' : '') + (m.text || '')).join('\n');
+    }
+    $toSessionPrompt.value = body;
+    $toSessionError.textContent = '';
+    buildWorkspaceOptions();
+    $toSessionModal.hidden = false;
+  }
+
+  async function submitToSession() {
+    const workspaceId = $toSessionWorkspace.value;
+    const promptText = $toSessionPrompt.value.trim();
+    if (!workspaceId) { $toSessionError.textContent = '请选择目标工作区'; return; }
+    if (!promptText) { $toSessionError.textContent = '任务指令不能为空'; return; }
+    try {
+      const res = await apiFetch('/feishu/insights/to-session', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ workspaceId, promptText })
+      });
+      const j = await res.json();
+      if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '提交失败');
+      $toSessionModal.hidden = true;
+      toast('已提交，正在创建会话并开工…');
+    } catch (err) {
+      $toSessionError.textContent = (err && err.message ? err.message : String(err));
+    }
+  }
+
+  // 卡片操作（事件委托）
+  $insightsMain.addEventListener('click', (e) => {
+    const btn = e.target.closest('.insight-action');
+    if (!btn) return;
+    const loc = { date: btn.dataset.date, section: btn.dataset.section, index: parseInt(btn.dataset.index, 10) };
+    if (btn.dataset.kind === 'remove') confirmDeleteInsight(loc);
+    else if (btn.dataset.kind === 'to-session') openToSession(loc);
+  });
+
+  $insightsDatePrev.addEventListener('click', () => {
+    const i = insightsDates.indexOf(insightsDate);
+    if (i > 0) { insightsDate = insightsDates[i - 1]; loadInsights(false, true); }
+  });
+  $insightsDateNext.addEventListener('click', () => {
+    const i = insightsDates.indexOf(insightsDate);
+    if (i >= 0 && i < insightsDates.length - 1) { insightsDate = insightsDates[i + 1]; loadInsights(false, true); }
+  });
+  $toSessionClose.addEventListener('click', () => { $toSessionModal.hidden = true; });
+  $toSessionModal.addEventListener('click', (e) => { if (e.target === $toSessionModal) $toSessionModal.hidden = true; });
+  $toSessionOkBtn.addEventListener('click', submitToSession);
+
+  function updateInsightsDateNav() {
+    const idx = insightsDates.indexOf(insightsDate);
+    $insightsDateLabel.textContent = insightsDate || '';
+    $insightsDateNav.hidden = insightsDates.length === 0;
+    $insightsDatePrev.disabled = idx <= 0;
+    $insightsDateNext.disabled = idx < 0 || idx >= insightsDates.length - 1;
   }
 
   // ---------- 生成（异步：先增量同步再洞察；前端轮询 status） ----------
@@ -4343,20 +4594,20 @@
           insightsGenerating = false;
           $insightsGenBtn.disabled = false;
           $insightsGenBtn.textContent = '生成今日洞察';
+          insightsDate = todayStr();   // 生成完成 → 回到今天视图
           loadInsights(false, true);
         }
       } catch (_) { /* 网络抖动继续轮询 */ }
     }, 3000);
   }
 
-  // ---------- 加载：status（前置条件/惰性触发）→ data（渲染） ----------
+  // ---------- 加载：status（前置条件/惰性触发）→ dates（日期切换）→ history（所选日期渲染） ----------
   async function loadInsights(forceRefresh, skipLazy) {
     try {
       const res = await apiFetch('/feishu/insights/status' + (forceRefresh ? '?refresh=1' : ''));
       const j = await res.json();
       const d = j && j.data;
       if (!d) { $insightsStatus.textContent = '⚠️ 状态获取失败'; return; }
-      $insightsStatus.textContent = '';
 
       if (!d.configured) {
         // 未配置洞察脚本：显示引导卡
@@ -4369,28 +4620,41 @@
         return;
       }
 
-      // 惰性触发：打开时若今日未生成 → 自动生成（每天最多一次）
+      // 已生成日期列表（驱动日期切换；30 天保留由后端裁剪）
+      try {
+        const dr = await apiFetch('/feishu/insights/dates' + (forceRefresh ? '?refresh=1' : ''));
+        const dj = await dr.json();
+        insightsDates = (dj && dj.ok && dj.data && Array.isArray(dj.data.dates)) ? dj.data.dates : [];
+      } catch (_) { insightsDates = []; }
+
+      // 默认查看日期：最近有数据的一天（优先今天）
+      const today = todayStr();
+      if (!insightsDate || !insightsDates.includes(insightsDate)) {
+        insightsDate = insightsDates.includes(today) ? today : (insightsDates[0] || today);
+      }
+      updateInsightsDateNav();
+
+      // 惰性触发：查看今天且今日未生成 → 自动生成（每天最多一次）
       const lastDate = d.last && d.last.date;
-      if (!skipLazy && !insightsLazyFired && d.configured && (!lastDate || lastDate !== todayStr())) {
+      if (!skipLazy && !insightsLazyFired && insightsDate === today && (!lastDate || lastDate !== today)) {
         insightsLazyFired = true;
         insightsGenerate();
         return;   // 生成完成后由轮询回调刷新
       }
 
-      // 有结果 → 渲染数据
-      if (d.last) {
-        const dataRes = await apiFetch('/feishu/insights/data');
-        const dj = await dataRes.json();
-        if (dj && dj.ok && dj.data) {
-          const st = dj.data.stats || {};
-          const llmTxt = st.llm === 'ok' ? 'LLM 判定 ✅' : (st.llm === 'fallback' ? 'LLM 判定 ⚠️（回退规则）' : '规则判定（未配 LLM key）');
-          $insightsStatus.textContent = (d.last.date || '') + ' · 扫描 ' + (st.scanned != null ? st.scanned : '?') + ' 条 · ' + llmTxt;
-          renderInsightsData(dj.data);
-          return;
-        }
+      // 所选日期数据（历史接口；无数据 → 空态）
+      const hr = await apiFetch('/feishu/insights/history?date=' + encodeURIComponent(insightsDate));
+      const hj = await hr.json();
+      const hd = hj && hj.ok && hj.data;
+      if (hd && !hd.empty) {
+        const st = hd.stats || {};
+        const llmTxt = st.llm === 'ok' ? 'LLM 判定 ✅' : (st.llm === 'fallback' ? 'LLM 判定 ⚠️（回退规则）' : '规则判定（未配 LLM key）');
+        $insightsStatus.textContent = (hd.date || '') + ' · 扫描 ' + (st.scanned != null ? st.scanned : '?') + ' 条 · ' + llmTxt;
+        renderInsightsData(hd);
+      } else {
+        $insightsStatus.textContent = '';
+        renderInsightsEmpty(insightsDate);
       }
-      // 无 last（未生成过）→ 引导卡
-      renderInsightsGuide(d.prereq || {});
     } catch (e) {
       $insightsStatus.textContent = '⚠️ 加载失败';
       try { toast('洞察加载失败'); } catch (_) {}

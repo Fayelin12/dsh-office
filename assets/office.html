@@ -1881,6 +1881,7 @@
         <div class="help-tabs">
           <button class="help-tab active" id="helpTabCaliber">数据口径</button>
           <button class="help-tab" id="helpTabLogs">办公室日志</button>
+          <button class="help-tab" id="helpTabEmbed">Embedding</button>
         </div>
         <div class="help-body" id="helpPanelCaliber">
           <h4>会话状态</h4>
@@ -1913,6 +1914,11 @@
             <span class="log-status" id="logStatus">实时日志 · 自动滚动</span>
           </div>
           <div class="log-list" id="logList"></div>
+        </div>
+        <div class="help-body" id="helpPanelEmbed" hidden>
+          <h4>Embedding API（💡 洞察用）</h4>
+          <p>用于把消息文本变成数学向量做语义召回——找出「这个 Q 我们周五对一下」这类形不似而神似的待办 / 高价值消息。消息文本会发送到你填写的接口做向量化（联网，与聊天 LLM 是两个不同的接口）；key 仅保存在本机 dsh 凭据库，不会上传、不会随插件分发。</p>
+          <div id="embedConfigHost"></div>
         </div>
       </div>
     </div>
@@ -2604,9 +2610,6 @@
     });
 
     $config.appendChild(grid);
-
-    // Embedding API 配置区（💡 洞察用；独立保存，不参与列分配的 dirty 机制）
-    appendEmbedConfig($config);
   }
 
   // ---------- P2-4: 公共视图切换（互斥逻辑） ----------
@@ -2703,8 +2706,10 @@
   const $helpClose = document.getElementById('helpClose');
   const $helpTabCaliber = document.getElementById('helpTabCaliber');
   const $helpTabLogs = document.getElementById('helpTabLogs');
+  const $helpTabEmbed = document.getElementById('helpTabEmbed');
   const $helpPanelCaliber = document.getElementById('helpPanelCaliber');
   const $helpPanelLogs = document.getElementById('helpPanelLogs');
+  const $helpPanelEmbed = document.getElementById('helpPanelEmbed');
   const $logToggleBtn = document.getElementById('logToggleBtn');
   const $logStatus = document.getElementById('logStatus');
   const $logList = document.getElementById('logList');
@@ -2815,15 +2820,26 @@
 
   function switchHelpTab(name) {
     const isLogs = name === 'logs';
-    $helpTabCaliber.classList.toggle('active', !isLogs);
+    const isEmbed = name === 'embed';
+    $helpTabCaliber.classList.toggle('active', !isLogs && !isEmbed);
     $helpTabLogs.classList.toggle('active', isLogs);
-    $helpPanelCaliber.hidden = isLogs;
+    $helpTabEmbed.classList.toggle('active', isEmbed);
+    $helpPanelCaliber.hidden = isLogs || isEmbed;
     $helpPanelLogs.hidden = !isLogs;
+    $helpPanelEmbed.hidden = !isEmbed;
     syncLogPolling();
+    if (isEmbed) { ensureEmbedForm(); refreshEmbedStatus(); }
+  }
+
+  // 打开帮助弹窗并切换到指定 tab（供 💡 引导卡「去配置 Embedding」等入口使用）
+  function openHelpTab(name) {
+    $helpModal.hidden = false;
+    switchHelpTab(name);
   }
 
   $helpTabCaliber.addEventListener('click', () => switchHelpTab('caliber'));
   $helpTabLogs.addEventListener('click', () => switchHelpTab('logs'));
+  $helpTabEmbed.addEventListener('click', () => switchHelpTab('embed'));
 
   $helpBtn.addEventListener('click', () => {
     $helpModal.hidden = !$helpModal.hidden;
@@ -4169,7 +4185,7 @@
     const items = [
       { ok: !!prereq.msgConnected, text: '① 飞书消息已接入（未接入先去 💬 飞书视图配置消息流）' },
       { ok: !!prereq.vectorized, warn: !!prereq.vectorizedUnknown, text: '② 消息已向量化（同步时调用 Embedding API 把消息变成向量，语义洞察依赖它）' },
-      { ok: !!prereq.embedConfigured, warn: !!prereq.embedEndpoint, text: '③ Embedding API 已配置（未配置去 ⚙️ 配置 → Embedding API 填写）' },
+      { ok: !!prereq.embedConfigured, warn: !!prereq.embedEndpoint, text: '③ Embedding API 已配置（未配置去 ❓ 帮助 → Embedding 填写）' },
       { ok: !!prereq.llmConfigured, warn: true, text: '④ LLM 精判（未配置时洞察降级为规则判定，不影响使用）' },
     ];
     for (const it of items) {
@@ -4192,7 +4208,7 @@
     actions.className = 'insights-guide-actions';
     const goCfg = el('button', 'icon-btn', '去配置 Embedding');
     goCfg.style.cssText = 'width:auto;padding:0 12px;font-size:var(--font-body)';
-    goCfg.addEventListener('click', () => { toggleConfig(); setTimeout(scrollEmbedConfigIntoView, 60); });
+    goCfg.addEventListener('click', () => openHelpTab('embed'));
     const recheck = el('button', 'icon-btn', '重新检测');
     recheck.style.cssText = 'width:auto;padding:0 12px;font-size:var(--font-body)';
     recheck.addEventListener('click', () => loadInsights(true));
@@ -4202,11 +4218,6 @@
 
     $insightsMain.innerHTML = '';
     $insightsMain.appendChild(wrap);
-  }
-
-  function scrollEmbedConfigIntoView() {
-    const f = document.getElementById('embedConfigForm');
-    if (f) f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   // ---------- 三区块渲染 ----------
@@ -4397,11 +4408,32 @@
   $insightsRefreshBtn.addEventListener('click', () => loadInsights(true, true));
   $insightsGenBtn.addEventListener('click', () => insightsGenerate());
 
-  // ---------- ⚙️ 配置界面：Embedding API 配置区（独立保存，走 /insights/config；key 存 dsh 凭据库） ----------
+  // ---------- ❓ 帮助弹窗：Embedding API 配置区（独立保存，走 /insights/config；key 存 dsh 凭据库） ----------
+  let embedStatusSpan = null;   // 配置区状态行（tab 切换 / 保存后刷新）
+  let embedFormBuilt = false;   // Embedding tab 内容惰性构建（首次打开才建）
+
+  function ensureEmbedForm() {
+    if (embedFormBuilt) return;
+    embedFormBuilt = true;
+    appendEmbedConfig($helpPanelEmbed);
+  }
+
+  // 已配置状态（describe 驱动）
+  async function refreshEmbedStatus() {
+    if (!embedStatusSpan) return;
+    try {
+      const res = await apiFetch('/feishu/insights/status?refresh=1');
+      const j = await res.json();
+      const p = j && j.data && j.data.prereq || {};
+      if (p.embedConfigured) { embedStatusSpan.textContent = '✅ 已配置（端点 + key 就绪）'; embedStatusSpan.className = 'ef-status ok'; }
+      else if (p.embedEndpoint) { embedStatusSpan.textContent = '⚠️ 端点已填，key 未配置'; embedStatusSpan.className = 'ef-status'; }
+      else { embedStatusSpan.textContent = '❌ 未配置'; embedStatusSpan.className = 'ef-status bad'; }
+    } catch (_) { embedStatusSpan.textContent = '⚠️ 状态不可用'; }
+  }
+
   function appendEmbedConfig(parent) {
     const form = document.createElement('div');
     form.className = 'insights-embed-form';
-    form.id = 'embedConfigForm';
 
     const title = el('div', 'insights-guide-title', 'Embedding API（💡 洞察用）');
     form.appendChild(title);
@@ -4446,17 +4478,8 @@
     btnRow.appendChild(saveBtn);
     form.appendChild(btnRow);
 
-    // 已配置状态（describe 驱动）
-    (async () => {
-      try {
-        const res = await apiFetch('/feishu/insights/status?refresh=1');
-        const j = await res.json();
-        const p = j && j.data && j.data.prereq || {};
-        if (p.embedConfigured) { statusSpan.textContent = '✅ 已配置（端点 + key 就绪）'; statusSpan.className = 'ef-status ok'; }
-        else if (p.embedEndpoint) { statusSpan.textContent = '⚠️ 端点已填，key 未配置'; statusSpan.className = 'ef-status'; }
-        else { statusSpan.textContent = '❌ 未配置'; statusSpan.className = 'ef-status bad'; }
-      } catch (_) { statusSpan.textContent = '⚠️ 状态不可用'; }
-    })();
+    embedStatusSpan = statusSpan;
+    refreshEmbedStatus();
 
     saveBtn.addEventListener('click', async () => {
       saveBtn.disabled = true;

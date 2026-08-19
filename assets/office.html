@@ -1491,12 +1491,6 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
-  .insights-summary-ai {
-    margin-top: 4px;
-    font-size: var(--font-sm);
-    color: var(--text-dim);
-    line-height: 1.5;
-  }
   .insights-section {
     flex: none;
     display: flex;
@@ -4334,7 +4328,7 @@
     const date = d.date || insightsDate || '';
     $insightsMain.innerHTML = '';
 
-    // 当日摘要：实时统计行（随删除/变更即时更新）+ AI 总结（生成时的一句话快照）
+    // 当日摘要：实时统计行（随删除/变更即时更新）
     const counts = {
       todos: (secs.todos || []).length,
       unreplied: (secs.unreplied || []).length,
@@ -4343,7 +4337,6 @@
     const summary = el('div', 'insights-summary-card');
     summary.appendChild(el('div', 'insights-summary-stats',
       '📋 待办 ' + counts.todos + ' · 📩 未回复 ' + counts.unreplied + ' · 🔥 讨论 ' + counts.highlights));
-    if (d.summary) summary.appendChild(el('div', 'insights-summary-ai', 'AI 总结：' + d.summary));
     $insightsMain.appendChild(summary);
 
     // 卡片操作（🗑 删除 / ↗ 转会话）——删除走二次确认，转会话新建任务

@@ -1491,6 +1491,36 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
+  .insights-summary-text {
+    margin-top: 4px;
+    color: var(--text-dim);
+    font-size: calc(var(--font-body) * 0.92);
+  }
+  .insights-report-body {
+    line-height: 1.75;
+    font-size: var(--font-body);
+    color: var(--text);
+  }
+  .insights-report-body h3 {
+    margin: 10px 0 6px;
+    font-size: var(--font-body);
+    font-weight: 700;
+  }
+  .insights-report-body h3:first-child { margin-top: 0; }
+  .insights-report-body ul {
+    margin: 4px 0 8px;
+    padding-left: 18px;
+  }
+  .insights-report-body li { margin: 4px 0; }
+  .insights-report-body p { margin: 6px 0; }
+  .insights-report-body b { color: var(--accent); }
+  .insights-report-body code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(127, 127, 127, 0.15);
+    font-family: Consolas, monospace;
+    font-size: 0.9em;
+  }
   .insights-section {
     flex: none;
     display: flex;
@@ -1625,41 +1655,6 @@
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   }
   .insights-guide-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  .insights-embed-form {
-    flex: none;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px 14px;
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-sm);
-    background: var(--card-bg);
-  }
-  .insights-embed-form .ef-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .insights-embed-form label {
-    flex: 0 0 92px;
-    font-size: var(--font-sm);
-    color: var(--text-dim);
-  }
-  .insights-embed-form input,
-  .insights-embed-form select {
-    flex: 1;
-    min-width: 0;
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-sm);
-    background: var(--card-bg);
-    color: var(--text);
-    font-family: inherit;
-    font-size: var(--font-body);
-    padding: 6px 8px;
-  }
-  .insights-embed-form .ef-status { font-size: var(--font-sm); color: var(--text-dim); }
-  .insights-embed-form .ef-status.ok { color: #34c759; }
-  .insights-embed-form .ef-status.bad { color: #ff453a; }
   /* 💡 洞察：日期切换 + 卡片操作 + 转会话/确认弹窗 */
   .insights-date-nav {
     display: flex;
@@ -1964,7 +1959,6 @@
         <div class="help-tabs">
           <button class="help-tab active" id="helpTabCaliber">数据口径</button>
           <button class="help-tab" id="helpTabLogs">办公室日志</button>
-          <button class="help-tab" id="helpTabEmbed">Embedding</button>
         </div>
         <div class="help-body" id="helpPanelCaliber">
           <h4>会话状态</h4>
@@ -1997,11 +1991,6 @@
             <span class="log-status" id="logStatus">实时日志 · 自动滚动</span>
           </div>
           <div class="log-list" id="logList"></div>
-        </div>
-        <div class="help-body" id="helpPanelEmbed" hidden>
-          <h4>Embedding API（💡 洞察用）</h4>
-          <p>用于把消息文本变成数学向量做语义召回——找出「这个 Q 我们周五对一下」这类形不似而神似的待办 / 高价值消息。消息文本会发送到你填写的接口做向量化（联网，与聊天 LLM 是两个不同的接口）；key 仅保存在本机 dsh 凭据库，不会上传、不会随插件分发。</p>
-          <div id="embedConfigHost"></div>
         </div>
       </div>
     </div>
@@ -2789,10 +2778,8 @@
   const $helpClose = document.getElementById('helpClose');
   const $helpTabCaliber = document.getElementById('helpTabCaliber');
   const $helpTabLogs = document.getElementById('helpTabLogs');
-  const $helpTabEmbed = document.getElementById('helpTabEmbed');
   const $helpPanelCaliber = document.getElementById('helpPanelCaliber');
   const $helpPanelLogs = document.getElementById('helpPanelLogs');
-  const $helpPanelEmbed = document.getElementById('helpPanelEmbed');
   const $logToggleBtn = document.getElementById('logToggleBtn');
   const $logStatus = document.getElementById('logStatus');
   const $logList = document.getElementById('logList');
@@ -2903,26 +2890,15 @@
 
   function switchHelpTab(name) {
     const isLogs = name === 'logs';
-    const isEmbed = name === 'embed';
-    $helpTabCaliber.classList.toggle('active', !isLogs && !isEmbed);
+    $helpTabCaliber.classList.toggle('active', !isLogs);
     $helpTabLogs.classList.toggle('active', isLogs);
-    $helpTabEmbed.classList.toggle('active', isEmbed);
-    $helpPanelCaliber.hidden = isLogs || isEmbed;
+    $helpPanelCaliber.hidden = isLogs;
     $helpPanelLogs.hidden = !isLogs;
-    $helpPanelEmbed.hidden = !isEmbed;
     syncLogPolling();
-    if (isEmbed) { ensureEmbedForm(); refreshEmbedStatus(); }
-  }
-
-  // 打开帮助弹窗并切换到指定 tab（供 💡 引导卡「去配置 Embedding」等入口使用）
-  function openHelpTab(name) {
-    $helpModal.hidden = false;
-    switchHelpTab(name);
   }
 
   $helpTabCaliber.addEventListener('click', () => switchHelpTab('caliber'));
   $helpTabLogs.addEventListener('click', () => switchHelpTab('logs'));
-  $helpTabEmbed.addEventListener('click', () => switchHelpTab('embed'));
 
   $helpBtn.addEventListener('click', () => {
     $helpModal.hidden = !$helpModal.hidden;
@@ -4281,6 +4257,36 @@
     return e;
   }
 
+  // 轻量 markdown → HTML（洞察日报用：标题/列表/加粗/段落；先转义防注入）
+  function renderMarkdown(md) {
+    if (!md) return '';
+    const esc = String(md)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const lines = esc.split(/\r?\n/);
+    const html = [];
+    let inList = false;
+    const closeList = () => { if (inList) { html.push('</ul>'); inList = false; } };
+    for (const raw of lines) {
+      const line = raw.trimEnd();
+      if (!line.trim()) { closeList(); continue; }
+      const h = line.match(/^(#{1,3})\s+(.*)$/);
+      if (h) { closeList(); html.push('<h3>' + h[2] + '</h3>'); continue; }
+      const li = line.match(/^\s*[-*]\s+(.*)$/);
+      if (li) {
+        if (!inList) { html.push('<ul>'); inList = true; }
+        html.push('<li>' + li[1] + '</li>');
+        continue;
+      }
+      closeList();
+      html.push('<p>' + line + '</p>');
+    }
+    closeList();
+    return html.join('')
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+
   // ---------- 引导卡（前置条件检测清单） ----------
   function renderInsightsGuide(prereq) {
     const wrap = document.createElement('div');
@@ -4289,9 +4295,7 @@
 
     const items = [
       { ok: !!prereq.msgConnected, text: '① 飞书消息已接入（未接入先去 💬 飞书视图配置消息流）' },
-      { ok: !!prereq.vectorized, warn: !!prereq.vectorizedUnknown, text: '② 消息已向量化（同步时调用 Embedding API 把消息变成向量，语义洞察依赖它）' },
-      { ok: !!prereq.embedConfigured, warn: !!prereq.embedEndpoint, text: '③ Embedding API 已配置（未配置去 ❓ 帮助 → Embedding 填写）' },
-      { ok: !!prereq.llmConfigured, warn: true, text: '④ LLM 精判（未配置时洞察降级为规则判定，不影响使用）' },
+      { ok: !!prereq.llmConfigured, warn: true, text: '② LLM 已配置（日报/待办由 LLM 通读当天消息生成；未配置时洞察降级为规则判定，只出不完整日报）' },
     ];
     for (const it of items) {
       const row = document.createElement('div');
@@ -4306,18 +4310,14 @@
 
     const note = document.createElement('div');
     note.className = 'insights-guide-note';
-    note.textContent = '「Embedding（向量化）」把消息文本变成数学向量，用于语义召回——找出「这个 Q 我们周五对一下」这类形不似而神似的待办/高价值消息。它调用你填写的 Embedding 接口：消息文本会发送到该接口做向量化（联网，与聊天 LLM 是两个不同的接口）。key 仅保存在本机 dsh 凭据库，不会上传、不会随插件分发。';
+    note.textContent = '洞察 = 今日飞书日报：LLM 通读当天全部消息，生成要点式日报（今日要点/待办/值得回顾的讨论），另附未回复清单（私聊末条非我 + 群聊@我）。LLM key 复用 dsh 凭据（DEEPSEEK_API_KEY），无需额外配置。';
     wrap.appendChild(note);
 
     const actions = document.createElement('div');
     actions.className = 'insights-guide-actions';
-    const goCfg = el('button', 'icon-btn', '去配置 Embedding');
-    goCfg.style.cssText = 'width:auto;padding:0 12px;font-size:var(--font-body)';
-    goCfg.addEventListener('click', () => openHelpTab('embed'));
     const recheck = el('button', 'icon-btn', '重新检测');
     recheck.style.cssText = 'width:auto;padding:0 12px;font-size:var(--font-body)';
     recheck.addEventListener('click', () => loadInsights(true));
-    actions.appendChild(goCfg);
     actions.appendChild(recheck);
     wrap.appendChild(actions);
 
@@ -4339,9 +4339,25 @@
       highlights: (secs.highlights || []).length
     };
     const summary = el('div', 'insights-summary-card');
-    summary.appendChild(el('div', 'insights-summary-stats',
-      '📋 待办 ' + counts.todos + ' · 📩 未回复 ' + counts.unreplied + ' · 🔥 讨论 ' + counts.highlights));
+    const sumText = el('div', 'insights-summary-stats',
+      '📋 待办 ' + counts.todos + ' · 📩 未回复 ' + counts.unreplied + ' · 🔥 讨论 ' + counts.highlights);
+    summary.appendChild(sumText);
+    if (d.summary) summary.appendChild(el('div', 'insights-summary-text', d.summary));
     $insightsMain.appendChild(summary);
+
+    // 📰 日报正文（markdown 渲染）
+    if (secs.report) {
+      const rSec = el('div', 'insights-section');
+      const rHead = el('div', 'insights-sec-head', '📰 今日日报');
+      rSec.appendChild(rHead);
+      const rCard = el('div', 'insights-card insights-report-card');
+      const rBody = document.createElement('div');
+      rBody.className = 'insights-report-body';
+      rBody.innerHTML = renderMarkdown(secs.report);
+      rCard.appendChild(rBody);
+      rSec.appendChild(rCard);
+      $insightsMain.appendChild(rSec);
+    }
 
     // 卡片操作（🗑 删除 / ↗ 转会话）——删除走二次确认，转会话新建任务
     function appendCardActions(card, section, index) {
@@ -4686,115 +4702,6 @@
   $insightsBtn.addEventListener('click', toggleInsights);
   $insightsRefreshBtn.addEventListener('click', () => loadInsights(true, true));
   $insightsGenBtn.addEventListener('click', () => insightsGenerate());
-
-  // ---------- ❓ 帮助弹窗：Embedding API 配置区（独立保存，走 /insights/config；key 存 dsh 凭据库） ----------
-  let embedStatusSpan = null;   // 配置区状态行（tab 切换 / 保存后刷新）
-  let embedFormBuilt = false;   // Embedding tab 内容惰性构建（首次打开才建）
-
-  function ensureEmbedForm() {
-    if (embedFormBuilt) return;
-    embedFormBuilt = true;
-    appendEmbedConfig($helpPanelEmbed);
-  }
-
-  // 已配置状态（describe 驱动）
-  async function refreshEmbedStatus() {
-    if (!embedStatusSpan) return;
-    try {
-      const res = await apiFetch('/feishu/insights/status?refresh=1');
-      const j = await res.json();
-      const p = j && j.data && j.data.prereq || {};
-      if (p.embedConfigured) { embedStatusSpan.textContent = '✅ 已配置（端点 + key 就绪）'; embedStatusSpan.className = 'ef-status ok'; }
-      else if (p.embedEndpoint) { embedStatusSpan.textContent = '⚠️ 端点已填，key 未配置'; embedStatusSpan.className = 'ef-status'; }
-      else { embedStatusSpan.textContent = '❌ 未配置'; embedStatusSpan.className = 'ef-status bad'; }
-    } catch (_) { embedStatusSpan.textContent = '⚠️ 状态不可用'; }
-  }
-
-  function appendEmbedConfig(parent) {
-    const form = document.createElement('div');
-    form.className = 'insights-embed-form';
-
-    const title = el('div', 'insights-guide-title', 'Embedding API（💡 洞察用）');
-    form.appendChild(title);
-
-    const mkRow = (label, input) => {
-      const row = document.createElement('div');
-      row.className = 'ef-row';
-      row.appendChild(el('label', '', label));
-      row.appendChild(input);
-      return row;
-    };
-
-    const endpointInput = document.createElement('input');
-    endpointInput.placeholder = 'https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings';
-    endpointInput.value = 'https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings';
-    const modelInput = document.createElement('input');
-    modelInput.placeholder = 'text-embedding-v4';
-    modelInput.value = 'text-embedding-v4';
-    const dimInput = document.createElement('input');
-    dimInput.placeholder = '1024';
-    dimInput.value = '1024';
-    dimInput.type = 'number';
-    const keyInput = document.createElement('input');
-    keyInput.placeholder = 'sk-…（已配置可不填，填写则覆盖）';
-    keyInput.type = 'password';
-
-    form.appendChild(mkRow('Endpoint', endpointInput));
-    form.appendChild(mkRow('Model', modelInput));
-    form.appendChild(mkRow('Dimensions', dimInput));
-    form.appendChild(mkRow('API Key', keyInput));
-
-    const statusRow = document.createElement('div');
-    statusRow.className = 'ef-row';
-    const statusSpan = el('span', 'ef-status bad', '检查中…');
-    statusRow.appendChild(statusSpan);
-    form.appendChild(statusRow);
-
-    const btnRow = document.createElement('div');
-    btnRow.className = 'ef-row';
-    const saveBtn = el('button', 'icon-btn', '保存 Embedding 配置');
-    saveBtn.style.cssText = 'width:auto;padding:0 12px;font-size:var(--font-body)';
-    btnRow.appendChild(saveBtn);
-    form.appendChild(btnRow);
-
-    embedStatusSpan = statusSpan;
-    refreshEmbedStatus();
-
-    saveBtn.addEventListener('click', async () => {
-      saveBtn.disabled = true;
-      statusSpan.textContent = '保存中…';
-      statusSpan.className = 'ef-status';
-      try {
-        const payload = {
-          embedEndpoint: endpointInput.value.trim(),
-          embedModel: modelInput.value.trim(),
-          embedDim: parseInt(dimInput.value, 10) || 0
-        };
-        if (keyInput.value.trim()) payload.apiKey = keyInput.value.trim();
-        const res = await apiFetch('/feishu/insights/config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const j = await res.json();
-        if (j && j.ok) {
-          statusSpan.textContent = '✅ 已保存' + (payload.apiKey ? '（含 key）' : '');
-          statusSpan.className = 'ef-status ok';
-          keyInput.value = '';
-        } else {
-          statusSpan.textContent = '❌ ' + ((j && j.error && j.error.message) || '保存失败');
-          statusSpan.className = 'ef-status bad';
-        }
-      } catch (e) {
-        statusSpan.textContent = '❌ 保存失败：' + (e && e.message || e);
-        statusSpan.className = 'ef-status bad';
-      } finally {
-        saveBtn.disabled = false;
-      }
-    });
-
-    parent.appendChild(form);
-  }
 
   function toast(msg) {
     let el = document.getElementById('officeToast');

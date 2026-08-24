@@ -1564,6 +1564,14 @@
     padding: 3px 6px;
   }
   .todo-item .icon-btn { flex: none; }
+  .todo-move {
+    flex: none;
+    width: auto;
+    padding: 0 8px;
+    font-size: var(--font-sm);
+    color: #4aa3ff;
+  }
+  .todo-move:hover { color: #fff; background: rgba(10, 132, 255, 0.55); }
   .todo-empty {
     padding: 18px;
     text-align: center;
@@ -4896,6 +4904,12 @@
     const text = el('span', 'todo-text', t.text);
     row.appendChild(text);
 
+    if (!t.done) {
+      const moveBtn = el('button', 'icon-btn todo-move', '→ 明天');
+      moveBtn.title = '顺延到下一天';
+      row.appendChild(moveBtn);
+    }
+
     const editBtn = el('button', 'icon-btn todo-edit', '✎');
     editBtn.title = '编辑';
     row.appendChild(editBtn);
@@ -4955,6 +4969,24 @@
     }
   }
 
+  // 改到下一天：把该条待办移到当前查看日期的次日（保留原状态）
+  async function todoMove(id) {
+    const toDate = shiftDate(insightsDate || todayStr(), 1);
+    try {
+      const res = await apiFetch('/todos/move', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ date: insightsDate || todayStr(), id, toDate })
+      });
+      const j = await res.json();
+      if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '改期失败');
+      toast('已改到 ' + toDate);
+      loadTodos();
+    } catch (err) {
+      toast('改期失败：' + (err && err.message ? err.message : err));
+    }
+  }
+
   function todoEditInline(id) {
     const row = $todoList.querySelector('.todo-item[data-id="' + id + '"]');
     if (!row) return;
@@ -5005,6 +5037,8 @@
       todoEditInline(id);
     } else if (e.target.closest('.todo-del')) {
       showConfirm('删除这条待办？', '删除后不可恢复。', () => todoRemove(id));
+    } else if (e.target.closest('.todo-move')) {
+      todoMove(id);
     }
   });
 

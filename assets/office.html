@@ -1460,22 +1460,115 @@
     flex: 1;
     min-width: 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
   }
-  .insights-aside-hint {
-    width: 100%;
-    height: 100%;
+  /* 📝 每日待办面板（右侧预留区） */
+  .todo-panel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    padding: 12px;
+    overflow: hidden;
+  }
+  .todo-head {
+    flex: none;
     display: flex;
     align-items: center;
-    justify-content: center;
-    border: 2px dashed var(--glass-border);
+    gap: 8px;
+  }
+  .todo-title { font-weight: 600; color: var(--text); font-size: var(--font-body); }
+  .todo-count {
+    font-size: var(--font-sm);
+    color: var(--text-faint);
+    padding: 1px 8px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
+  }
+  .todo-add {
+    flex: none;
+    display: flex;
+    gap: 8px;
+  }
+  .todo-add input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-sm);
+    background: var(--input-bg, transparent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 7px 10px;
+  }
+  .todo-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .todo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 8px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-hover);
+  }
+  .todo-item:hover { border-color: var(--accent); }
+  .todo-check {
+    flex: none;
+    margin-top: 1px;
+    accent-color: #34c759;
+    cursor: pointer;
+  }
+  .todo-prio {
+    flex: none;
+    font-size: var(--font-sm);
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    line-height: 1.5;
+    user-select: none;
+  }
+  .todo-prio.high { background: rgba(255, 149, 0, 0.16); color: #e89b3c; }
+  .todo-prio.mid  { background: rgba(10, 132, 255, 0.14); color: #4aa3ff; }
+  .todo-prio.low  { background: rgba(142, 142, 147, 0.16); color: var(--text-dim); }
+  .todo-text {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--font-body);
+    color: var(--text);
+    line-height: 1.5;
+    word-break: break-word;
+    cursor: default;
+  }
+  .todo-item.done .todo-text { color: var(--text-faint); text-decoration: line-through; }
+  .todo-edit-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg, transparent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 3px 6px;
+  }
+  .todo-item .icon-btn { flex: none; }
+  .todo-empty {
+    padding: 18px;
+    text-align: center;
     color: var(--text-faint);
     font-size: var(--font-body);
-    text-align: center;
-    line-height: 1.8;
-    user-select: none;
   }
   .insights-summary-card {
     flex: none;
@@ -1665,11 +1758,17 @@
     color: var(--text);
   }
   .insights-date-nav .icon-btn { padding: 2px 8px; }
-  .insights-date-label {
-    min-width: 96px;
-    text-align: center;
+  .insights-date-input {
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 3px 8px;
     font-variant-numeric: tabular-nums;
   }
+  .insights-date-input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
   .insights-card-actions {
     display: flex;
     gap: 6px;
@@ -1869,10 +1968,11 @@
     <div class="mail-view" id="insightsView" hidden>
       <div class="mail-toolbar">
         <span class="mail-identity" id="insightsIdentity">💡 洞察</span>
-        <div class="insights-date-nav" id="insightsDateNav" hidden>
+        <div class="insights-date-nav" id="insightsDateNav">
           <button class="icon-btn" id="insightsDatePrev" title="前一天">‹</button>
-          <span class="insights-date-label" id="insightsDateLabel"></span>
+          <input type="date" class="insights-date-input" id="insightsDateInput" title="点击选择任意日期" />
           <button class="icon-btn" id="insightsDateNext" title="后一天">›</button>
+          <button class="icon-btn" id="insightsDateToday" title="回到今天" style="width:auto;padding:0 10px;font-size:var(--font-body)">今天</button>
         </div>
         <div class="mail-actions">
           <span class="mail-status" id="insightsStatus"></span>
@@ -1883,7 +1983,17 @@
       <div class="insights-layout">
         <div class="insights-main" id="insightsMain"></div>
         <div class="insights-aside" id="insightsAside">
-          <div class="insights-aside-hint">预留区<br/>（将来放别的东西）</div>
+          <div class="todo-panel">
+            <div class="todo-head">
+              <span class="todo-title">📝 我的待办</span>
+              <span class="todo-count" id="todoCount"></span>
+            </div>
+            <div class="todo-add">
+              <input id="todoInput" placeholder="记一条待办…" maxlength="500" autocomplete="off" />
+              <button class="icon-btn" id="todoAddBtn" title="添加待办" style="width:auto;padding:0 12px;font-size:var(--font-body)">添加</button>
+            </div>
+            <div class="todo-list" id="todoList"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -4220,7 +4330,8 @@
   let _toastTimer = null;
   // ============================================================
   // 💡 洞察视图（每日洞察：scripts.insights 脚本接入，配置驱动）
-  // 数据：GET /insights/status（前置条件+最近生成）· GET /insights/dates + /insights/history?date=（历史）· POST /insights/generate（异步生成）· POST /insights/delete|to-session
+  // 数据：GET /insights/status（前置条件+最近生成）· GET /insights/history?date=（历史）· POST /insights/generate（异步生成）· POST /insights/delete|to-session
+  // 📝 每日待办（右侧面板）：GET /todos/list?date= · POST /todos/add|update|remove
   // ============================================================
   const $insightsBtn = document.getElementById('insightsBtn');
   const $insightsView = document.getElementById('insightsView');
@@ -4230,9 +4341,14 @@
   const $insightsGenBtn = document.getElementById('insightsGenBtn');
   const $insightsMain = document.getElementById('insightsMain');
   const $insightsDateNav = document.getElementById('insightsDateNav');
-  const $insightsDateLabel = document.getElementById('insightsDateLabel');
+  const $insightsDateInput = document.getElementById('insightsDateInput');
   const $insightsDatePrev = document.getElementById('insightsDatePrev');
   const $insightsDateNext = document.getElementById('insightsDateNext');
+  const $insightsDateToday = document.getElementById('insightsDateToday');
+  const $todoInput = document.getElementById('todoInput');
+  const $todoAddBtn = document.getElementById('todoAddBtn');
+  const $todoList = document.getElementById('todoList');
+  const $todoCount = document.getElementById('todoCount');
   const $confirmModal = document.getElementById('confirmModal');
   const $confirmTitle = document.getElementById('confirmTitle');
   const $confirmMessage = document.getElementById('confirmMessage');
@@ -4248,12 +4364,21 @@
   let insightsViewOpen = false;
   let insightsGenerating = false;   // 前端生成轮询标志
   let insightsLazyFired = false;    // 本次打开是否已惰性触发（防重复）
-  let insightsDate = null;          // 当前查看日期（YYYY-MM-DD）
-  let insightsDates = [];           // 已生成洞察的日期列表（新 → 旧）
+  let insightsDate = null;          // 当前查看日期（YYYY-MM-DD，洞察与待办共享）
   let currentInsightsDay = null;    // 当前渲染的整日快照（转会话取条目文本用）
+  let todos = [];                   // 当前日期的待办列表
+  let todoLoadedDate = null;        // todos 已加载的日期（避免重复渲染）
 
   function todayStr() {
     const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  // 按日历日位移（dateStr: YYYY-MM-DD，delta: ±N 天）
+  function shiftDate(dateStr, delta) {
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return dateStr;
+    d.setDate(d.getDate() + delta);
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
@@ -4368,8 +4493,8 @@
       $insightsMain.appendChild(rSec);
     }
 
-    // 卡片操作（🗑 删除 / ↗ 转会话）——删除走二次确认，转会话新建任务
-    function appendCardActions(card, section, index) {
+    // 卡片操作（🗑 删除 / ↗ 转会话 / 📥 加入我的待办）——删除走二次确认，转会话新建任务
+    function appendCardActions(card, section, index, withAddTodo) {
       const acts = el('div', 'insights-card-actions');
       const rm = el('button', 'icon-btn insight-action insights-action-remove', '🗑 删除');
       const ts = el('button', 'icon-btn insight-action', '↗ 转会话');
@@ -4378,6 +4503,14 @@
       for (const b of [rm, ts]) { b.dataset.date = date; b.dataset.section = section; b.dataset.index = String(index); }
       acts.appendChild(rm);
       acts.appendChild(ts);
+      if (withAddTodo) {
+        const at = el('button', 'icon-btn insight-action', '📥 加入待办');
+        at.dataset.kind = 'add-todo';
+        at.dataset.date = date;
+        at.dataset.section = section;
+        at.dataset.index = String(index);
+        acts.appendChild(at);
+      }
       card.appendChild(acts);
     }
 
@@ -4405,7 +4538,7 @@
         if (t.action) meta.appendChild(el('div', '', '→ 要做：' + t.action));
         if (t.reason) meta.appendChild(el('div', 'ins-i-reason', '💬 ' + t.reason));
         if (meta.children.length > 0) card.appendChild(meta);
-        appendCardActions(card, 'todos', i);
+        appendCardActions(card, 'todos', i, true);
         tSec.appendChild(card);
       });
     }
@@ -4583,26 +4716,48 @@
     const loc = { date: btn.dataset.date, section: btn.dataset.section, index: parseInt(btn.dataset.index, 10) };
     if (btn.dataset.kind === 'remove') confirmDeleteInsight(loc);
     else if (btn.dataset.kind === 'to-session') openToSession(loc);
+    else if (btn.dataset.kind === 'add-todo') addInsightToTodo(loc);
   });
 
-  $insightsDatePrev.addEventListener('click', () => {
-    const i = insightsDates.indexOf(insightsDate);
-    if (i > 0) { insightsDate = insightsDates[i - 1]; loadInsights(false, true); }
-  });
-  $insightsDateNext.addEventListener('click', () => {
-    const i = insightsDates.indexOf(insightsDate);
-    if (i >= 0 && i < insightsDates.length - 1) { insightsDate = insightsDates[i + 1]; loadInsights(false, true); }
-  });
+  // 洞察「📋 重要待办」一键加入「📝 我的待办」（复制到当前查看日期）
+  async function addInsightToTodo(loc) {
+    const sec = currentInsightsDay && currentInsightsDay.sections && currentInsightsDay.sections[loc.section];
+    const item = sec && sec[loc.index];
+    if (!item) { toast('该条洞察不存在，请刷新'); return; }
+    const text = (item.action && String(item.action).trim()) || (item.text && String(item.text).trim()) || '';
+    if (!text) { toast('该条洞察无可加入的内容'); return; }
+    try {
+      const res = await apiFetch('/todos/add', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ date: insightsDate, text })
+      });
+      const j = await res.json();
+      if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '添加失败');
+      toast('已加入我的待办');
+      loadTodos();
+    } catch (err) {
+      toast('加入待办失败：' + (err && err.message ? err.message : err));
+    }
+  }
+
+  // ---------- 日期切换（按天翻页，洞察与待办共享；左=前一天、右=后一天） ----------
+  function applyInsightsDate(next) {
+    if (!next) return;
+    insightsDate = next;
+    syncDatePickerUI();
+    loadInsights(false, true);   // loadInsights 内部会刷新待办面板
+  }
+  $insightsDatePrev.addEventListener('click', () => applyInsightsDate(shiftDate(insightsDate || todayStr(), -1)));
+  $insightsDateNext.addEventListener('click', () => applyInsightsDate(shiftDate(insightsDate || todayStr(), 1)));
+  $insightsDateToday.addEventListener('click', () => applyInsightsDate(todayStr()));
+  $insightsDateInput.addEventListener('change', () => applyInsightsDate($insightsDateInput.value));
   $toSessionClose.addEventListener('click', () => { $toSessionModal.hidden = true; });
   $toSessionModal.addEventListener('click', (e) => { if (e.target === $toSessionModal) $toSessionModal.hidden = true; });
   $toSessionOkBtn.addEventListener('click', submitToSession);
 
-  function updateInsightsDateNav() {
-    const idx = insightsDates.indexOf(insightsDate);
-    $insightsDateLabel.textContent = insightsDate || '';
-    $insightsDateNav.hidden = insightsDates.length === 0;
-    $insightsDatePrev.disabled = idx <= 0;
-    $insightsDateNext.disabled = idx < 0 || idx >= insightsDates.length - 1;
+  function syncDatePickerUI() {
+    $insightsDateInput.value = insightsDate || todayStr();
   }
 
   // ---------- 生成（异步：先增量同步再洞察；前端轮询 status） ----------
@@ -4641,8 +4796,13 @@
     }, 3000);
   }
 
-  // ---------- 加载：status（前置条件/惰性触发）→ dates（日期切换）→ history（所选日期渲染） ----------
+  // ---------- 加载：待办（不依赖洞察配置）→ status（前置条件/惰性触发）→ history（所选日期渲染） ----------
   async function loadInsights(forceRefresh, skipLazy) {
+    // 待办面板独立于洞察配置：先定日期、同步日期选择器、刷新待办
+    if (!insightsDate) insightsDate = todayStr();
+    syncDatePickerUI();
+    loadTodos();
+
     try {
       const res = await apiFetch('/feishu/insights/status' + (forceRefresh ? '?refresh=1' : ''));
       const j = await res.json();
@@ -4660,21 +4820,8 @@
         return;
       }
 
-      // 已生成日期列表（驱动日期切换；30 天保留由后端裁剪）
-      try {
-        const dr = await apiFetch('/feishu/insights/dates' + (forceRefresh ? '?refresh=1' : ''));
-        const dj = await dr.json();
-        insightsDates = (dj && dj.ok && dj.data && Array.isArray(dj.data.dates)) ? dj.data.dates : [];
-      } catch (_) { insightsDates = []; }
-
-      // 默认查看日期：最近有数据的一天（优先今天）
-      const today = todayStr();
-      if (!insightsDate || !insightsDates.includes(insightsDate)) {
-        insightsDate = insightsDates.includes(today) ? today : (insightsDates[0] || today);
-      }
-      updateInsightsDateNav();
-
       // 惰性触发：查看今天且今日未生成 → 自动生成（每天最多一次）
+      const today = todayStr();
       const lastDate = d.last && d.last.date;
       if (!skipLazy && !insightsLazyFired && insightsDate === today && (!lastDate || lastDate !== today)) {
         insightsLazyFired = true;
@@ -4700,6 +4847,166 @@
       try { toast('洞察加载失败'); } catch (_) {}
     }
   }
+
+  // ============ 📝 每日待办面板（右侧，与洞察共享日期） ============
+  function todoPrioClass(p) { return p === '高' ? 'high' : (p === '低' ? 'low' : 'mid'); }
+  function nextTodoPriority(p) { return p === '高' ? '中' : (p === '中' ? '低' : '高'); }
+
+  async function loadTodos() {
+    const date = insightsDate || todayStr();
+    try {
+      const res = await apiFetch('/todos/list?date=' + encodeURIComponent(date), { cache: 'no-store' });
+      const j = await res.json();
+      todos = (j && j.ok && j.data && Array.isArray(j.data.items)) ? j.data.items : [];
+    } catch (_) { todos = []; }
+    todoLoadedDate = date;
+    renderTodos();
+  }
+
+  function renderTodos() {
+    $todoCount.textContent = String(todos.length);
+    $todoList.innerHTML = '';
+    if (todos.length === 0) {
+      $todoList.appendChild(el('div', 'todo-empty', '这一天还没有待办'));
+      return;
+    }
+    // 未完成在前，已完成沉底；组内按创建顺序
+    const open = todos.filter((t) => !t.done);
+    const done = todos.filter((t) => t.done);
+    for (const t of open.concat(done)) {
+      $todoList.appendChild(makeTodoItem(t));
+    }
+  }
+
+  function makeTodoItem(t) {
+    const row = el('div', 'todo-item' + (t.done ? ' done' : ''));
+    row.dataset.id = t.id;
+
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'todo-check';
+    chk.checked = !!t.done;
+    chk.title = t.done ? '标记为未完成' : '标记为完成';
+    row.appendChild(chk);
+
+    const prio = el('span', 'todo-prio ' + todoPrioClass(t.priority), '[' + (t.priority || '中') + ']');
+    prio.title = '优先级（点击切换 高→中→低）';
+    row.appendChild(prio);
+
+    const text = el('span', 'todo-text', t.text);
+    row.appendChild(text);
+
+    const editBtn = el('button', 'icon-btn todo-edit', '✎');
+    editBtn.title = '编辑';
+    row.appendChild(editBtn);
+
+    const delBtn = el('button', 'icon-btn todo-del', '🗑');
+    delBtn.title = '删除';
+    row.appendChild(delBtn);
+
+    return row;
+  }
+
+  async function todoAdd() {
+    const text = $todoInput.value.trim();
+    if (!text) { $todoInput.focus(); return; }
+    try {
+      const res = await apiFetch('/todos/add', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ date: insightsDate || todayStr(), text })
+      });
+      const j = await res.json();
+      if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '添加失败');
+      $todoInput.value = '';
+      loadTodos();
+    } catch (err) {
+      toast('添加待办失败：' + (err && err.message ? err.message : err));
+    }
+  }
+
+  async function todoUpdate(id, patch) {
+    try {
+      const res = await apiFetch('/todos/update', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ date: insightsDate || todayStr(), id, patch })
+      });
+      const j = await res.json();
+      if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '更新失败');
+      loadTodos();
+    } catch (err) {
+      toast('更新待办失败：' + (err && err.message ? err.message : err));
+    }
+  }
+
+  async function todoRemove(id) {
+    try {
+      const res = await apiFetch('/todos/remove', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ date: insightsDate || todayStr(), id })
+      });
+      const j = await res.json();
+      if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '删除失败');
+      loadTodos();
+    } catch (err) {
+      toast('删除待办失败：' + (err && err.message ? err.message : err));
+    }
+  }
+
+  function todoEditInline(id) {
+    const row = $todoList.querySelector('.todo-item[data-id="' + id + '"]');
+    if (!row) return;
+    const textEl = row.querySelector('.todo-text');
+    if (!textEl) return;
+    const cur = textEl.textContent;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'todo-edit-input';
+    input.value = cur;
+    input.maxLength = 500;
+    textEl.replaceWith(input);
+    input.focus();
+    let finished = false;
+    const commit = () => {
+      if (finished) return;
+      finished = true;
+      const v = input.value.trim();
+      if (v && v !== cur) todoUpdate(id, { text: v });
+      else loadTodos();
+    };
+    const cancel = () => {
+      if (finished) return;
+      finished = true;
+      loadTodos();
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    });
+  }
+
+  $todoAddBtn.addEventListener('click', todoAdd);
+  $todoInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); todoAdd(); }
+  });
+  $todoList.addEventListener('click', (e) => {
+    const row = e.target.closest('.todo-item');
+    if (!row) return;
+    const id = row.dataset.id;
+    if (e.target.classList.contains('todo-check')) {
+      todoUpdate(id, { done: e.target.checked });
+    } else if (e.target.classList.contains('todo-prio')) {
+      const t = todos.find((x) => x.id === id);
+      if (t) todoUpdate(id, { priority: nextTodoPriority(t.priority) });
+    } else if (e.target.closest('.todo-edit')) {
+      todoEditInline(id);
+    } else if (e.target.closest('.todo-del')) {
+      showConfirm('删除这条待办？', '删除后不可恢复。', () => todoRemove(id));
+    }
+  });
 
   function toggleInsights() {
     toggleView('insights',

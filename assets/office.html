@@ -4118,8 +4118,8 @@
       if (tr.errorCode === 'NO_PERMISSION') {
         const applyBtn = trBtn('申请权限', async () => {
           applyBtn.disabled = true;
-          const ok = await applyPermission(e.event_id);
-          toast(ok ? '已向妙记 owner 发出查看申请' : '申请失败，请稍后重试');
+          const r = await applyPermission(e.event_id);
+          toast(r.ok ? '已向妙记 owner 发出查看申请' : ('申请失败：' + friendlyLarkError(r.message || '请稍后重试')));
           applyBtn.disabled = false;
         });
         els.push(applyBtn);
@@ -4173,6 +4173,14 @@
     }
   }
 
+  // lark-cli 常见英文错误 → 中文提示（其余原样透传，不猜不编）
+  function friendlyLarkError(msg) {
+    if (!msg) return '未知错误';
+    if (/too frequently/i.test(msg)) return '申请太频繁，请稍后再试';
+    if (/permission/i.test(msg)) return '无妙记查看权限';
+    return msg;
+  }
+
   async function convertTranscript(eventId) {
     try {
       const res = await apiFetch('/transcript/fetch', {
@@ -4184,7 +4192,7 @@
       if (json && json.ok) {
         toast('✅ 逐字稿已生成');
       } else {
-        toast('逐字稿拉取失败：' + ((json && json.error && json.error.message) || '未知错误'));
+        toast('逐字稿拉取失败：' + friendlyLarkError(json && json.error && json.error.message));
       }
       loadCalendarEvents();
     } catch (err) {
@@ -4192,7 +4200,7 @@
     }
   }
 
-  // 申请妙记查看权限：返回是否已发出申请（等待 owner 批准）
+  // 申请妙记查看权限：返回 { ok, message }，message 透传后端真实错误（等待 owner 批准）
   async function applyPermission(eventId) {
     try {
       const res = await apiFetch('/transcript/apply-permission', {
@@ -4201,9 +4209,10 @@
         body: JSON.stringify({ event_id: eventId })
       });
       const json = await res.json();
-      return !!(json && json.ok);
+      if (json && json.ok) return { ok: true, message: '' };
+      return { ok: false, message: (json && json.error && json.error.message) || '未知错误' };
     } catch (err) {
-      return false;
+      return { ok: false, message: (err && err.message ? err.message : err) || '网络异常' };
     }
   }
 

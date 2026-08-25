@@ -11,6 +11,7 @@ ERROR-ANALYSIS.md
 DEPLOY-PLAN.md
 
 # 生产文件替换前的本地备份
+*.bak
 *.bak-*
 
 # 系统文件

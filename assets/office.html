@@ -17,8 +17,8 @@
     --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
     --glass-border: rgba(0, 0, 0, 0.06);
     --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-    --card-bg: #ffffff;
-    --card-hover: #f5f5f7;
+    --card-bg: #fafafa;
+    --card-hover: #f0f0f2;
     --text: #1c1c1e;
     --text-dim: #6e6e73;
     --text-faint: #9a9aa0;
@@ -1022,8 +1022,8 @@
   }
   .f-preview .fp-row:hover { color: var(--text); }
   .f-preview .fp-row b { font-weight: 600; color: var(--text); }
-  /* ============ 会议视图（📅 飞书日历日程） ============ */
-  /* 会议页左右布局：左列 = 待办，右列 = 会议（单列） */
+  /* ============ 日程视图（📅 飞书日历日程） ============ */
+  /* 日程页左右布局：左列 = 待办，右列 = 会议（单列），左右等宽 */
   .calendar-layout {
     flex: 1;
     min-height: 0;
@@ -1031,7 +1031,6 @@
     gap: 12px;
     align-items: stretch;
   }
-  .calendar-layout .todo-panel { flex: 0 0 38%; }
   .calendar-list {
     flex: 1;
     min-height: 0;
@@ -1942,7 +1941,7 @@
         <span class="dirty-badge" id="dirtyBadge"><span class="dirty-dot"></span>有未保存的更改</span>
         <button class="icon-btn save-btn" id="saveBtn" title="保存更改">保存</button>
         <button class="header-btn" id="feishuBtn" title="飞书消息">💬 飞书</button>
-        <button class="header-btn" id="calendarBtn" title="会议日程">📅 会议</button>
+        <button class="header-btn" id="calendarBtn" title="日程">📅 日程</button>
         <button class="header-btn" id="insightsBtn" title="每日洞察">💡 洞察</button>
         <button class="header-btn" id="mailBtn" title="邮箱">📧 邮箱</button>
         <button class="header-btn" id="helpBtn" title="数据口径">❓ 帮助</button>
@@ -1995,7 +1994,7 @@
     </div>
     <div class="mail-view" id="calendarView" hidden>
       <div class="mail-toolbar">
-        <span class="mail-identity" id="calendarIdentity">📅 会议</span>
+        <span class="mail-identity" id="calendarIdentity">📅 日程</span>
         <div class="mail-actions">
           <span class="mail-status" id="calendarStatus"></span>
           <a class="guide-link" href="https://qcn7nupmeook.feishu.cn/docx/GIMZdIJjooOenjxcoJicn5sEnGc" target="_blank" rel="noopener" title="飞书消息 + 会议日程 从 0 到 1 配置指南">📖 指南</a>
@@ -2892,7 +2891,7 @@
       $calendarView.hidden = false;
       $body.hidden = true;
       $calendarBtn.classList.add('active');
-      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u4F1A\u8BAE';
+      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u65E5\u7A0B';
     } else if (viewName === 'insights') {
       insightsViewOpen = true;
       $insightsView.hidden = false;
@@ -5132,7 +5131,7 @@
     const card = document.createElement('div');
     card.className = 'calendar-setup-card';
     const h = document.createElement('h3');
-    h.textContent = '📅 会议日程未配置';
+    h.textContent = '📅 日程未配置';
     const p1 = document.createElement('div');
     p1.className = 'cs-step';
     p1.textContent = '会议日程与飞书消息共用同一套 lark-cli 授权与配置（feishu-config.json），只是脚本不同。配置一次，两个功能都能用。';

@@ -1040,50 +1040,6 @@
     gap: 10px;
     padding-right: 2px;
   }
-  /* 单列：上 = 未开始，下 = 已结束 */
-  .cal-columns {
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 14px;
-    align-items: start;
-  }
-  .cal-col {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 0;
-  }
-  .cal-col-head {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 6px 2px 8px;
-    font-size: var(--font-body);
-    font-weight: 700;
-    letter-spacing: .3px;
-    color: var(--text);
-    border-bottom: 1px solid var(--glass-border);
-    background: var(--panel-gradient);
-    backdrop-filter: blur(6px);
-  }
-  .cal-head-count {
-    flex: none;
-    font-size: var(--font-sm);
-    font-weight: 600;
-    color: var(--text-dim);
-    padding: 1px 10px;
-    border-radius: var(--radius-pill);
-    border: 1px solid var(--glass-border);
-    background: var(--card-bg);
-  }
-  .cal-col.past .cal-col-head { color: var(--text-faint); }
-  .cal-col.past .cal-head-count { color: var(--text-faint); }
   .cal-card {
     display: flex;
     align-items: flex-start;
@@ -4104,32 +4060,9 @@
     const upcoming = events.filter((e) => !isEnded(e)).sort((a, b) => (a.start_ts || 0) - (b.start_ts || 0));
     const past = events.filter(isEnded).sort((a, b) => (b.end_ts || 0) - (a.end_ts || 0));
 
-    // 单列容器：上 = 未开始（含进行中，带标题），下 = 已结束（无标题，靠卡片灰色淡化区分）；空 section 直接收起
-    const cols = document.createElement('div');
-    cols.className = 'cal-columns';
-
-    const mkCol = (title, list, withHead) => {
-      const col = document.createElement('div');
-      col.className = 'cal-col' + (list === past ? ' past' : '');
-      if (withHead) {
-        const head = document.createElement('div');
-        head.className = 'cal-col-head';
-        const headTitle = document.createElement('span');
-        headTitle.className = 'cal-head-title';
-        headTitle.textContent = title;
-        const headCount = document.createElement('span');
-        headCount.className = 'cal-head-count';
-        headCount.textContent = String(list.length);
-        head.appendChild(headTitle);
-        head.appendChild(headCount);
-        col.appendChild(head);
-      }
-      for (const e of list) col.appendChild(buildCalCard(e));
-      return col;
-    };
-    if (upcoming.length) cols.appendChild(mkCol('⏳ 未开始', upcoming, true));
-    if (past.length) cols.appendChild(mkCol('', past, false));
-    $calendarList.appendChild(cols);
+    // 纯卡片流：未开始（含进行中）在前、已结束在后，靠卡片状态色区分（绿=进行中/橙=即将/灰=已结束），无标题栏
+    for (const e of upcoming) $calendarList.appendChild(buildCalCard(e));
+    for (const e of past) $calendarList.appendChild(buildCalCard(e));
   }
 
   function buildCalCard(e) {

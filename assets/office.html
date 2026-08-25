@@ -1403,44 +1403,6 @@
   }
   .fm-more:hover { background: var(--card-hover); }
   .fm-more:disabled { cursor: default; opacity: 0.7; }
-  /* ============ 💡 洞察视图（左右布局） ============ */
-  .insights-layout {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    gap: 12px;
-    align-items: stretch;
-  }
-  .insights-main {
-    flex: 0 0 62%;
-    min-width: 0;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-right: 2px;
-  }
-  .insights-aside {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .insights-aside-hint {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px dashed var(--glass-border);
-    border-radius: var(--radius-sm);
-    color: var(--text-faint);
-    font-size: var(--font-body);
-    text-align: center;
-    line-height: 1.8;
-    user-select: none;
-  }
   /* 📝 每日待办面板（会议视图左列） */
   .todo-panel {
     flex: 1;
@@ -1565,6 +1527,46 @@
     color: var(--text-faint);
     font-size: var(--font-body);
   }
+
+  /* ============ 💡 洞察视图（左右布局） ============ */
+  .insights-layout {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .insights-main {
+    flex: 0 0 62%;
+    min-width: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 2px;
+  }
+  .insights-aside {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .insights-aside-hint {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--glass-border);
+    border-radius: var(--radius-sm);
+    color: var(--text-faint);
+    font-size: var(--font-body);
+    text-align: center;
+    line-height: 1.8;
+    user-select: none;
+  }
+
   .insights-summary-card {
     flex: none;
     padding: 12px 14px;
@@ -4302,6 +4304,136 @@
     }
   }
 
+  function renderCalendarGuide() {
+    $calendarList.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'calendar-setup';
+    const card = document.createElement('div');
+    card.className = 'calendar-setup-card';
+    const h = document.createElement('h3');
+    h.textContent = '📅 日程未配置';
+    const p1 = document.createElement('div');
+    p1.className = 'cs-step';
+    p1.textContent = '会议日程与飞书消息共用同一套 lark-cli 授权与配置（feishu-config.json），只是脚本不同。配置一次，两个功能都能用。';
+    const guideLink = document.createElement('a');
+    guideLink.className = 'guide-link';
+    guideLink.href = GUIDE_URL;
+    guideLink.target = '_blank';
+    guideLink.rel = 'noopener';
+    guideLink.textContent = GUIDE_LABEL;
+    const p2 = document.createElement('div');
+    p2.className = 'cs-step';
+    p2.textContent = '1. 安装并授权 lark-cli（用户身份，需 calendar / vc / minutes scope）';
+    const p3 = document.createElement('div');
+    p3.className = 'cs-step';
+    p3.textContent = '2. 准备日历脚本（仓库 scripts/calendar.js 是开箱示例，含妙记/纪要链路）';
+    const p4 = document.createElement('div');
+    p4.className = 'cs-step';
+    p4.textContent = '3. 在 ~/.dsh/office/feishu-config.json 的 scripts 里加一行：';
+    const code2 = document.createElement('code');
+    code2.textContent = '"calendar": "<你的calendar.js绝对路径>"';
+    const p5 = document.createElement('div');
+    p5.className = 'cs-step';
+    p5.textContent = '4. 刷新页面，点右上角「同步」即可拉取日程。';
+    // 可复制提示词：发给 AI 代配（附带在线文档链接，AI 可打开阅读）
+    const prompt = document.createElement('div');
+    prompt.className = 'cs-step';
+    prompt.textContent = '也可以把下面这句发给你的 AI，让它帮你完成配置：';
+    const promptText = document.createElement('code');
+    promptText.textContent = '请阅读飞书配置指南（' + GUIDE_URL + '），按照文档为我安装并配置 lark-cli（含用户授权，scope 需含 calendar / vc / minutes），准备 calendar.js 脚本并写入 ~/.dsh/office/feishu-config.json 的 scripts.calendar。';
+    card.appendChild(h); card.appendChild(p1); card.appendChild(guideLink); card.appendChild(p2);
+    card.appendChild(p3); card.appendChild(p4); card.appendChild(code2); card.appendChild(p5);
+    card.appendChild(prompt); card.appendChild(promptText);
+    wrap.appendChild(card);
+    $calendarList.appendChild(wrap);
+  }
+
+  async function loadCalendarStatus() {
+    try {
+      const res = await apiFetch('/calendar/status', { cache: 'no-store' });
+      const json = await res.json();
+      if (!json || !json.ok || !json.data) { setStatus($calendarStatus, TEXT_STATUS_ERROR); return; }
+      const d = json.data;
+      if (!d.configured) { renderCalendarGuide(); return; }
+      $calendarSyncBtn.disabled = false;
+      let base = d.syncing ? TEXT_SYNCING : (d.fetchedAt ? '上次同步 ' + d.fetchedAt + (d.total ? ' · ' + d.total + ' 条' : '') : '尚未同步');
+      if (d.stale && !d.syncing) base += ' · 数据已过期';
+      setStatus($calendarStatus, base);
+    } catch (e) {
+      setStatus($calendarStatus, TEXT_STATUS_ERROR);
+    }
+  }
+
+  async function loadCalendarEvents() {
+    try {
+      const res = await apiFetch('/calendar/events', { cache: 'no-store' });
+      const json = await res.json();
+      if (!json || !json.ok) {
+        const code = json && json.error && json.error.code;
+        if (code === 'CALENDAR_CONFIG_REQUIRED') { renderCalendarGuide(); return; }
+        setStatus($calendarStatus, (json && json.error && json.error.message) || TEXT_READ_ERROR);
+        return;
+      }
+      calendarEvents = (json.data && json.data.events) || [];
+      calendarFetchedAt = (json.data && json.data.fetchedAt) || '';
+      renderCalendarCards(calendarEvents);
+      loadCalendarStatus();
+    } catch (e) {
+      setStatus($calendarStatus, TEXT_READ_ERROR + '：' + (e && e.message ? e.message : e));
+    }
+  }
+
+  async function syncCalendarManual() {
+    $calendarSyncBtn.disabled = true;
+    $calendarSyncBtn.textContent = TEXT_SYNCING;
+    setStatus($calendarStatus, TEXT_SYNCING);
+    try {
+      const res = await apiFetch('/calendar/sync', { cache: 'no-store', method: 'POST' });
+      const json = await res.json();
+      if (json && json.ok) {
+        setStatus($calendarStatus, '同步完成' + (json.data && json.data.total != null ? ' · ' + json.data.total + ' 条' : ''));
+        loadCalendarEvents();
+      } else {
+        setStatus($calendarStatus, (json && json.error && json.error.message) || '同步失败');
+        $calendarSyncBtn.disabled = false;
+      }
+    } catch (e) {
+      setStatus($calendarStatus, '同步失败：' + (e && e.message ? e.message : e));
+      $calendarSyncBtn.disabled = false;
+    } finally {
+      $calendarSyncBtn.textContent = '同步';
+    }
+  }
+
+  // ---------- 会议视图开关 ----------
+  function toggleCalendar() {
+    toggleView('calendar',
+      () => calendarViewOpen, (v) => { calendarViewOpen = v; },
+      () => { if (calendarTimer) { clearInterval(calendarTimer); calendarTimer = null; } },
+      () => {
+        loadCalendarStatus();
+        loadCalendarEvents();
+        loadTodos();
+        if (calendarTimer) clearInterval(calendarTimer);
+        calendarTimer = setInterval(() => {
+          if (!calendarViewOpen) { clearInterval(calendarTimer); calendarTimer = null; return; }
+          document.querySelectorAll('.cal-card[data-id]').forEach(function(card) {
+            var eventId = card.dataset.id;
+            var evt = calendarEvents.find(function(ev) { return ev.event_id === eventId; });
+            if (!evt) return;
+            var cdEl = card.querySelector('.ct-countdown');
+            if (!cdEl) return;
+            cdEl.textContent = calCountdown(evt);
+          });
+        }, CALENDAR_COUNTDOWN_MS);
+      }
+    );
+  }
+  let calendarTimer = null;
+  $calendarBtn.addEventListener('click', toggleCalendar);
+  $calendarRefreshBtn.addEventListener('click', () => { loadCalendarStatus(); loadCalendarEvents(); });
+  $calendarSyncBtn.addEventListener('click', () => syncCalendarManual());
+
   // 轻量 toast 提示（一次性，几秒后消失）
   let _toastTimer = null;
   // ============================================================
@@ -5052,135 +5184,7 @@
     _toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
   }
 
-  function renderCalendarGuide() {
-    $calendarList.innerHTML = '';
-    const wrap = document.createElement('div');
-    wrap.className = 'calendar-setup';
-    const card = document.createElement('div');
-    card.className = 'calendar-setup-card';
-    const h = document.createElement('h3');
-    h.textContent = '📅 日程未配置';
-    const p1 = document.createElement('div');
-    p1.className = 'cs-step';
-    p1.textContent = '会议日程与飞书消息共用同一套 lark-cli 授权与配置（feishu-config.json），只是脚本不同。配置一次，两个功能都能用。';
-    const guideLink = document.createElement('a');
-    guideLink.className = 'guide-link';
-    guideLink.href = GUIDE_URL;
-    guideLink.target = '_blank';
-    guideLink.rel = 'noopener';
-    guideLink.textContent = GUIDE_LABEL;
-    const p2 = document.createElement('div');
-    p2.className = 'cs-step';
-    p2.textContent = '1. 安装并授权 lark-cli（用户身份，需 calendar / vc / minutes scope）';
-    const p3 = document.createElement('div');
-    p3.className = 'cs-step';
-    p3.textContent = '2. 准备日历脚本（仓库 scripts/calendar.js 是开箱示例，含妙记/纪要链路）';
-    const p4 = document.createElement('div');
-    p4.className = 'cs-step';
-    p4.textContent = '3. 在 ~/.dsh/office/feishu-config.json 的 scripts 里加一行：';
-    const code2 = document.createElement('code');
-    code2.textContent = '"calendar": "<你的calendar.js绝对路径>"';
-    const p5 = document.createElement('div');
-    p5.className = 'cs-step';
-    p5.textContent = '4. 刷新页面，点右上角「同步」即可拉取日程。';
-    // 可复制提示词：发给 AI 代配（附带在线文档链接，AI 可打开阅读）
-    const prompt = document.createElement('div');
-    prompt.className = 'cs-step';
-    prompt.textContent = '也可以把下面这句发给你的 AI，让它帮你完成配置：';
-    const promptText = document.createElement('code');
-    promptText.textContent = '请阅读飞书配置指南（' + GUIDE_URL + '），按照文档为我安装并配置 lark-cli（含用户授权，scope 需含 calendar / vc / minutes），准备 calendar.js 脚本并写入 ~/.dsh/office/feishu-config.json 的 scripts.calendar。';
-    card.appendChild(h); card.appendChild(p1); card.appendChild(guideLink); card.appendChild(p2);
-    card.appendChild(p3); card.appendChild(p4); card.appendChild(code2); card.appendChild(p5);
-    card.appendChild(prompt); card.appendChild(promptText);
-    wrap.appendChild(card);
-    $calendarList.appendChild(wrap);
-  }
 
-  async function loadCalendarStatus() {
-    try {
-      const res = await apiFetch('/calendar/status', { cache: 'no-store' });
-      const json = await res.json();
-      if (!json || !json.ok || !json.data) { setStatus($calendarStatus, TEXT_STATUS_ERROR); return; }
-      const d = json.data;
-      if (!d.configured) { renderCalendarGuide(); return; }
-      $calendarSyncBtn.disabled = false;
-      let base = d.syncing ? TEXT_SYNCING : (d.fetchedAt ? '上次同步 ' + d.fetchedAt + (d.total ? ' · ' + d.total + ' 条' : '') : '尚未同步');
-      if (d.stale && !d.syncing) base += ' · 数据已过期';
-      setStatus($calendarStatus, base);
-    } catch (e) {
-      setStatus($calendarStatus, TEXT_STATUS_ERROR);
-    }
-  }
-
-  async function loadCalendarEvents() {
-    try {
-      const res = await apiFetch('/calendar/events', { cache: 'no-store' });
-      const json = await res.json();
-      if (!json || !json.ok) {
-        const code = json && json.error && json.error.code;
-        if (code === 'CALENDAR_CONFIG_REQUIRED') { renderCalendarGuide(); return; }
-        setStatus($calendarStatus, (json && json.error && json.error.message) || TEXT_READ_ERROR);
-        return;
-      }
-      calendarEvents = (json.data && json.data.events) || [];
-      calendarFetchedAt = (json.data && json.data.fetchedAt) || '';
-      renderCalendarCards(calendarEvents);
-      loadCalendarStatus();
-    } catch (e) {
-      setStatus($calendarStatus, TEXT_READ_ERROR + '：' + (e && e.message ? e.message : e));
-    }
-  }
-
-  async function syncCalendarManual() {
-    $calendarSyncBtn.disabled = true;
-    $calendarSyncBtn.textContent = TEXT_SYNCING;
-    setStatus($calendarStatus, TEXT_SYNCING);
-    try {
-      const res = await apiFetch('/calendar/sync', { cache: 'no-store', method: 'POST' });
-      const json = await res.json();
-      if (json && json.ok) {
-        setStatus($calendarStatus, '同步完成' + (json.data && json.data.total != null ? ' · ' + json.data.total + ' 条' : ''));
-        loadCalendarEvents();
-      } else {
-        setStatus($calendarStatus, (json && json.error && json.error.message) || '同步失败');
-        $calendarSyncBtn.disabled = false;
-      }
-    } catch (e) {
-      setStatus($calendarStatus, '同步失败：' + (e && e.message ? e.message : e));
-      $calendarSyncBtn.disabled = false;
-    } finally {
-      $calendarSyncBtn.textContent = '同步';
-    }
-  }
-
-  // ---------- 会议视图开关 ----------
-  function toggleCalendar() {
-    toggleView('calendar',
-      () => calendarViewOpen, (v) => { calendarViewOpen = v; },
-      () => { if (calendarTimer) { clearInterval(calendarTimer); calendarTimer = null; } },
-      () => {
-        loadCalendarStatus();
-        loadCalendarEvents();
-        loadTodos();
-        if (calendarTimer) clearInterval(calendarTimer);
-        calendarTimer = setInterval(() => {
-          if (!calendarViewOpen) { clearInterval(calendarTimer); calendarTimer = null; return; }
-          document.querySelectorAll('.cal-card[data-id]').forEach(function(card) {
-            var eventId = card.dataset.id;
-            var evt = calendarEvents.find(function(ev) { return ev.event_id === eventId; });
-            if (!evt) return;
-            var cdEl = card.querySelector('.ct-countdown');
-            if (!cdEl) return;
-            cdEl.textContent = calCountdown(evt);
-          });
-        }, CALENDAR_COUNTDOWN_MS);
-      }
-    );
-  }
-  let calendarTimer = null;
-  $calendarBtn.addEventListener('click', toggleCalendar);
-  $calendarRefreshBtn.addEventListener('click', () => { loadCalendarStatus(); loadCalendarEvents(); });
-  $calendarSyncBtn.addEventListener('click', () => syncCalendarManual());
 
   // ---------- 启动：拉数据 → 渲染 → 轮询（数据变化才重渲） ----------
   // P2-1: lightweight structural key instead of full JSON.stringify

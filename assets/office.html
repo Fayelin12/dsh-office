@@ -1023,6 +1023,15 @@
   .f-preview .fp-row:hover { color: var(--text); }
   .f-preview .fp-row b { font-weight: 600; color: var(--text); }
   /* ============ 会议视图（📅 飞书日历日程） ============ */
+  /* 会议页左右布局：左列 = 待办，右列 = 会议（单列） */
+  .calendar-layout {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .calendar-layout .todo-panel { flex: 0 0 38%; }
   .calendar-list {
     flex: 1;
     min-height: 0;
@@ -1032,12 +1041,12 @@
     gap: 10px;
     padding-right: 2px;
   }
-  /* 双列：左 = 未开始，右 = 已结束 */
+  /* 单列：上 = 未开始，下 = 已结束 */
   .cal-columns {
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 14px;
     align-items: start;
   }
@@ -1460,9 +1469,24 @@
     flex: 1;
     min-width: 0;
     display: flex;
-    align-items: stretch;
+    align-items: center;
+    justify-content: center;
   }
-  /* 📝 每日待办面板（右侧预留区） */
+  .insights-aside-hint {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--glass-border);
+    border-radius: var(--radius-sm);
+    color: var(--text-faint);
+    font-size: var(--font-body);
+    text-align: center;
+    line-height: 1.8;
+    user-select: none;
+  }
+  /* 📝 每日待办面板（会议视图左列） */
   .todo-panel {
     flex: 1;
     min-width: 0;
@@ -1489,6 +1513,14 @@
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-pill);
   }
+  .todo-date-nav {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .todo-date-nav .icon-btn { padding: 2px 8px; }
+  .todo-date-nav .insights-date-input { flex: 1; min-width: 0; }
   .todo-add {
     flex: none;
     display: flex;
@@ -1971,7 +2003,26 @@
           <button class="icon-btn" id="calendarSyncBtn" title="同步日程" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
         </div>
       </div>
-      <div class="calendar-list" id="calendarList"></div>
+      <div class="calendar-layout">
+        <div class="todo-panel">
+          <div class="todo-head">
+            <span class="todo-title">📝 我的待办</span>
+            <span class="todo-count" id="todoCount"></span>
+          </div>
+          <div class="todo-date-nav">
+            <button class="icon-btn" id="todoDatePrev" title="前一天">‹</button>
+            <input type="date" class="insights-date-input" id="todoDateInput" title="点击选择任意日期" />
+            <button class="icon-btn" id="todoDateNext" title="后一天">›</button>
+            <button class="icon-btn" id="todoDateToday" title="回到今天" style="width:auto;padding:0 10px;font-size:var(--font-body)">今天</button>
+          </div>
+          <div class="todo-add">
+            <input id="todoInput" placeholder="记一条待办…" maxlength="500" autocomplete="off" />
+            <button class="icon-btn" id="todoAddBtn" title="添加待办" style="width:auto;padding:0 12px;font-size:var(--font-body)">添加</button>
+          </div>
+          <div class="todo-list" id="todoList"></div>
+        </div>
+        <div class="calendar-list" id="calendarList"></div>
+      </div>
     </div>
     <div class="mail-view" id="insightsView" hidden>
       <div class="mail-toolbar">
@@ -1991,17 +2042,7 @@
       <div class="insights-layout">
         <div class="insights-main" id="insightsMain"></div>
         <div class="insights-aside" id="insightsAside">
-          <div class="todo-panel">
-            <div class="todo-head">
-              <span class="todo-title">📝 我的待办</span>
-              <span class="todo-count" id="todoCount"></span>
-            </div>
-            <div class="todo-add">
-              <input id="todoInput" placeholder="记一条待办…" maxlength="500" autocomplete="off" />
-              <button class="icon-btn" id="todoAddBtn" title="添加待办" style="width:auto;padding:0 12px;font-size:var(--font-body)">添加</button>
-            </div>
-            <div class="todo-list" id="todoList"></div>
-          </div>
+          <div class="insights-aside-hint">预留区<br/>（将来放别的东西）</div>
         </div>
       </div>
     </div>
@@ -4348,11 +4389,14 @@
   const $insightsRefreshBtn = document.getElementById('insightsRefreshBtn');
   const $insightsGenBtn = document.getElementById('insightsGenBtn');
   const $insightsMain = document.getElementById('insightsMain');
-  const $insightsDateNav = document.getElementById('insightsDateNav');
   const $insightsDateInput = document.getElementById('insightsDateInput');
   const $insightsDatePrev = document.getElementById('insightsDatePrev');
   const $insightsDateNext = document.getElementById('insightsDateNext');
   const $insightsDateToday = document.getElementById('insightsDateToday');
+  const $todoDateInput = document.getElementById('todoDateInput');
+  const $todoDatePrev = document.getElementById('todoDatePrev');
+  const $todoDateNext = document.getElementById('todoDateNext');
+  const $todoDateToday = document.getElementById('todoDateToday');
   const $todoInput = document.getElementById('todoInput');
   const $todoAddBtn = document.getElementById('todoAddBtn');
   const $todoList = document.getElementById('todoList');
@@ -4372,7 +4416,8 @@
   let insightsViewOpen = false;
   let insightsGenerating = false;   // 前端生成轮询标志
   let insightsLazyFired = false;    // 本次打开是否已惰性触发（防重复）
-  let insightsDate = null;          // 当前查看日期（YYYY-MM-DD，洞察与待办共享）
+  let insightsDate = null;          // 洞察查看日期（YYYY-MM-DD）
+  let todoDate = null;              // 待办查看日期（YYYY-MM-DD，独立于洞察）
   let currentInsightsDay = null;    // 当前渲染的整日快照（转会话取条目文本用）
   let todos = [];                   // 当前日期的待办列表
   let todoLoadedDate = null;        // todos 已加载的日期（避免重复渲染）
@@ -4727,7 +4772,7 @@
     else if (btn.dataset.kind === 'add-todo') addInsightToTodo(loc);
   });
 
-  // 洞察「📋 重要待办」一键加入「📝 我的待办」（复制到当前查看日期）
+  // 洞察「📋 重要待办」一键加入「📝 我的待办」（复制到洞察查看的那一天）
   async function addInsightToTodo(loc) {
     const sec = currentInsightsDay && currentInsightsDay.sections && currentInsightsDay.sections[loc.section];
     const item = sec && sec[loc.index];
@@ -4742,24 +4787,38 @@
       });
       const j = await res.json();
       if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '添加失败');
-      toast('已加入我的待办');
-      loadTodos();
+      toast('已加入 ' + (insightsDate || todayStr()) + ' 的我的待办');
     } catch (err) {
       toast('加入待办失败：' + (err && err.message ? err.message : err));
     }
   }
 
-  // ---------- 日期切换（按天翻页，洞察与待办共享；左=前一天、右=后一天） ----------
+  // ---------- 洞察日期切换（只驱动洞察；左=前一天、右=后一天） ----------
   function applyInsightsDate(next) {
     if (!next) return;
     insightsDate = next;
     syncDatePickerUI();
-    loadInsights(false, true);   // loadInsights 内部会刷新待办面板
+    loadInsights(false, true);
   }
   $insightsDatePrev.addEventListener('click', () => applyInsightsDate(shiftDate(insightsDate || todayStr(), -1)));
   $insightsDateNext.addEventListener('click', () => applyInsightsDate(shiftDate(insightsDate || todayStr(), 1)));
   $insightsDateToday.addEventListener('click', () => applyInsightsDate(todayStr()));
   $insightsDateInput.addEventListener('change', () => applyInsightsDate($insightsDateInput.value));
+
+  // ---------- 待办日期切换（只驱动待办） ----------
+  function applyTodoDate(next) {
+    if (!next) return;
+    todoDate = next;
+    syncTodoDateUI();
+    loadTodos();
+  }
+  function syncTodoDateUI() {
+    $todoDateInput.value = todoDate || todayStr();
+  }
+  $todoDatePrev.addEventListener('click', () => applyTodoDate(shiftDate(todoDate || todayStr(), -1)));
+  $todoDateNext.addEventListener('click', () => applyTodoDate(shiftDate(todoDate || todayStr(), 1)));
+  $todoDateToday.addEventListener('click', () => applyTodoDate(todayStr()));
+  $todoDateInput.addEventListener('change', () => applyTodoDate($todoDateInput.value));
   $toSessionClose.addEventListener('click', () => { $toSessionModal.hidden = true; });
   $toSessionModal.addEventListener('click', (e) => { if (e.target === $toSessionModal) $toSessionModal.hidden = true; });
   $toSessionOkBtn.addEventListener('click', submitToSession);
@@ -4804,12 +4863,10 @@
     }, 3000);
   }
 
-  // ---------- 加载：待办（不依赖洞察配置）→ status（前置条件/惰性触发）→ history（所选日期渲染） ----------
+  // ---------- 加载：status（前置条件/惰性触发）→ history（所选日期渲染） ----------
   async function loadInsights(forceRefresh, skipLazy) {
-    // 待办面板独立于洞察配置：先定日期、同步日期选择器、刷新待办
     if (!insightsDate) insightsDate = todayStr();
     syncDatePickerUI();
-    loadTodos();
 
     try {
       const res = await apiFetch('/feishu/insights/status' + (forceRefresh ? '?refresh=1' : ''));
@@ -4856,12 +4913,13 @@
     }
   }
 
-  // ============ 📝 每日待办面板（右侧，与洞察共享日期） ============
+  // ============ 📝 每日待办面板（会议视图左列，独立日期） ============
   function todoPrioClass(p) { return p === '高' ? 'high' : (p === '低' ? 'low' : 'mid'); }
   function nextTodoPriority(p) { return p === '高' ? '中' : (p === '中' ? '低' : '高'); }
 
   async function loadTodos() {
-    const date = insightsDate || todayStr();
+    if (!todoDate) { todoDate = todayStr(); syncTodoDateUI(); }
+    const date = todoDate;
     try {
       const res = await apiFetch('/todos/list?date=' + encodeURIComponent(date), { cache: 'no-store' });
       const j = await res.json();
@@ -4928,7 +4986,7 @@
       const res = await apiFetch('/todos/add', {
         method: 'POST',
         headers: JSON_HEADERS,
-        body: JSON.stringify({ date: insightsDate || todayStr(), text })
+        body: JSON.stringify({ date: todoDate || todayStr(), text })
       });
       const j = await res.json();
       if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '添加失败');
@@ -4944,7 +5002,7 @@
       const res = await apiFetch('/todos/update', {
         method: 'POST',
         headers: JSON_HEADERS,
-        body: JSON.stringify({ date: insightsDate || todayStr(), id, patch })
+        body: JSON.stringify({ date: todoDate || todayStr(), id, patch })
       });
       const j = await res.json();
       if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '更新失败');
@@ -4959,7 +5017,7 @@
       const res = await apiFetch('/todos/remove', {
         method: 'POST',
         headers: JSON_HEADERS,
-        body: JSON.stringify({ date: insightsDate || todayStr(), id })
+        body: JSON.stringify({ date: todoDate || todayStr(), id })
       });
       const j = await res.json();
       if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '删除失败');
@@ -4971,12 +5029,12 @@
 
   // 改到下一天：把该条待办移到当前查看日期的次日（保留原状态）
   async function todoMove(id) {
-    const toDate = shiftDate(insightsDate || todayStr(), 1);
+    const toDate = shiftDate(todoDate || todayStr(), 1);
     try {
       const res = await apiFetch('/todos/move', {
         method: 'POST',
         headers: JSON_HEADERS,
-        body: JSON.stringify({ date: insightsDate || todayStr(), id, toDate })
+        body: JSON.stringify({ date: todoDate || todayStr(), id, toDate })
       });
       const j = await res.json();
       if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '改期失败');
@@ -5176,6 +5234,7 @@
       () => {
         loadCalendarStatus();
         loadCalendarEvents();
+        loadTodos();
         if (calendarTimer) clearInterval(calendarTimer);
         calendarTimer = setInterval(() => {
           if (!calendarViewOpen) { clearInterval(calendarTimer); calendarTimer = null; return; }

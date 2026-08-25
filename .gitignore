@@ -14,6 +14,11 @@ DEPLOY-PLAN.md
 *.bak
 *.bak-*
 
+# 临时调试脚本（下划线开头，不入库）
+_*.mjs
+_*.js
+_*.cjs
+
 # 系统文件
 .DS_Store
 Thumbs.db

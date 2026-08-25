@@ -4104,29 +4104,31 @@
     const upcoming = events.filter((e) => !isEnded(e)).sort((a, b) => (a.start_ts || 0) - (b.start_ts || 0));
     const past = events.filter(isEnded).sort((a, b) => (b.end_ts || 0) - (a.end_ts || 0));
 
-    // 单列容器：上 = 未开始（含进行中），下 = 已结束；空 section 直接收起不渲染
+    // 单列容器：上 = 未开始（含进行中，带标题），下 = 已结束（无标题，靠卡片灰色淡化区分）；空 section 直接收起
     const cols = document.createElement('div');
     cols.className = 'cal-columns';
 
-    const mkCol = (title, list) => {
+    const mkCol = (title, list, withHead) => {
       const col = document.createElement('div');
       col.className = 'cal-col' + (list === past ? ' past' : '');
-      const head = document.createElement('div');
-      head.className = 'cal-col-head';
-      const headTitle = document.createElement('span');
-      headTitle.className = 'cal-head-title';
-      headTitle.textContent = title;
-      const headCount = document.createElement('span');
-      headCount.className = 'cal-head-count';
-      headCount.textContent = String(list.length);
-      head.appendChild(headTitle);
-      head.appendChild(headCount);
-      col.appendChild(head);
+      if (withHead) {
+        const head = document.createElement('div');
+        head.className = 'cal-col-head';
+        const headTitle = document.createElement('span');
+        headTitle.className = 'cal-head-title';
+        headTitle.textContent = title;
+        const headCount = document.createElement('span');
+        headCount.className = 'cal-head-count';
+        headCount.textContent = String(list.length);
+        head.appendChild(headTitle);
+        head.appendChild(headCount);
+        col.appendChild(head);
+      }
       for (const e of list) col.appendChild(buildCalCard(e));
       return col;
     };
-    if (upcoming.length) cols.appendChild(mkCol('⏳ 未开始', upcoming));
-    if (past.length) cols.appendChild(mkCol('✅ 已结束', past));
+    if (upcoming.length) cols.appendChild(mkCol('⏳ 未开始', upcoming, true));
+    if (past.length) cols.appendChild(mkCol('', past, false));
     $calendarList.appendChild(cols);
   }
 

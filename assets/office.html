@@ -4104,7 +4104,7 @@
     const upcoming = events.filter((e) => !isEnded(e)).sort((a, b) => (a.start_ts || 0) - (b.start_ts || 0));
     const past = events.filter(isEnded).sort((a, b) => (b.end_ts || 0) - (a.end_ts || 0));
 
-    // 双列容器：左 = 未开始（含进行中），右 = 已结束
+    // 单列容器：上 = 未开始（含进行中），下 = 已结束；空 section 直接收起不渲染
     const cols = document.createElement('div');
     cols.className = 'cal-columns';
 
@@ -4122,18 +4122,11 @@
       head.appendChild(headTitle);
       head.appendChild(headCount);
       col.appendChild(head);
-      if (!list.length) {
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        empty.textContent = list === past ? '没有已结束的会议' : '没有待开始的会议';
-        col.appendChild(empty);
-      } else {
-        for (const e of list) col.appendChild(buildCalCard(e));
-      }
+      for (const e of list) col.appendChild(buildCalCard(e));
       return col;
     };
-    cols.appendChild(mkCol('⏳ 未开始', upcoming));
-    cols.appendChild(mkCol('✅ 已结束', past));
+    if (upcoming.length) cols.appendChild(mkCol('⏳ 未开始', upcoming));
+    if (past.length) cols.appendChild(mkCol('✅ 已结束', past));
     $calendarList.appendChild(cols);
   }
 

@@ -1788,6 +1788,115 @@
     white-space: nowrap;
   }
 
+  /* ============ 📋 待办看板：日历视图（左栏「全部」，§5） ============ */
+  .todo-calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .todo-cal-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .todo-cal-head .icon-btn { padding: 2px 8px; }
+  .todo-cal-title {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .todo-cal-today {
+    width: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 2px 12px;
+    cursor: pointer;
+  }
+  .todo-cal-today:hover { background: var(--bg-surface-hover); color: var(--text); }
+  .todo-cal-stat {
+    margin-left: auto;
+    font-size: var(--font-sm);
+    color: var(--text-faint);
+  }
+  .todo-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+  .todo-cal-wd {
+    font-size: var(--font-sm);
+    color: var(--text-faint);
+    text-align: center;
+    padding: 2px 0;
+  }
+  .todo-cal-cell {
+    min-height: 76px;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .todo-cal-cell:hover { background: var(--bg-surface-hover); }
+  .todo-cal-cell.today {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .todo-cal-day {
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+  .todo-cal-cell.today .todo-cal-day { color: var(--accent); font-weight: 600; }
+  .todo-cal-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    padding: 1px 2px;
+    font-family: inherit;
+    font-size: var(--font-sm);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+  }
+  .todo-cal-item:hover { background: var(--bg-surface-hover); }
+  .todo-cal-item-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .todo-cal-item.done { color: var(--text-faint); text-decoration: line-through; }
+  .todo-cal-item.overdue { color: var(--warn); }
+  .todo-cal-dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .todo-cal-more {
+    align-self: flex-start;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: inherit;
+    font-size: var(--font-sm);
+    color: var(--text-faint);
+    cursor: pointer;
+  }
+  .todo-cal-more:hover { color: var(--text); }
+  /* .todo-cal-empty：空占位格，无样式 */
+
   /* 编辑弹层 */
   .todo-edit-form {
     display: flex;

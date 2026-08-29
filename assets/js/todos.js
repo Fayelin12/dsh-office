@@ -46,12 +46,13 @@
   const $todoProjectsClose = document.getElementById('todoProjectsClose');
 
   let todoViewOpen = false;          // 看板视图是否打开
-  let todoView = 'all';              // 左栏选中视图：all | today | overdue | unassigned | project:<项目名>
+  let todoView = 'all';              // 左栏选中视图：all | today | overdue | unassigned | project:<项目名> | day:<YYYY-MM-DD>
   let boardItems = [];               // 看板全量条目
   let boardProjects = [];            // 项目列表
   let boardDoneOpen = false;         // 已完成区是否展开
   let editingTodoId = null;          // 编辑弹层目标 id
   let editingProjName = null;        // 项目管理弹层正在重命名的项目
+  let calMonth = null;               // 日历视图所在月（'YYYY-MM'，null 表示当月）
 
   function toggleTodoBoard() {
     toggleView('todos',
@@ -122,9 +123,11 @@
       overdue: open.filter((t) => t.due && t.due < today).length,
       unassigned: open.filter((t) => !t.project).length
     };
+    // day 视图无对应左栏项，语义上高亮「全部」（从日历上下文进入）
+    const activeView = todoView.indexOf('day:') === 0 ? 'all' : todoView;
     for (const btn of $todoNav.querySelectorAll('.todo-nav-scroll > .todo-nav-item[data-view]')) {
       const n = counts[btn.dataset.view] || 0;
-      btn.classList.toggle('active', todoView === btn.dataset.view);
+      btn.classList.toggle('active', activeView === btn.dataset.view);
       let c = btn.querySelector('.todo-nav-count');
       if (!c) { c = el('span', 'todo-nav-count'); btn.appendChild(c); }
       c.textContent = String(n);
@@ -145,18 +148,31 @@
     const today = todayStr();
     const q = $todoSearch.value.trim().toLowerCase();
 
+    // 全部视图：右栏整体渲染日历（日历自带头部，不再显示外层视图头）
+    if (todoView === 'all') {
+      $todoMainHead.innerHTML = '';
+      $todoBoardAdd.hidden = true;
+      $todoBoardOpts.hidden = true;
+      $todoBoardMoreBtn.textContent = '▸ 选项';
+      $todoBoard.innerHTML = '';
+      $todoBoard.appendChild(renderTodoCalendar());
+      return;
+    }
+
     let title = '📥 全部';
     let projectScope = null;
+    let dayDate = null;
     if (todoView === 'today') title = '📅 今天';
     else if (todoView === 'overdue') title = '⏰ 逾期';
     else if (todoView === 'unassigned') title = '未分配';
     else if (todoView.indexOf('project:') === 0) { projectScope = todoView.slice(8); title = '📁 ' + projectScope; }
+    else if (todoView.indexOf('day:') === 0) { dayDate = todoView.slice(4); title = fmtCalDate(dayDate, true); }
 
     const inScope = (t) => {
       if (todoView === 'today') return t.due === today;
       if (todoView === 'overdue') return !!(t.due && t.due < today);
       if (todoView === 'unassigned') return !t.project;
-      if (todoView === 'all') return true;
+      if (todoView.indexOf('day:') === 0) return t.due === dayDate;
       return t.project === projectScope;
     };
     const searchMatch = (t) => !q || (t.text + ' ' + (t.note || '') + ' ' + (t.project || '')).toLowerCase().indexOf(q) >= 0;
@@ -177,10 +193,11 @@
     if (!showAdd) { $todoBoardOpts.hidden = true; $todoBoardMoreBtn.textContent = '▸ 选项'; }
     if (projectScope !== null) $todoBoardInput.placeholder = '记一条待办…（将归入 ' + projectScope + '）';
     else if (todoView === 'today') $todoBoardInput.placeholder = '记一条待办…（今天截止）';
+    else if (todoView.indexOf('day:') === 0) $todoBoardInput.placeholder = '记一条待办…（' + fmtCalDate(dayDate, false) + '截止）';
     else $todoBoardInput.placeholder = '记一条待办…';
 
     // 条目列表（跨项目视图加项目 chip）+ 已完成折叠区
-    const crossProject = todoView === 'today' || todoView === 'overdue';
+    const crossProject = todoView === 'today' || todoView === 'overdue' || todoView.indexOf('day:') === 0;
     $todoBoard.innerHTML = '';
     if (open.length === 0 && done.length === 0) {
       const msg = q ? '没有符合条件的待办'
@@ -188,6 +205,7 @@
         : todoView === 'today' ? '今天还没有待办'
         : todoView === 'unassigned' ? '还没有未分配的待办'
         : todoView.indexOf('project:') === 0 ? '这个项目还没有待办'
+        : todoView.indexOf('day:') === 0 ? '这一天还没有待办'
         : '还没有待办';
       $todoBoard.appendChild(el('div', 'todo-empty', msg));
     } else {
@@ -272,6 +290,116 @@
     return row;
   }
 
+  // ---------- 日历视图（左栏「全部」） ----------
+  // 项目色点色板（§10 token 取值，按 boardProjects 索引循环取模；未分配无点）
+  const CAL_DOT_COLORS = ['var(--accent)', 'var(--ok)', 'var(--warn)', 'var(--danger)', 'var(--text-dim)'];
+
+  // 当前日历所在年/月（calMonth: 'YYYY-MM'，null 表示当月）
+  function calBase() {
+    const now = new Date();
+    const y = calMonth ? parseInt(calMonth.slice(0, 4), 10) : now.getFullYear();
+    const m = calMonth ? parseInt(calMonth.slice(5, 7), 10) - 1 : now.getMonth();
+    return { y, m };
+  }
+
+  // 翻月：返回 'YYYY-MM'
+  function shiftCalMonth(delta) {
+    const { y, m } = calBase();
+    const d = new Date(y, m + delta, 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
+  // 'YYYY-MM-DD' → '2026年8月29日'（full）或 '8月29日'（short）
+  function fmtCalDate(dateStr, full) {
+    const m = parseInt(dateStr.slice(5, 7), 10);
+    const d = parseInt(dateStr.slice(8, 10), 10);
+    return (full ? dateStr.slice(0, 4) + '年' : '') + m + '月' + d + '日';
+  }
+
+  // 项目色点：按 boardProjects 索引取模色板，同一项目颜色一致
+  function calProjectColor(name) {
+    const i = boardProjects.indexOf(name);
+    return CAL_DOT_COLORS[i < 0 ? 0 : i % CAL_DOT_COLORS.length];
+  }
+
+  // 格内条目：项目色点 + 截断标题；已完成淡显划线，当月内已过且未完成标红
+  function makeCalItem(t) {
+    const overdue = !!t.due && !t.done && t.due < todayStr();
+    const item = el('button', 'todo-cal-item' + (t.done ? ' done' : '') + (overdue ? ' overdue' : ''));
+    item.dataset.id = t.id;
+    item.title = t.text;
+    if (t.project) {
+      const dot = el('span', 'todo-cal-dot');
+      dot.style.background = calProjectColor(t.project);
+      item.appendChild(dot);
+    }
+    item.appendChild(el('span', 'todo-cal-item-text', t.text));
+    return item;
+  }
+
+  // 渲染月历：周一起始、仅当月天数（前补空占位），每格最多 2 条 + 超出「+N」
+  function renderTodoCalendar() {
+    const { y, m } = calBase();
+    const today = todayStr();
+    const cal = el('div', 'todo-calendar');
+
+    // 头部：‹ 2026 年 8 月 › [今天] 统计
+    const head = el('div', 'todo-cal-head');
+    const prevBtn = el('button', 'icon-btn', '‹');
+    prevBtn.title = '上个月';
+    const nextBtn = el('button', 'icon-btn', '›');
+    nextBtn.title = '下个月';
+    const todayBtn = el('button', 'todo-cal-today', '今天');
+    todayBtn.title = '回到当前月';
+    const monthPrefix = y + '-' + String(m + 1).padStart(2, '0');
+    const inMonth = boardItems.filter((t) => t.due && t.due.indexOf(monthPrefix) === 0);
+    const stat = el('span', 'todo-cal-stat',
+      '本月待办 ' + inMonth.filter((t) => !t.done).length + ' · 已完成 ' + inMonth.filter((t) => t.done).length);
+    prevBtn.addEventListener('click', () => { calMonth = shiftCalMonth(-1); renderTodoMain(); });
+    nextBtn.addEventListener('click', () => { calMonth = shiftCalMonth(1); renderTodoMain(); });
+    todayBtn.addEventListener('click', () => { calMonth = null; renderTodoMain(); });
+    head.appendChild(prevBtn);
+    head.appendChild(el('span', 'todo-cal-title', y + ' 年 ' + (m + 1) + ' 月'));
+    head.appendChild(nextBtn);
+    head.appendChild(todayBtn);
+    head.appendChild(stat);
+    cal.appendChild(head);
+
+    // 网格：周一起始（一 二 三 四 五 六 日）
+    const grid = el('div', 'todo-cal-grid');
+    for (const wd of ['一', '二', '三', '四', '五', '六', '日']) grid.appendChild(el('div', 'todo-cal-wd', wd));
+    const lead = (new Date(y, m, 1).getDay() + 6) % 7;
+    for (let i = 0; i < lead; i++) grid.appendChild(el('div', 'todo-cal-empty'));
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      const cell = el('div', 'todo-cal-cell' + (dateStr === today ? ' today' : ''));
+      cell.dataset.date = dateStr;
+      cell.appendChild(el('span', 'todo-cal-day', String(d)));
+      const dayItems = boardItems.filter((t) => t.due === dateStr);
+      for (const t of boardSort(dayItems).slice(0, 2)) cell.appendChild(makeCalItem(t));
+      if (dayItems.length > 2) {
+        const more = el('button', 'todo-cal-more', '+' + (dayItems.length - 2));
+        more.title = '查看当天全部待办';
+        cell.appendChild(more);
+      }
+      grid.appendChild(cell);
+    }
+    cal.appendChild(grid);
+    return cal;
+  }
+
+  // 日历交互：点格内条目打开编辑弹窗；点日期数字/空白格/「+N」进入该日列表视图
+  $todoBoard.addEventListener('click', (e) => {
+    const calItem = e.target.closest('.todo-cal-item');
+    if (calItem) { openTodoEdit(calItem.dataset.id); return; }
+    const cell = e.target.closest('.todo-cal-cell');
+    if (cell && cell.dataset.date) {
+      todoView = 'day:' + cell.dataset.date;
+      renderTodoLayout();
+    }
+  });
+
   // ---------- 看板操作 ----------
   // 添加归属由当前视图决定：project:X → 归入该项目；today → 截止今天；unassigned → 不设项目、due 取附属行
   function boardAdd() {
@@ -281,6 +409,7 @@
     let due = $todoBoardDue.value || null;
     if (todoView.indexOf('project:') === 0) project = todoView.slice(8);
     else if (todoView === 'today') due = todayStr();
+    else if (todoView.indexOf('day:') === 0) due = due || todoView.slice(4);
     const body = { text, project, due };
     apiFetch('/todos/add', {
       method: 'POST',

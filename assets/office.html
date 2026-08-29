@@ -21,6 +21,7 @@
         <button class="icon-btn save-btn" id="saveBtn" title="保存更改">保存</button>
         <button class="header-btn" id="feishuBtn" title="飞书消息">💬 飞书</button>
         <button class="header-btn" id="calendarBtn" title="日程">📅 日程</button>
+        <button class="header-btn" id="todoBoardBtn" title="待办看板">📋 待办</button>
         <button class="header-btn" id="insightsBtn" title="每日洞察">💡 洞察</button>
         <button class="header-btn" id="mailBtn" title="邮箱">📧 邮箱</button>
         <button class="header-btn" id="helpBtn" title="数据口径">❓ 帮助</button>
@@ -102,6 +103,29 @@
         <div class="calendar-list" id="calendarList"></div>
       </div>
     </div>
+    <div class="mail-view" id="todoView" hidden>
+      <div class="mail-toolbar">
+        <span class="mail-identity" id="todoIdentity">📋 待办</span>
+        <div class="todo-board-tools">
+          <select id="todoProjectFilter" title="按项目筛选"><option value="">全部项目</option></select>
+          <input id="todoSearch" placeholder="搜索待办…" autocomplete="off" />
+          <label class="todo-overdue-label" title="只看已逾期的未完成待办">
+            <input type="checkbox" id="todoOverdueOnly" /> 只看逾期
+          </label>
+        </div>
+        <div class="mail-actions">
+          <button class="icon-btn" id="todoManageProjectsBtn" title="管理项目" style="width:auto;padding:0 12px;font-size:var(--font-body)">📁 项目</button>
+          <button class="icon-btn" id="todoBoardRefreshBtn" title="刷新">⟳</button>
+        </div>
+      </div>
+      <div class="todo-board-add">
+        <input id="todoBoardInput" placeholder="记一条待办…（Enter 添加）" maxlength="500" autocomplete="off" />
+        <select id="todoBoardProject" title="项目"></select>
+        <input type="date" id="todoBoardDue" title="截止日（可空）" />
+        <button class="icon-btn" id="todoBoardAddBtn" title="添加待办" style="width:auto;padding:0 12px;font-size:var(--font-body)">添加</button>
+      </div>
+      <div class="todo-board" id="todoBoard"></div>
+    </div>
     <div class="mail-view" id="insightsView" hidden>
       <div class="mail-toolbar">
         <span class="mail-identity" id="insightsIdentity">💡 洞察</span>
@@ -153,6 +177,41 @@
         <div class="compose-foot">
           <span class="compose-error" id="confirmError"></span>
           <button class="icon-btn" id="confirmOkBtn" style="width:auto;padding:0 18px;font-size:var(--font-body);font-weight:600">确认</button>
+        </div>
+      </div>
+    </div>
+    <div class="compose-modal modal-overlay" id="todoEditModal" hidden>
+      <div class="compose-card modal-card">
+        <div class="compose-head">
+          <span>✎ 编辑待办</span>
+          <button class="icon-btn" id="todoEditClose" title="关闭">✕</button>
+        </div>
+        <div class="compose-body todo-edit-form">
+          <input id="todoEditText" placeholder="待办内容" maxlength="500" autocomplete="off" />
+          <div class="todo-edit-row">
+            <select id="todoEditProject" title="项目"></select>
+            <input type="date" id="todoEditDue" title="截止日（可空）" />
+          </div>
+          <textarea id="todoEditNote" placeholder="备注（链接、上下文、验收标准…）" maxlength="2000"></textarea>
+        </div>
+        <div class="compose-foot">
+          <span class="compose-error" id="todoEditError"></span>
+          <button class="icon-btn" id="todoEditSaveBtn" style="width:auto;padding:0 18px;font-size:var(--font-body);font-weight:600">保存</button>
+        </div>
+      </div>
+    </div>
+    <div class="compose-modal modal-overlay" id="todoProjectsModal" hidden>
+      <div class="compose-card modal-card">
+        <div class="compose-head">
+          <span>📁 管理项目</span>
+          <button class="icon-btn" id="todoProjectsClose" title="关闭">✕</button>
+        </div>
+        <div class="compose-body">
+          <div class="todo-proj-add">
+            <input id="todoProjNew" placeholder="新项目名" maxlength="50" autocomplete="off" />
+            <button class="icon-btn" id="todoProjAddBtn" style="width:auto;padding:0 12px;font-size:var(--font-body)">添加</button>
+          </div>
+          <div class="todo-proj-list" id="todoProjList"></div>
         </div>
       </div>
     </div>

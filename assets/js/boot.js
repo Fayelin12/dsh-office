@@ -19,7 +19,7 @@
     }
   }
   async function refresh() {
-    if (mailViewOpen || feishuViewOpen || calendarViewOpen) return;  // 邮箱/飞书/会议视图打开时不轮询办公室数据
+    if (mailViewOpen || feishuViewOpen || calendarViewOpen || todoViewOpen) return;  // 邮箱/飞书/会议/待办视图打开时不轮询办公室数据
     try {
       await fetchData();
       // 合并快照实时状态：客户端 useSessions 比服务端 agents.list() 更快知道 running/pending

@@ -1521,6 +1521,234 @@
     font-size: var(--font-body);
   }
 
+  /* ============ 📋 待办看板（独立视图） ============ */
+  .todo-board-tools {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .todo-board-tools select,
+  .todo-board-tools input[type="text"] {
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg, transparent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 6px 10px;
+  }
+  .todo-board-tools select { flex: none; max-width: 170px; }
+  .todo-board-tools input[type="text"] { flex: 1; min-width: 80px; max-width: 240px; }
+  .todo-overdue-label {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  .todo-overdue-label input { accent-color: #ff9f0a; cursor: pointer; }
+
+  .todo-board-add {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .todo-board-add input[type="text"],
+  .todo-board-add input[type="date"],
+  .todo-board-add select {
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg, transparent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 7px 10px;
+  }
+  .todo-board-add input[type="text"] { flex: 1; min-width: 0; }
+  .todo-board-add select { flex: none; max-width: 180px; }
+  .todo-board-add input[type="date"] { flex: none; }
+
+  .todo-board {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .todo-board-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .todo-board-group-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px;
+  }
+  .todo-board-group-name {
+    font-size: var(--font-body);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .todo-board-group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .todo-board-done {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px dashed var(--glass-border);
+    padding-top: 10px;
+  }
+  .todo-board-done-head {
+    align-self: flex-start;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: var(--font-sm);
+    font-family: inherit;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .todo-board-done-head:hover { background: var(--card-hover); color: var(--text); }
+
+  .todo-item-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .todo-due {
+    flex: none;
+    font-size: var(--font-sm);
+    padding: 1px 7px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+    line-height: 1.5;
+    color: var(--text-dim);
+    background: rgba(142, 142, 147, 0.12);
+  }
+  .todo-due.today { color: #e89b3c; background: rgba(255, 149, 0, 0.14); }
+  .todo-due.overdue { color: #ff453a; background: rgba(255, 69, 58, 0.14); font-weight: 600; }
+  .todo-note-toggle { flex: none; }
+  .todo-note-row {
+    margin: 0 8px 6px 30px;
+    padding: 8px 10px;
+    border-left: 2px solid var(--accent);
+    background: var(--card-bg);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.6;
+  }
+  .todo-chip {
+    flex: none;
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    padding: 1px 7px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+  }
+
+  /* 编辑弹层 */
+  .todo-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .todo-edit-form input[type="text"],
+  .todo-edit-form textarea {
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg, transparent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 8px 10px;
+  }
+  .todo-edit-form textarea {
+    min-height: 90px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+  .todo-edit-row {
+    display: flex;
+    gap: 8px;
+  }
+  .todo-edit-row select {
+    flex: 1;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg, transparent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 6px 8px;
+  }
+
+  /* 项目管理弹层 */
+  .todo-proj-add {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .todo-proj-add input {
+    flex: 1;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg, transparent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 7px 10px;
+  }
+  .todo-proj-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .todo-proj-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-hover);
+  }
+  .todo-proj-name {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--font-body);
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .todo-proj-rename-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg, transparent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 3px 8px;
+  }
+
   /* ============ 💡 洞察视图（左右布局） ============ */
   .insights-layout {
     flex: 1;

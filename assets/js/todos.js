@@ -31,6 +31,7 @@
   const $todoSearch = document.getElementById('todoSearch');
   const $todoManageProjectsBtn = document.getElementById('todoManageProjectsBtn');
   const $todoBoardRefreshBtn = document.getElementById('todoBoardRefreshBtn');
+  const $todoNavToggle = document.getElementById('todoNavToggle');
   const $todoEditModal = document.getElementById('todoEditModal');
   const $todoEditText = document.getElementById('todoEditText');
   const $todoEditProject = document.getElementById('todoEditProject');
@@ -53,6 +54,8 @@
   let editingTodoId = null;          // 编辑弹层目标 id
   let editingProjName = null;        // 项目管理弹层正在重命名的项目
   let calMonth = null;               // 日历视图所在月（'YYYY-MM'，null 表示当月）
+  let todoNavCollapsed = false;      // 窄屏（≤720px）下 true = 左栏抽屉收起；宽屏忽略
+  let $todoNavBackdrop = null;       // 抽屉遮罩元素（懒创建）
 
   function toggleTodoBoard() {
     toggleView('todos',
@@ -107,6 +110,7 @@
 
   // ---------- 左右布局渲染（左栏导航 + 右栏列表） ----------
   function renderTodoLayout() {
+    collapseTodoNav();   // 窄屏下切换视图/刷新后自动收起抽屉（宽屏无影响）
     // 当前项目被删除时，活动视图回退「全部」
     if (todoView.indexOf('project:') === 0 && boardProjects.indexOf(todoView.slice(8)) < 0) todoView = 'all';
     renderTodoNav();
@@ -460,6 +464,41 @@
     renderTodoLayout();
   });
 
+  // ---------- 窄屏左栏抽屉（≤720px：左栏折叠为抽屉，☰ 展开） ----------
+  function isTodoNavNarrow() { return window.matchMedia('(max-width: 720px)').matches; }
+
+  // 收起抽屉：加 .collapsed 并隐藏遮罩（仅窄屏有效，宽屏无视觉影响）
+  function collapseTodoNav() {
+    if (!isTodoNavNarrow()) return;
+    todoNavCollapsed = true;
+    $todoNav.classList.add('collapsed');
+    if ($todoNavBackdrop) $todoNavBackdrop.hidden = true;
+  }
+
+  // 展开抽屉（仅窄屏调用）：去 .collapsed 并显示遮罩
+  function expandTodoNav() {
+    todoNavCollapsed = false;
+    $todoNav.classList.remove('collapsed');
+    if (!$todoNavBackdrop) {
+      $todoNavBackdrop = document.createElement('div');
+      $todoNavBackdrop.className = 'todo-nav-backdrop';
+      $todoNavBackdrop.hidden = true;
+      $todoNavBackdrop.addEventListener('click', collapseTodoNav);
+      $todoView.appendChild($todoNavBackdrop);
+    }
+    $todoNavBackdrop.hidden = false;
+  }
+
+  // ☰ 切换：窄屏下展开/收起
+  $todoNavToggle.addEventListener('click', () => {
+    if (!isTodoNavNarrow()) return;
+    if (todoNavCollapsed) expandTodoNav();
+    else collapseTodoNav();
+  });
+
+  // 初始化：视口 ≤720px 时默认折叠（不做 resize 监听，刷新时按当前宽度重新初始化）
+  if (isTodoNavNarrow()) collapseTodoNav();
+
   // 展开/收起 截止日 附属行
   $todoBoardMoreBtn.addEventListener('click', () => {
     const hidden = $todoBoardOpts.hidden;
@@ -586,6 +625,7 @@
   }
 
   function openProjectsModal() {
+    collapseTodoNav();   // 窄屏：打开项目管理弹层前收起抽屉，避免弹层被遮罩盖住
     editingProjName = null;
     $todoProjNew.value = '';
     renderProjectList();

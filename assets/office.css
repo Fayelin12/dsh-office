@@ -2362,3 +2362,29 @@
     margin-top: 12px;
     text-align: center;
   }
+
+  /* ============ 窄屏待办左栏折叠抽屉（≤720px，全部走 §10 token） ============ */
+  @media (max-width: 720px) {
+    .todo-nav-toggle { display: grid !important; }   /* 覆盖 HTML 内联 display:none */
+    .todo-layout { position: relative; }
+    .todo-nav {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 200px;
+      z-index: 30;
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-card);
+      border-right: 1px solid var(--border);
+      transform: translateX(0);
+      transition: transform .18s ease;
+    }
+    /* -16px 补偿 .mail-view 左内边距：left:0 相对 .todo-layout（被 padding 右移 16px），
+       仅 translateX(-100%) 会残留 16px 残影；补足后抽屉彻底滑出视口 */
+    .todo-nav.collapsed { transform: translateX(calc(-100% - 16px)); }
+    .todo-nav-backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.32);
+    }
+  }

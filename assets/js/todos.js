@@ -15,18 +15,20 @@
   // ---------- 待办看板元素 ----------
   const $todoView = document.getElementById('todoView');
   const $todoBoardBtn = document.getElementById('todoBoardBtn');
+  const $todoNav = document.getElementById('todoNav');
+  const $todoNavProjects = document.getElementById('todoNavProjects');
+  const $todoNavStats = document.getElementById('todoNavStats');
+  const $todoMain = document.getElementById('todoMain');
+  const $todoMainHead = document.getElementById('todoMainHead');
   const $todoBoard = document.getElementById('todoBoard');
+  const $todoBoardAdd = document.getElementById('todoBoardAdd');
   const $todoBoardInput = document.getElementById('todoBoardInput');
-  const $todoBoardProject = document.getElementById('todoBoardProject');
   const $todoBoardDue = document.getElementById('todoBoardDue');
   const $todoBoardAddBtn = document.getElementById('todoBoardAddBtn');
   const $todoBoardMoreBtn = document.getElementById('todoBoardMoreBtn');
   const $todoBoardOpts = document.getElementById('todoBoardOpts');
-  const $todoNewProjectQuickBtn = document.getElementById('todoNewProjectQuickBtn');
   const $todoDueClearBtn = document.getElementById('todoDueClearBtn');
-  const $todoProjectFilter = document.getElementById('todoProjectFilter');
   const $todoSearch = document.getElementById('todoSearch');
-  const $todoOverdueOnly = document.getElementById('todoOverdueOnly');
   const $todoManageProjectsBtn = document.getElementById('todoManageProjectsBtn');
   const $todoBoardRefreshBtn = document.getElementById('todoBoardRefreshBtn');
   const $todoEditModal = document.getElementById('todoEditModal');
@@ -44,13 +46,12 @@
   const $todoProjectsClose = document.getElementById('todoProjectsClose');
 
   let todoViewOpen = false;          // 看板视图是否打开
+  let todoView = 'all';              // 左栏选中视图：all | today | overdue | unassigned | project:<项目名>
   let boardItems = [];               // 看板全量条目
   let boardProjects = [];            // 项目列表
   let boardDoneOpen = false;         // 已完成区是否展开
   let editingTodoId = null;          // 编辑弹层目标 id
   let editingProjName = null;        // 项目管理弹层正在重命名的项目
-  let boardProjAutoPick = false;     // 从「＋ 新项目」快捷添加时，成功后自动选用新项目
-  const TODO_PROJ_AUTO = '__auto__'; // 添加行项目下拉「跟随筛选」的特殊值
 
   function toggleTodoBoard() {
     toggleView('todos',
@@ -71,46 +72,22 @@
       boardProjects = Array.isArray(j.data.projects) ? j.data.projects : [];
     } catch (_) { boardItems = []; boardProjects = []; }
     refreshProjectOptions();
-    renderBoard();
+    renderTodoLayout();
   }
 
-  // 同步项目下拉（筛选 / 添加行 / 编辑弹层），保留当前选中值
+  // 同步编辑弹层项目下拉
   function refreshProjectOptions() {
-    const sync = (sel, keep, firstLabel, firstValue, extra) => {
-      const cur = keep && sel.value;
-      sel.innerHTML = '';
-      const first = document.createElement('option');
-      first.value = firstValue;
-      first.textContent = firstLabel;
-      sel.appendChild(first);
-      if (extra) {
-        const e = document.createElement('option');
-        e.value = extra.value;
-        e.textContent = extra.label;
-        sel.appendChild(e);
-      }
-      for (const p of boardProjects) {
-        const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
-        sel.appendChild(opt);
-      }
-      // 重建后恢复原选中（含 '' 未分配 / 特殊值；项目被删则回退第一项）
-      if (cur !== undefined && cur !== null) {
-        const valid = cur === firstValue || (extra && cur === extra.value) || boardProjects.includes(cur);
-        if (valid) sel.value = cur;
-      }
-    };
-    sync($todoProjectFilter, true, '全部项目', '');
-    sync($todoBoardProject, true, '跟随筛选', TODO_PROJ_AUTO, { value: '', label: '未分配' });
-    sync($todoEditProject, false, '未分配', '');
-  }
-
-  // 添加行的实际项目：显式选择优先，未选择时跟随当前筛选（无筛选则未分配）
-  function resolveBoardProject() {
-    const v = $todoBoardProject.value;
-    if (v === TODO_PROJ_AUTO) return $todoProjectFilter.value || null;
-    return v || null;
+    $todoEditProject.innerHTML = '';
+    const first = document.createElement('option');
+    first.value = '';
+    first.textContent = '未分配';
+    $todoEditProject.appendChild(first);
+    for (const p of boardProjects) {
+      const opt = document.createElement('option');
+      opt.value = p;
+      opt.textContent = p;
+      $todoEditProject.appendChild(opt);
+    }
   }
 
   // 排序：due 升序（无 due 沉底）→ 优先级（高中低）→ 创建时间
@@ -127,65 +104,112 @@
     });
   }
 
-  function renderBoard() {
-    $todoBoard.innerHTML = '';
+  // ---------- 左右布局渲染（左栏导航 + 右栏列表） ----------
+  function renderTodoLayout() {
+    // 当前项目被删除时，活动视图回退「全部」
+    if (todoView.indexOf('project:') === 0 && boardProjects.indexOf(todoView.slice(8)) < 0) todoView = 'all';
+    renderTodoNav();
+    renderTodoMain();
+  }
+
+  // 左栏：智能入口计数 + 项目列表 + 底部统计
+  function renderTodoNav() {
+    const today = todayStr();
+    const open = boardItems.filter((t) => !t.done);
+    const counts = {
+      all: open.length,
+      today: open.filter((t) => t.due === today).length,
+      overdue: open.filter((t) => t.due && t.due < today).length,
+      unassigned: open.filter((t) => !t.project).length
+    };
+    for (const btn of $todoNav.querySelectorAll('.todo-nav-scroll > .todo-nav-item[data-view]')) {
+      const n = counts[btn.dataset.view] || 0;
+      btn.classList.toggle('active', todoView === btn.dataset.view);
+      let c = btn.querySelector('.todo-nav-count');
+      if (!c) { c = el('span', 'todo-nav-count'); btn.appendChild(c); }
+      c.textContent = String(n);
+    }
+    $todoNavProjects.innerHTML = '';
+    for (const name of boardProjects) {
+      const n = open.filter((t) => t.project === name).length;
+      const btn = el('button', 'todo-nav-item' + (todoView === 'project:' + name ? ' active' : ''), '▸ ' + name);
+      btn.dataset.view = 'project:' + name;
+      btn.appendChild(el('span', 'todo-nav-count', String(n)));
+      $todoNavProjects.appendChild(btn);
+    }
+    $todoNavStats.textContent = '合计 ' + counts.all + ' · 逾期 ' + counts.overdue;
+  }
+
+  // 右栏：视图头 + 添加区（按视图显隐）+ 条目列表
+  function renderTodoMain() {
     const today = todayStr();
     const q = $todoSearch.value.trim().toLowerCase();
-    const filterProj = $todoProjectFilter.value;
-    const overdueOnly = $todoOverdueOnly.checked;
 
-    const match = (t) => {
-      if (filterProj && (t.project || '') !== filterProj) return false;
-      if (q && (t.text + ' ' + (t.note || '') + ' ' + (t.project || '')).toLowerCase().indexOf(q) < 0) return false;
-      return true;
+    let title = '📥 全部';
+    let projectScope = null;
+    if (todoView === 'today') title = '📅 今天';
+    else if (todoView === 'overdue') title = '⏰ 逾期';
+    else if (todoView === 'unassigned') title = '未分配';
+    else if (todoView.indexOf('project:') === 0) { projectScope = todoView.slice(8); title = '📁 ' + projectScope; }
+
+    const inScope = (t) => {
+      if (todoView === 'today') return t.due === today;
+      if (todoView === 'overdue') return !!(t.due && t.due < today);
+      if (todoView === 'unassigned') return !t.project;
+      if (todoView === 'all') return true;
+      return t.project === projectScope;
     };
+    const searchMatch = (t) => !q || (t.text + ' ' + (t.note || '') + ' ' + (t.project || '')).toLowerCase().indexOf(q) >= 0;
+    const open = boardItems.filter((t) => !t.done && inScope(t) && searchMatch(t));
+    const done = boardItems.filter((t) => t.done && inScope(t) && searchMatch(t));
 
-    // 未完成：按项目分组
-    const open = boardItems.filter((t) => !t.done && match(t) && !(overdueOnly && !(t.due && t.due < today)));
-    const groups = [];
-    for (const p of boardProjects) {
-      const items = open.filter((t) => t.project === p);
-      if (items.length) groups.push({ name: p, items });
-    }
-    const unassigned = open.filter((t) => !t.project || boardProjects.indexOf(t.project) < 0);
-    if (unassigned.length) groups.push({ name: '未分配', items: unassigned });
+    // 视图头：标题 + 未完成/逾期计数
+    const overdueInScope = open.filter((t) => t.due && t.due < today).length;
+    $todoMainHead.innerHTML = '';
+    const head = el('div', 'todo-main-head');
+    head.appendChild(el('span', 'todo-main-title', title));
+    head.appendChild(el('span', 'todo-main-meta', '未完成 ' + open.length + ' · 逾期 ' + overdueInScope));
+    $todoMainHead.appendChild(head);
 
-    if (groups.length === 0) {
-      $todoBoard.appendChild(el('div', 'todo-empty',
-        overdueOnly ? '没有已逾期的待办' : (q || filterProj ? '没有符合条件的待办' : '还没有待办，先在上面记一条')));
+    // 添加区：overdue 与 all 视图不渲染；placeholder 提示当前视图归属
+    const showAdd = todoView !== 'overdue' && todoView !== 'all';
+    $todoBoardAdd.hidden = !showAdd;
+    if (!showAdd) { $todoBoardOpts.hidden = true; $todoBoardMoreBtn.textContent = '▸ 选项'; }
+    if (projectScope !== null) $todoBoardInput.placeholder = '记一条待办…（将归入 ' + projectScope + '）';
+    else if (todoView === 'today') $todoBoardInput.placeholder = '记一条待办…（今天截止）';
+    else $todoBoardInput.placeholder = '记一条待办…';
+
+    // 条目列表（跨项目视图加项目 chip）+ 已完成折叠区
+    const crossProject = todoView === 'today' || todoView === 'overdue';
+    $todoBoard.innerHTML = '';
+    if (open.length === 0 && done.length === 0) {
+      const msg = q ? '没有符合条件的待办'
+        : todoView === 'overdue' ? '没有已逾期的待办'
+        : todoView === 'today' ? '今天还没有待办'
+        : todoView === 'unassigned' ? '还没有未分配的待办'
+        : todoView.indexOf('project:') === 0 ? '这个项目还没有待办'
+        : '还没有待办';
+      $todoBoard.appendChild(el('div', 'todo-empty', msg));
     } else {
-      for (const g of groups) {
-        const section = el('div', 'todo-board-group');
-        const head = el('div', 'todo-board-group-head');
-        head.appendChild(el('span', 'todo-board-group-name', g.name));
-        head.appendChild(el('span', 'todo-count', String(g.items.length)));
-        section.appendChild(head);
-        const list = el('div', 'todo-board-group-list');
-        for (const t of boardSort(g.items)) list.appendChild(makeBoardItem(t));
-        section.appendChild(list);
-        $todoBoard.appendChild(section);
+      for (const t of boardSort(open)) $todoBoard.appendChild(makeBoardItem(t, crossProject));
+      if (done.length) {
+        const doneSection = el('div', 'todo-board-done');
+        const doneHead = el('button', 'todo-board-done-head', (boardDoneOpen ? '▾' : '▸') + ' 已完成 ' + done.length);
+        doneHead.title = boardDoneOpen ? '收起' : '展开';
+        doneHead.addEventListener('click', () => { boardDoneOpen = !boardDoneOpen; renderTodoMain(); });
+        doneSection.appendChild(doneHead);
+        if (boardDoneOpen) {
+          const list = el('div', 'todo-board-group-list');
+          const sorted = done.slice().sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
+          for (const t of sorted) list.appendChild(makeBoardItem(t, crossProject));
+          doneSection.appendChild(list);
+        }
+        $todoBoard.appendChild(doneSection);
       }
-    }
-
-    // 已完成：折叠区（筛选跟随项目/搜索，不看逾期）
-    const done = boardItems.filter((t) => t.done && match(t));
-    if (done.length) {
-      const doneSection = el('div', 'todo-board-done');
-      const doneHead = el('button', 'todo-board-done-head', (boardDoneOpen ? '▾' : '▸') + ' 已完成 ' + done.length);
-      doneHead.title = boardDoneOpen ? '收起' : '展开';
-      doneHead.addEventListener('click', () => { boardDoneOpen = !boardDoneOpen; renderBoard(); });
-      doneSection.appendChild(doneHead);
-      if (boardDoneOpen) {
-        const list = el('div', 'todo-board-group-list');
-        const sorted = done.slice().sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
-        for (const t of sorted) list.appendChild(makeBoardItem(t));
-        doneSection.appendChild(list);
-      }
-      $todoBoard.appendChild(doneSection);
     }
   }
 
-  function makeBoardItem(t) {
+  function makeBoardItem(t, showProjectChip) {
     const row = el('div', 'todo-item' + (t.done ? ' done' : ''));
     row.dataset.id = t.id;
 
@@ -209,6 +233,13 @@
       const dueEl = el('span', 'todo-due ' + todoDueState(t.due, t.done), '📅 ' + t.due);
       dueEl.title = '截止日' + (todoDueState(t.due, t.done) === 'overdue' ? '（已逾期）' : '');
       row.appendChild(dueEl);
+    }
+
+    // 跨项目视图（今天/逾期）显示项目 chip
+    if (showProjectChip && t.project) {
+      const chip = el('span', 'todo-chip', t.project);
+      chip.title = '项目：' + t.project;
+      row.appendChild(chip);
     }
 
     // 备注图标（有备注时显示，点击展开）
@@ -242,10 +273,15 @@
   }
 
   // ---------- 看板操作 ----------
+  // 添加归属由当前视图决定：project:X → 归入该项目；today → 截止今天；unassigned → 不设项目、due 取附属行
   function boardAdd() {
     const text = $todoBoardInput.value.trim();
     if (!text) { $todoBoardInput.focus(); return; }
-    const body = { text, project: resolveBoardProject(), due: $todoBoardDue.value || null };
+    let project = null;
+    let due = $todoBoardDue.value || null;
+    if (todoView.indexOf('project:') === 0) project = todoView.slice(8);
+    else if (todoView === 'today') due = todayStr();
+    const body = { text, project, due };
     apiFetch('/todos/add', {
       method: 'POST',
       headers: JSON_HEADERS,
@@ -285,16 +321,22 @@
     if (e.key === 'Enter') { e.preventDefault(); boardAdd(); }
   });
   $todoBoardRefreshBtn.addEventListener('click', loadBoard);
-  $todoProjectFilter.addEventListener('change', renderBoard);
-  $todoSearch.addEventListener('input', renderBoard);
-  $todoOverdueOnly.addEventListener('change', renderBoard);
+  $todoSearch.addEventListener('input', renderTodoLayout);
 
-  // 展开/收起 项目、截止日 附属行
+  // 左栏导航：点击切换视图（含动态项目项）
+  $todoNav.addEventListener('click', (e) => {
+    const btn = e.target.closest('.todo-nav-item');
+    if (!btn) return;
+    todoView = btn.dataset.view;
+    renderTodoLayout();
+  });
+
+  // 展开/收起 截止日 附属行
   $todoBoardMoreBtn.addEventListener('click', () => {
     const hidden = $todoBoardOpts.hidden;
     $todoBoardOpts.hidden = !hidden;
     $todoBoardMoreBtn.textContent = hidden ? '▸ 选项' : '▾ 选项';
-    $todoBoardMoreBtn.title = hidden ? '展开 项目、截止日选项' : '收起 项目、截止日选项';
+    $todoBoardMoreBtn.title = hidden ? '展开 截止日选项' : '收起 截止日选项';
   });
 
   // 日期快捷：今天 / 明天 / 清除
@@ -305,13 +347,6 @@
       return;
     }
     if (e.target.closest('#todoDueClearBtn')) $todoBoardDue.value = '';
-  });
-
-  // ＋ 新项目：打开项目管理层（标记自动选用，添加成功后选中新项目）
-  $todoNewProjectQuickBtn.addEventListener('click', () => {
-    boardProjAutoPick = true;
-    openProjectsModal();
-    $todoProjNew.focus();
   });
 
   $todoBoard.addEventListener('click', (e) => {
@@ -325,7 +360,7 @@
       if (t) boardUpdate(id, { priority: nextTodoPriority(t.priority) });
     } else if (e.target.closest('.todo-note-toggle')) {
       const t = boardItems.find((x) => x.id === id);
-      if (t) { t.noteOpen = !t.noteOpen; renderBoard(); }
+      if (t) { t.noteOpen = !t.noteOpen; renderTodoLayout(); }
     } else if (e.target.closest('.todo-edit')) {
       openTodoEdit(id);
     } else if (e.target.closest('.todo-del')) {
@@ -442,11 +477,8 @@
       boardProjects = j.projects || boardProjects;
       renderProjectList();
       refreshProjectOptions();
-      renderBoard();
-      // 仅从「＋ 新项目」快捷进来时自动选用（工具栏「📁 项目」添加不改变添加行选择）
-      if (boardProjAutoPick && name && boardProjects.includes(name)) $todoBoardProject.value = name;
-      boardProjAutoPick = false;
-    }).catch((err) => { boardProjAutoPick = false; toast('添加项目失败：' + (err && err.message ? err.message : err)); });
+      renderTodoLayout();
+    }).catch((err) => toast('添加项目失败：' + (err && err.message ? err.message : err)));
   }
 
   function renameProject(oldName, newName) {
@@ -461,7 +493,7 @@
       for (const t of boardItems) if (t.project === oldName) t.project = newName;
       renderProjectList();
       refreshProjectOptions();
-      renderBoard();
+      renderTodoLayout();
     }).catch((err) => toast('重命名失败：' + (err && err.message ? err.message : err)));
   }
 
@@ -476,7 +508,7 @@
       for (const t of boardItems) if (t.project === name) t.project = null;
       renderProjectList();
       refreshProjectOptions();
-      renderBoard();
+      renderTodoLayout();
     }).catch((err) => toast('删除项目失败：' + (err && err.message ? err.message : err)));
   }
 

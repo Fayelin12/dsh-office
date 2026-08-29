@@ -924,3 +924,19 @@
     }
   });
 
+  // ---------- 通用 toast 提示（一次性，几秒后消失；全模块共用，须定义在公共基础模块） ----------
+  let _toastTimer = null;
+  function toast(msg) {
+    let el = document.getElementById('officeToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'officeToast';
+      el.className = 'office-toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('show');
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
+  }
+

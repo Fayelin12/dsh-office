@@ -49,6 +49,7 @@
   let boardDoneOpen = false;         // 已完成区是否展开
   let editingTodoId = null;          // 编辑弹层目标 id
   let editingProjName = null;        // 项目管理弹层正在重命名的项目
+  let boardProjAutoPick = false;     // 从「＋ 新项目」快捷添加时，成功后自动选用新项目
   const TODO_PROJ_AUTO = '__auto__'; // 添加行项目下拉「跟随筛选」的特殊值
 
   function toggleTodoBoard() {
@@ -75,23 +76,33 @@
 
   // 同步项目下拉（筛选 / 添加行 / 编辑弹层），保留当前选中值
   function refreshProjectOptions() {
-    const sync = (sel, keep, firstLabel, firstValue) => {
+    const sync = (sel, keep, firstLabel, firstValue, extra) => {
       const cur = keep && sel.value;
       sel.innerHTML = '';
       const first = document.createElement('option');
       first.value = firstValue;
       first.textContent = firstLabel;
       sel.appendChild(first);
+      if (extra) {
+        const e = document.createElement('option');
+        e.value = extra.value;
+        e.textContent = extra.label;
+        sel.appendChild(e);
+      }
       for (const p of boardProjects) {
         const opt = document.createElement('option');
         opt.value = p;
         opt.textContent = p;
         sel.appendChild(opt);
       }
-      if (cur && boardProjects.includes(cur)) sel.value = cur;
+      // 重建后恢复原选中（含 '' 未分配 / 特殊值；项目被删则回退第一项）
+      if (cur !== undefined && cur !== null) {
+        const valid = cur === firstValue || (extra && cur === extra.value) || boardProjects.includes(cur);
+        if (valid) sel.value = cur;
+      }
     };
     sync($todoProjectFilter, true, '全部项目', '');
-    sync($todoBoardProject, true, '跟随筛选', TODO_PROJ_AUTO);
+    sync($todoBoardProject, true, '跟随筛选', TODO_PROJ_AUTO, { value: '', label: '未分配' });
     sync($todoEditProject, false, '未分配', '');
   }
 
@@ -296,8 +307,9 @@
     if (e.target.closest('#todoDueClearBtn')) $todoBoardDue.value = '';
   });
 
-  // ＋ 新项目：打开项目管理层，添加成功后自动选用新项目
+  // ＋ 新项目：打开项目管理层（标记自动选用，添加成功后选中新项目）
   $todoNewProjectQuickBtn.addEventListener('click', () => {
+    boardProjAutoPick = true;
     openProjectsModal();
     $todoProjNew.focus();
   });
@@ -431,9 +443,10 @@
       renderProjectList();
       refreshProjectOptions();
       renderBoard();
-      // 从「＋ 新项目」快捷进来时，自动选用新项目（后续添加直接归它）
-      if (name && boardProjects.includes(name)) $todoBoardProject.value = name;
-    }).catch((err) => toast('添加项目失败：' + (err && err.message ? err.message : err)));
+      // 仅从「＋ 新项目」快捷进来时自动选用（工具栏「📁 项目」添加不改变添加行选择）
+      if (boardProjAutoPick && name && boardProjects.includes(name)) $todoBoardProject.value = name;
+      boardProjAutoPick = false;
+    }).catch((err) => { boardProjAutoPick = false; toast('添加项目失败：' + (err && err.message ? err.message : err)); });
   }
 
   function renameProject(oldName, newName) {
@@ -672,28 +685,3 @@
       todoMove(id);
     }
   });
-
-  function toggleInsights() {
-    toggleView('insights',
-      () => insightsViewOpen, (v) => { insightsViewOpen = v; },
-      () => { insightsLazyFired = false; },
-      () => { loadInsights(false, false); }
-    );
-  }
-  $insightsBtn.addEventListener('click', toggleInsights);
-  $insightsRefreshBtn.addEventListener('click', () => loadInsights(true, true));
-  $insightsGenBtn.addEventListener('click', () => insightsGenerate());
-
-  function toast(msg) {
-    let el = document.getElementById('officeToast');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'officeToast';
-      el.className = 'office-toast';
-      document.body.appendChild(el);
-    }
-    el.textContent = msg;
-    el.classList.add('show');
-    if (_toastTimer) clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
-  }

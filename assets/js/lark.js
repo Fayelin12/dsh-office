@@ -1015,6 +1015,3 @@
   $calendarBtn.addEventListener('click', toggleCalendar);
   $calendarRefreshBtn.addEventListener('click', () => { loadCalendarStatus(); loadCalendarEvents(); });
   $calendarSyncBtn.addEventListener('click', () => syncCalendarManual());
-
-  // 轻量 toast 提示（一次性，几秒后消失）
-  let _toastTimer = null;

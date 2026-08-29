@@ -95,7 +95,7 @@
             <button class="icon-btn" id="todoDateToday" title="回到今天" style="width:auto;padding:0 10px;font-size:var(--font-body)">今天</button>
           </div>
           <div class="todo-add">
-            <input id="todoInput" placeholder="记一条待办…" maxlength="500" autocomplete="off" />
+            <input type="text" id="todoInput" placeholder="记一条待办…" maxlength="500" autocomplete="off" />
             <button class="icon-btn" id="todoAddBtn" title="添加待办" style="width:auto;padding:0 12px;font-size:var(--font-body)">添加</button>
           </div>
           <div class="todo-list" id="todoList"></div>
@@ -108,7 +108,7 @@
         <span class="mail-identity" id="todoIdentity">📋 待办</span>
         <div class="todo-board-tools">
           <select id="todoProjectFilter" title="按项目筛选"><option value="">全部项目</option></select>
-          <input id="todoSearch" placeholder="搜索待办…" autocomplete="off" />
+          <input type="text" id="todoSearch" placeholder="搜索待办…" autocomplete="off" />
           <label class="todo-overdue-label" title="只看已逾期的未完成待办">
             <input type="checkbox" id="todoOverdueOnly" /> 只看逾期
           </label>
@@ -119,7 +119,7 @@
         </div>
       </div>
       <div class="todo-board-add">
-        <input id="todoBoardInput" placeholder="记一条待办…（Enter 添加）" maxlength="500" autocomplete="off" />
+        <input type="text" id="todoBoardInput" placeholder="记一条待办…（Enter 添加）" maxlength="500" autocomplete="off" />
         <button class="icon-btn todo-board-more" id="todoBoardMoreBtn" title="展开/收起 项目、截止日选项">▾ 选项</button>
         <button class="icon-btn" id="todoBoardAddBtn" title="添加待办" style="width:auto;padding:0 12px;font-size:var(--font-body)">添加</button>
       </div>
@@ -168,8 +168,8 @@
           <button class="icon-btn" id="composeClose" title="关闭">✕</button>
         </div>
         <div class="compose-body">
-          <input id="composeTo" placeholder="收件人邮箱（多个用逗号分隔）" autocomplete="off" />
-          <input id="composeSubject" placeholder="主题" autocomplete="off" />
+          <input type="text" id="composeTo" placeholder="收件人邮箱（多个用逗号分隔）" autocomplete="off" />
+          <input type="text" id="composeSubject" placeholder="主题" autocomplete="off" />
           <textarea id="composeBody" placeholder="正文（支持 HTML，如 <b>加粗</b> 或换行）"></textarea>
         </div>
         <div class="compose-foot">
@@ -200,7 +200,7 @@
           <button class="icon-btn" id="todoEditClose" title="关闭">✕</button>
         </div>
         <div class="compose-body todo-edit-form">
-          <input id="todoEditText" placeholder="待办内容" maxlength="500" autocomplete="off" />
+          <input type="text" id="todoEditText" placeholder="待办内容" maxlength="500" autocomplete="off" />
           <div class="todo-edit-row">
             <select id="todoEditProject" title="项目"></select>
             <input type="date" id="todoEditDue" title="截止日（可空）" />
@@ -221,7 +221,7 @@
         </div>
         <div class="compose-body">
           <div class="todo-proj-add">
-            <input id="todoProjNew" placeholder="新项目名" maxlength="50" autocomplete="off" />
+            <input type="text" id="todoProjNew" placeholder="新项目名" maxlength="50" autocomplete="off" />
             <button class="icon-btn" id="todoProjAddBtn" style="width:auto;padding:0 12px;font-size:var(--font-body)">添加</button>
           </div>
           <div class="todo-proj-list" id="todoProjList"></div>
@@ -251,7 +251,7 @@
           <button class="icon-btn" id="saveClose" title="关闭">✕</button>
         </div>
         <div class="compose-body">
-          <input id="saveDir" placeholder="目标目录（Windows 绝对路径，如 D:\会议纪要）" autocomplete="off" />
+          <input type="text" id="saveDir" placeholder="目标目录（Windows 绝对路径，如 D:\会议纪要）" autocomplete="off" />
         </div>
         <div class="compose-foot">
           <span class="compose-error" id="saveError"></span>

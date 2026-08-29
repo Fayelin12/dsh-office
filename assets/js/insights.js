@@ -444,6 +444,18 @@
   $toSessionModal.addEventListener('click', (e) => { if (e.target === $toSessionModal) $toSessionModal.hidden = true; });
   $toSessionOkBtn.addEventListener('click', submitToSession);
 
+  // ---------- 洞察视图开关（归属本模块） ----------
+  function toggleInsights() {
+    toggleView('insights',
+      () => insightsViewOpen, (v) => { insightsViewOpen = v; },
+      () => { insightsLazyFired = false; },
+      () => { loadInsights(false, false); }
+    );
+  }
+  $insightsBtn.addEventListener('click', toggleInsights);
+  $insightsRefreshBtn.addEventListener('click', () => loadInsights(true, true));
+  $insightsGenBtn.addEventListener('click', () => insightsGenerate());
+
   function syncDatePickerUI() {
     $insightsDateInput.value = insightsDate || todayStr();
   }

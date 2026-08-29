@@ -120,9 +120,22 @@
       </div>
       <div class="todo-board-add">
         <input id="todoBoardInput" placeholder="记一条待办…（Enter 添加）" maxlength="500" autocomplete="off" />
-        <select id="todoBoardProject" title="项目"></select>
-        <input type="date" id="todoBoardDue" title="截止日（可空）" />
+        <button class="icon-btn todo-board-more" id="todoBoardMoreBtn" title="展开/收起 项目、截止日选项">▾ 选项</button>
         <button class="icon-btn" id="todoBoardAddBtn" title="添加待办" style="width:auto;padding:0 12px;font-size:var(--font-body)">添加</button>
+      </div>
+      <div class="todo-board-opts" id="todoBoardOpts" hidden>
+        <div class="todo-opt-field">
+          <span class="todo-opt-label">📁 项目</span>
+          <select id="todoBoardProject" title="项目（默认跟随当前筛选）"></select>
+          <button class="icon-btn todo-opt-btn" id="todoNewProjectQuickBtn" title="新建项目并选用">＋ 新项目</button>
+        </div>
+        <div class="todo-opt-field">
+          <span class="todo-opt-label">📅 截止日</span>
+          <input type="date" id="todoBoardDue" title="截止日（可空）" />
+          <button class="icon-btn todo-date-quick" data-shift="0" title="今天截止">今天</button>
+          <button class="icon-btn todo-date-quick" data-shift="1" title="明天截止">明天</button>
+          <button class="icon-btn todo-date-clear" id="todoDueClearBtn" title="清除截止日">✕</button>
+        </div>
       </div>
       <div class="todo-board" id="todoBoard"></div>
     </div>

@@ -1560,9 +1560,9 @@
     align-items: center;
     gap: 8px;
   }
-  .todo-board-add input[type="text"],
-  .todo-board-add input[type="date"],
-  .todo-board-add select {
+  .todo-board-add input[type="text"] {
+    flex: 1;
+    min-width: 0;
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-sm);
     background: var(--input-bg, transparent);
@@ -1571,9 +1571,62 @@
     font-size: var(--font-body);
     padding: 7px 10px;
   }
-  .todo-board-add input[type="text"] { flex: 1; min-width: 0; }
-  .todo-board-add select { flex: none; max-width: 180px; }
-  .todo-board-add input[type="date"] { flex: none; }
+  .todo-board-more {
+    flex: none;
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+  }
+  .todo-board-more:hover { color: var(--text); }
+
+  /* 附属行（项目 + 截止日，默认收起） */
+  .todo-board-opts {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+  }
+  .todo-opt-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .todo-opt-label {
+    flex: none;
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .todo-opt-field select,
+  .todo-opt-field input[type="date"] {
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg, transparent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 5px 8px;
+    min-height: 30px;
+  }
+  .todo-opt-field select { max-width: 170px; }
+  .todo-opt-btn,
+  .todo-date-quick {
+    flex: none;
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .todo-date-quick:hover,
+  .todo-date-quick:active,
+  .todo-opt-btn:hover,
+  .todo-opt-btn:active { color: var(--text); }
+  .todo-date-clear { flex: none; color: var(--text-dim); }
+  .todo-date-clear:hover { color: #ff453a; }
 
   .todo-board {
     flex: 1;

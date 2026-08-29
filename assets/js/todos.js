@@ -20,6 +20,10 @@
   const $todoBoardProject = document.getElementById('todoBoardProject');
   const $todoBoardDue = document.getElementById('todoBoardDue');
   const $todoBoardAddBtn = document.getElementById('todoBoardAddBtn');
+  const $todoBoardMoreBtn = document.getElementById('todoBoardMoreBtn');
+  const $todoBoardOpts = document.getElementById('todoBoardOpts');
+  const $todoNewProjectQuickBtn = document.getElementById('todoNewProjectQuickBtn');
+  const $todoDueClearBtn = document.getElementById('todoDueClearBtn');
   const $todoProjectFilter = document.getElementById('todoProjectFilter');
   const $todoSearch = document.getElementById('todoSearch');
   const $todoOverdueOnly = document.getElementById('todoOverdueOnly');
@@ -45,6 +49,7 @@
   let boardDoneOpen = false;         // 已完成区是否展开
   let editingTodoId = null;          // 编辑弹层目标 id
   let editingProjName = null;        // 项目管理弹层正在重命名的项目
+  const TODO_PROJ_AUTO = '__auto__'; // 添加行项目下拉「跟随筛选」的特殊值
 
   function toggleTodoBoard() {
     toggleView('todos',
@@ -70,13 +75,13 @@
 
   // 同步项目下拉（筛选 / 添加行 / 编辑弹层），保留当前选中值
   function refreshProjectOptions() {
-    const sync = (sel, keep) => {
+    const sync = (sel, keep, firstLabel, firstValue) => {
       const cur = keep && sel.value;
       sel.innerHTML = '';
-      const none = document.createElement('option');
-      none.value = '';
-      none.textContent = sel === $todoProjectFilter ? '全部项目' : '未分配';
-      sel.appendChild(none);
+      const first = document.createElement('option');
+      first.value = firstValue;
+      first.textContent = firstLabel;
+      sel.appendChild(first);
       for (const p of boardProjects) {
         const opt = document.createElement('option');
         opt.value = p;
@@ -85,9 +90,16 @@
       }
       if (cur && boardProjects.includes(cur)) sel.value = cur;
     };
-    sync($todoProjectFilter, true);
-    sync($todoBoardProject, true);
-    sync($todoEditProject, false);
+    sync($todoProjectFilter, true, '全部项目', '');
+    sync($todoBoardProject, true, '跟随筛选', TODO_PROJ_AUTO);
+    sync($todoEditProject, false, '未分配', '');
+  }
+
+  // 添加行的实际项目：显式选择优先，未选择时跟随当前筛选（无筛选则未分配）
+  function resolveBoardProject() {
+    const v = $todoBoardProject.value;
+    if (v === TODO_PROJ_AUTO) return $todoProjectFilter.value || null;
+    return v || null;
   }
 
   // 排序：due 升序（无 due 沉底）→ 优先级（高中低）→ 创建时间
@@ -222,7 +234,7 @@
   function boardAdd() {
     const text = $todoBoardInput.value.trim();
     if (!text) { $todoBoardInput.focus(); return; }
-    const body = { text, project: $todoBoardProject.value || null, due: $todoBoardDue.value || null };
+    const body = { text, project: resolveBoardProject(), due: $todoBoardDue.value || null };
     apiFetch('/todos/add', {
       method: 'POST',
       headers: JSON_HEADERS,
@@ -265,6 +277,30 @@
   $todoProjectFilter.addEventListener('change', renderBoard);
   $todoSearch.addEventListener('input', renderBoard);
   $todoOverdueOnly.addEventListener('change', renderBoard);
+
+  // 展开/收起 项目、截止日 附属行
+  $todoBoardMoreBtn.addEventListener('click', () => {
+    const hidden = $todoBoardOpts.hidden;
+    $todoBoardOpts.hidden = !hidden;
+    $todoBoardMoreBtn.textContent = hidden ? '▸ 选项' : '▾ 选项';
+    $todoBoardMoreBtn.title = hidden ? '展开 项目、截止日选项' : '收起 项目、截止日选项';
+  });
+
+  // 日期快捷：今天 / 明天 / 清除
+  $todoBoardOpts.addEventListener('click', (e) => {
+    const q = e.target.closest('.todo-date-quick');
+    if (q) {
+      $todoBoardDue.value = shiftDate(todayStr(), parseInt(q.dataset.shift, 10) || 0);
+      return;
+    }
+    if (e.target.closest('#todoDueClearBtn')) $todoBoardDue.value = '';
+  });
+
+  // ＋ 新项目：打开项目管理层，添加成功后自动选用新项目
+  $todoNewProjectQuickBtn.addEventListener('click', () => {
+    openProjectsModal();
+    $todoProjNew.focus();
+  });
 
   $todoBoard.addEventListener('click', (e) => {
     const row = e.target.closest('.todo-item');
@@ -395,6 +431,8 @@
       renderProjectList();
       refreshProjectOptions();
       renderBoard();
+      // 从「＋ 新项目」快捷进来时，自动选用新项目（后续添加直接归它）
+      if (name && boardProjects.includes(name)) $todoBoardProject.value = name;
     }).catch((err) => toast('添加项目失败：' + (err && err.message ? err.message : err)));
   }
 

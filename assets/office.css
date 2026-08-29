@@ -1719,8 +1719,10 @@
     flex-direction: column;
     gap: 10px;
   }
-  .todo-edit-form input[type="text"],
-  .todo-edit-form textarea {
+  /* 编辑弹层（.compose-body.todo-edit-form 同一元素双类；.todo-edit-row 是子孙。前缀提升特异性，
+     覆盖写邮件弹层的 width:100%/padding/font 通用规则） */
+  .compose-body.todo-edit-form input[type="text"],
+  .compose-body.todo-edit-form textarea {
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-sm);
     background: var(--input-bg, transparent);
@@ -1728,8 +1730,10 @@
     font-family: inherit;
     font-size: var(--font-body);
     padding: 8px 10px;
+    width: auto;
+    outline: none;
   }
-  .todo-edit-form textarea {
+  .compose-body.todo-edit-form textarea {
     min-height: 90px;
     resize: vertical;
     line-height: 1.6;
@@ -1738,8 +1742,20 @@
     display: flex;
     gap: 8px;
   }
-  .todo-edit-row select {
+  .compose-body .todo-edit-row select {
     flex: 1;
+    min-width: 0;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg, transparent);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-body);
+    padding: 6px 8px;
+  }
+  .compose-body .todo-edit-row input[type="date"] {
+    flex: none;
+    width: auto;
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-sm);
     background: var(--input-bg, transparent);
@@ -1755,8 +1771,9 @@
     gap: 8px;
     margin-bottom: 10px;
   }
-  .todo-proj-add input {
+  .compose-body .todo-proj-add input {
     flex: 1;
+    min-width: 0;
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-sm);
     background: var(--input-bg, transparent);
@@ -1764,6 +1781,8 @@
     font-family: inherit;
     font-size: var(--font-body);
     padding: 7px 10px;
+    width: auto;
+    outline: none;
   }
   .todo-proj-list {
     display: flex;
@@ -1790,7 +1809,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .todo-proj-rename-input {
+  .compose-body .todo-proj-rename-input {
     flex: 1;
     min-width: 0;
     border: 1px solid var(--accent);
@@ -1800,6 +1819,8 @@
     font-family: inherit;
     font-size: var(--font-body);
     padding: 3px 8px;
+    width: auto;
+    outline: none;
   }
 
   /* ============ 💡 洞察视图（左右布局） ============ */

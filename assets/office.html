@@ -19,7 +19,6 @@
       <div class="office-actions">
         <div class="office-actions-tabs">
           <button class="header-btn" id="todoBoardBtn" title="待办看板">📋 待办</button>
-          <button class="header-btn" id="calendarBtn" title="会议与每日洞察">📅 会议</button>
           <button class="header-btn" id="feishuBtn" title="飞书消息">💬 飞书</button>
           <button class="header-btn" id="mailBtn" title="邮箱">📧 邮箱</button>
         </div>
@@ -92,18 +91,7 @@
         </div>
       </div>
     </div>
-    <div class="mail-view" id="calendarView" hidden>
-      <div class="mail-toolbar">
-        <span class="mail-identity" id="calendarIdentity">📅 会议</span>
-        <div class="mail-actions">
-          <span class="mail-status" id="calendarStatus"></span>
-          <a class="guide-link" href="https://qcn7nupmeook.feishu.cn/docx/GIMZdIJjooOenjxcoJicn5sEnGc" target="_blank" rel="noopener" title="飞书消息 + 会议日程 从 0 到 1 配置指南">📖 指南</a>
-          <button class="icon-btn" id="calendarRefreshBtn" title="刷新">⟳</button>
-          <button class="icon-btn" id="calendarSyncBtn" title="同步日程" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
-        </div>
-      </div>
-      <div class="calendar-list" id="calendarList"></div>
-    </div>
+
     <div class="mail-view" id="todoView" hidden>
       <div class="mail-toolbar">
         <button class="icon-btn todo-nav-toggle" id="todoNavToggle" title="展开/收起 项目导航" style="display:none">☰</button>
@@ -119,6 +107,7 @@
         <aside class="todo-nav" id="todoNav">
           <div class="todo-nav-scroll">
             <button class="todo-nav-item" data-view="all">📥 全部</button>
+            <button class="todo-nav-item" data-view="meeting">🗓 会议</button>
             <button class="todo-nav-item" data-view="today">📅 今天</button>
             <button class="todo-nav-item" data-view="timeline">🕐 时间轴</button>
             <div class="todo-nav-sep"></div>
@@ -151,6 +140,16 @@
             </div>
           </div>
           <div class="todo-board" id="todoBoard"></div>
+          <div class="todo-meeting" id="todoMeeting" hidden>
+            <div class="todo-meeting-toolbar">
+              <span class="mail-identity">📅 会议</span>
+              <span class="mail-status" id="calendarStatus"></span>
+              <a class="guide-link" href="https://qcn7nupmeook.feishu.cn/docx/GIMZdIJjooOenjxcoJicn5sEnGc" target="_blank" rel="noopener" title="飞书消息 + 会议日程 从 0 到 1 配置指南">📖 指南</a>
+              <button class="icon-btn" id="calendarRefreshBtn" title="刷新">⟳</button>
+              <button class="icon-btn" id="calendarSyncBtn" title="同步日程" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
+            </div>
+            <div class="calendar-list" id="calendarList"></div>
+          </div>
         </div>
       </div>
     </div>

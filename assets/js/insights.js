@@ -1,7 +1,7 @@
   // ============================================================
   // 💡 洞察（每日洞察：已并入 📅 日程页右栏，scripts.insights 脚本接入，配置驱动）
   // 数据：GET /insights/status（前置条件+最近生成）· GET /insights/history?date=（历史）· POST /insights/generate（异步生成）· POST /insights/delete|to-session
-  // 视图开关由日程视图（lark.js toggleCalendar）统一驱动，本模块只负责渲染/加载/日期切换
+  // 视图开关由飞书视图（lark.js toggleFeishu）统一驱动，本模块只负责渲染/加载/日期切换
   // ============================================================
   const $insightsStatus = document.getElementById('insightsStatus');
   const $insightsRefreshBtn = document.getElementById('insightsRefreshBtn');
@@ -415,7 +415,7 @@
   $toSessionModal.addEventListener('click', (e) => { if (e.target === $toSessionModal) $toSessionModal.hidden = true; });
   $toSessionOkBtn.addEventListener('click', submitToSession);
 
-  // ---------- 洞察工具栏（视图开关由日程视图统一驱动，见 lark.js toggleCalendar） ----------
+  // ---------- 洞察工具栏（视图开关由飞书视图统一驱动，见 lark.js toggleFeishu） ----------
   $insightsRefreshBtn.addEventListener('click', () => loadInsights(true, true));
   $insightsGenBtn.addEventListener('click', () => insightsGenerate());
 

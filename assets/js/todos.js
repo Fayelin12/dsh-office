@@ -70,9 +70,11 @@
   const $todoDayTitle = document.getElementById('todoDayTitle');
   const $todoDayList = document.getElementById('todoDayList');
   const $todoDayClose = document.getElementById('todoDayClose');
+  const $todoMeeting = document.getElementById('todoMeeting');
 
   let todoViewOpen = false;          // 看板视图是否打开
-  let todoView = 'all';              // 左栏选中视图：all | today | timeline | unassigned | project:<项目名>
+  let todoView = 'all';              // 左栏选中视图：all | meeting | today | timeline | unassigned | project:<项目名>
+  let meetingActive = false;         // 「会议」视图是否已启动（控制 start/stop 只调一次）
   let boardItems = [];               // 看板全量条目
   let boardProjects = [];            // 项目列表
   let boardDoneOpen = false;         // 已完成区是否展开
@@ -92,6 +94,17 @@
     );
   }
   $todoBoardBtn.addEventListener('click', toggleTodoBoard);
+
+  // 供 boot.js 会议提醒按钮调用：强制打开待办视图并选中「会议」
+  function openTodoMeeting() {
+    if (!todoViewOpen) {
+      todoViewOpen = true;
+      switchView('todos');
+      loadBoard();
+    }
+    todoView = 'meeting';
+    renderTodoLayout();
+  }
 
   // ---------- 看板数据 ----------
   async function loadBoard() {
@@ -157,8 +170,10 @@
     };
     const activeView = todoView;
     for (const btn of $todoNav.querySelectorAll('.todo-nav-scroll > .todo-nav-item[data-view]')) {
-      const n = counts[btn.dataset.view] || 0;
-      btn.classList.toggle('active', activeView === btn.dataset.view);
+      const view = btn.dataset.view;
+      btn.classList.toggle('active', activeView === view);
+      if (view === 'meeting') continue;   // 「会议」不显示待办计数
+      const n = counts[view] || 0;
       let c = btn.querySelector('.todo-nav-count');
       if (!c) { c = el('span', 'todo-nav-count'); btn.appendChild(c); }
       c.textContent = String(n);
@@ -178,6 +193,23 @@
     const today = todayStr();
     const q = $todoSearch.value.trim().toLowerCase();
     const searchMatch = (t) => !q || (t.text + ' ' + (t.note || '') + ' ' + (t.project || '')).toLowerCase().indexOf(q) >= 0;
+
+    // 会议视图：右栏显示会议内容（含完整功能：同步/刷新/倒计时）
+    if (todoView === 'meeting') {
+      $todoMainHead.innerHTML = '';
+      $todoBoardAdd.hidden = true;
+      $todoBoardOpts.hidden = true;
+      $todoBoardMoreBtn.textContent = '▸ 选项';
+      $todoBoard.hidden = true;
+      $todoMeeting.hidden = false;
+      if (!meetingActive) { meetingActive = true; startCalendarView(); }
+      return;
+    }
+
+    // 非会议视图：恢复待办内容、停会议倒计时
+    $todoBoard.hidden = false;
+    $todoMeeting.hidden = true;
+    if (meetingActive) { meetingActive = false; stopCalendarView(); }
 
     // 全部视图：右栏整体渲染日历（日历自带头部，不再显示外层视图头）
     if (todoView === 'all') {

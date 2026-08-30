@@ -555,15 +555,13 @@
   // ============================================================
   // 会议视图（📅 飞书日历日程，配置驱动：feishu-config.json → scripts.calendar）
   // 数据与飞书消息共用同一套 lark-cli 授权；随消息同步顺带拉取 + 打开时惰性补拉
+  // 已并入待办右栏「会议」视图（由 todos.js 调 startCalendarView/stopCalendarView）
   // ============================================================
-  const $calendarBtn = document.getElementById('calendarBtn');
-  const $calendarView = document.getElementById('calendarView');
   const $calendarStatus = document.getElementById('calendarStatus');
   const $calendarList = document.getElementById('calendarList');
   const $calendarRefreshBtn = document.getElementById('calendarRefreshBtn');
   const $calendarSyncBtn = document.getElementById('calendarSyncBtn');
 
-  let calendarViewOpen = false;
   let calendarEvents = [];       // 全部日程（按开始时间升序）
   let calendarFetchedAt = '';    // 缓存拉取时间
 
@@ -986,30 +984,25 @@
     }
   }
 
-  // ---------- 会议视图开关（日程列表） ----------
-  function toggleCalendar() {
-    toggleView('calendar',
-      () => calendarViewOpen, (v) => { calendarViewOpen = v; },
-      () => { if (calendarTimer) { clearInterval(calendarTimer); calendarTimer = null; } },
-      () => {
-        loadCalendarStatus();
-        loadCalendarEvents();
-        if (calendarTimer) clearInterval(calendarTimer);
-        calendarTimer = setInterval(() => {
-          if (!calendarViewOpen) { clearInterval(calendarTimer); calendarTimer = null; return; }
-          document.querySelectorAll('.cal-card[data-id]').forEach(function(card) {
-            var eventId = card.dataset.id;
-            var evt = calendarEvents.find(function(ev) { return ev.event_id === eventId; });
-            if (!evt) return;
-            var cdEl = card.querySelector('.ct-countdown');
-            if (!cdEl) return;
-            cdEl.textContent = calCountdown(evt);
-          });
-        }, CALENDAR_COUNTDOWN_MS);
-      }
-    );
-  }
+  // ---------- 会议视图钩子（嵌入待办右栏，由 todos.js 的「会议」视图调用） ----------
   let calendarTimer = null;
-  $calendarBtn.addEventListener('click', toggleCalendar);
+  function startCalendarView() {
+    loadCalendarStatus();
+    loadCalendarEvents();
+    if (calendarTimer) clearInterval(calendarTimer);
+    calendarTimer = setInterval(() => {
+      document.querySelectorAll('.cal-card[data-id]').forEach(function(card) {
+        var eventId = card.dataset.id;
+        var evt = calendarEvents.find(function(ev) { return ev.event_id === eventId; });
+        if (!evt) return;
+        var cdEl = card.querySelector('.ct-countdown');
+        if (!cdEl) return;
+        cdEl.textContent = calCountdown(evt);
+      });
+    }, CALENDAR_COUNTDOWN_MS);
+  }
+  function stopCalendarView() {
+    if (calendarTimer) { clearInterval(calendarTimer); calendarTimer = null; }
+  }
   $calendarRefreshBtn.addEventListener('click', () => { loadCalendarStatus(); loadCalendarEvents(); });
   $calendarSyncBtn.addEventListener('click', () => syncCalendarManual());

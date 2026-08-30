@@ -19,7 +19,7 @@
     }
   }
   async function refresh() {
-    if (mailViewOpen || feishuViewOpen || calendarViewOpen || todoViewOpen) return;  // 邮箱/飞书/会议/待办视图打开时不轮询办公室数据
+    if (mailViewOpen || feishuViewOpen || todoViewOpen) return;  // 邮箱/飞书/待办视图打开时不轮询办公室数据
     try {
       await fetchData();
       // 合并快照实时状态：客户端 useSessions 比服务端 agents.list() 更快知道 running/pending
@@ -98,9 +98,9 @@
     // 安全：校验 origin，拒绝非本源的 postMessage
     if (evt.origin !== window.location.origin) return;
     var msg = evt && evt.data;
-    // 父窗口 ⏰ 会议提醒按钮点击 → 打开会议视图
+    // 父窗口 ⏰ 会议提醒按钮点击 → 打开待办里的「会议」视图
     if (msg && msg.type === 'office-open-calendar') {
-      if (!calendarViewOpen) toggleCalendar();
+      openTodoMeeting();
       return;
     }
     if (!msg || msg.type !== 'office-snapshot' || !Array.isArray(msg.sessions)) return;

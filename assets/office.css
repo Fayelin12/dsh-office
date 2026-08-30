@@ -1611,6 +1611,24 @@
     flex-direction: column;
     gap: 14px;
   }
+  /* 会议视图（嵌入待办右栏） */
+  .todo-meeting {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .todo-meeting-toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .todo-meeting .calendar-list {
+    flex: 1;
+  }
   .todo-board-group-list {
     display: flex;
     flex-direction: column;

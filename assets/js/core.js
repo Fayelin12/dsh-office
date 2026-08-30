@@ -698,13 +698,11 @@
     // 关闭所有视图
     mailViewOpen = false;
     feishuViewOpen = false;
-    calendarViewOpen = false;
     todoViewOpen = false;
     showingConfig = false;
     $body.hidden = false;
     $mailView.hidden = true;
     $feishuView.hidden = true;
-    $calendarView.hidden = true;
     $todoView.hidden = true;
     $config.hidden = true;
     // 重置所有按钮状态（含视图切换的 header 按钮）
@@ -729,12 +727,6 @@
       $body.hidden = true;
       $feishuBtn.classList.add('active');
       $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u98DE\u4E66';
-    } else if (viewName === 'calendar') {
-      calendarViewOpen = true;
-      $calendarView.hidden = false;
-      $body.hidden = true;
-      $calendarBtn.classList.add('active');
-      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u4F1A\u8BAE';
     } else if (viewName === 'todos') {
       todoViewOpen = true;
       $todoView.hidden = false;

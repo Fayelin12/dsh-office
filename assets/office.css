@@ -2338,6 +2338,11 @@
     padding: 9px 12px;
     width: 100%;
   }
+  /* 深色模式下原生下拉面板可能是浅底，白字会看不清：显式给 option 深底浅字（对齐 .ws-item select option） */
+  .compose-body select option {
+    background: var(--bg-surface);
+    color: var(--text);
+  }
   /* 写信 / 回复弹窗 */
   .compose-modal {
     z-index: 20;

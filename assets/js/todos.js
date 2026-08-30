@@ -452,11 +452,11 @@
     }
 
     // 快捷改期（未完成条目，紧跟日期右边）：
-    // 「下一天继续」→ 今天继续、明天截止（start=今天, due=明天，今天+明天都有）
+    // 「下一天继续」→ 今天标记完成（删除线），明天新建一条同样的继续
     // 「改到下一天」→ 移到明天、今天不做（清 start，due=明天）
     if (!t.done) {
       const contBtn = el('button', 'todo-quick todo-continue', '下一天继续');
-      contBtn.title = '今天继续，明天截止（今天+明天都有）';
+      contBtn.title = '今天完成，明天新建一条继续';
       row.appendChild(contBtn);
       const deferBtn = el('button', 'todo-quick todo-defer', '改到下一天');
       deferBtn.title = '移到明天，今天不做';
@@ -640,6 +640,29 @@
     }).catch((err) => toast('删除待办失败：' + (err && err.message ? err.message : err)));
   }
 
+  // 「下一天继续」：今天这条标记完成（删除线），明天新建一条同样内容继续。
+  // 顺序「先建明天副本、再完成今天」——建失败则今天保持原样可重试，避免"只完成没顺延"丢任务。
+  function continueTodoNextDay(id) {
+    const t = boardItems.find((x) => x.id === id);
+    if (!t) return;
+    const tomorrow = shiftDate(todayStr(), 1);
+    apiFetch('/todos/add', {
+      method: 'POST',
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ text: t.text, project: t.project || null, priority: t.priority, note: t.note || null, due: tomorrow })
+    }).then((res) => res.json()).then((j) => {
+      if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '新建失败');
+      return apiFetch('/todos/update', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ id, patch: { done: true } })
+      });
+    }).then((res) => res.json()).then((j) => {
+      if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '完成失败');
+      loadBoard();
+    }).catch((err) => toast('下一天继续失败：' + (err && err.message ? err.message : err)));
+  }
+
   $todoBoardAddBtn.addEventListener('click', boardAdd);
   $todoBoardInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); boardAdd(); }
@@ -719,8 +742,8 @@
       const t = boardItems.find((x) => x.id === id);
       if (t) boardUpdate(id, { priority: nextTodoPriority(t.priority) });
     } else if (e.target.closest('.todo-continue')) {
-      // 下一天继续：今天继续、明天截止（今天+明天都有）
-      boardUpdate(id, { start: todayStr(), due: shiftDate(todayStr(), 1) });
+      // 下一天继续：今天标记完成（删除线），明天新建一条同样的
+      continueTodoNextDay(id);
     } else if (e.target.closest('.todo-defer')) {
       // 改到下一天：移到明天、今天不做
       boardUpdate(id, { start: null, due: shiftDate(todayStr(), 1) });

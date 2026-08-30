@@ -225,6 +225,10 @@
     box-shadow: var(--shadow-card);
     overflow: hidden;
   }
+  /* 二次确认弹窗：盖在所有业务弹窗之上（编辑/日/项目/飞书等），低于 toast(100)/loading(9999) */
+  #confirmModal {
+    z-index: 50;
+  }
 
   /* ============ 数据口径帮助弹窗 ============ */
   .help-modal {

@@ -72,7 +72,7 @@
   const $todoDayClose = document.getElementById('todoDayClose');
 
   let todoViewOpen = false;          // 看板视图是否打开
-  let todoView = 'all';              // 左栏选中视图：all | timeline | unassigned | project:<项目名>
+  let todoView = 'all';              // 左栏选中视图：all | today | timeline | unassigned | project:<项目名>
   let boardItems = [];               // 看板全量条目
   let boardProjects = [];            // 项目列表
   let boardDoneOpen = false;         // 已完成区是否展开
@@ -151,6 +151,7 @@
     const open = boardItems.filter((t) => !t.done);
     const counts = {
       all: open.length,
+      today: open.filter((t) => todoInRange(t, today)).length,
       timeline: open.length,
       unassigned: open.filter((t) => !t.project).length
     };
@@ -190,6 +191,12 @@
       return;
     }
 
+    // 今天视图：逾期（滚入今天）+ 今天（含持续任务进行中）+ 已完成
+    if (todoView === 'today') {
+      renderToday(today, q, searchMatch);
+      return;
+    }
+
     // 时间轴视图（主 + 项目）：逾期 → 今天 → 明天 → 未来7天 → 更晚 → 未安排
     if (todoView === 'timeline' || todoView.indexOf('project:') === 0) {
       renderTimeline(today, q, searchMatch, todoView === 'timeline' ? null : todoView.slice(8));
@@ -218,20 +225,7 @@
       $todoBoard.appendChild(el('div', 'todo-empty', q ? '没有符合条件的待办' : '还没有未分配的待办'));
     } else {
       for (const t of boardSort(open)) $todoBoard.appendChild(makeBoardItem(t, false));
-      if (done.length) {
-        const doneSection = el('div', 'todo-board-done');
-        const doneHead = el('button', 'todo-board-done-head', (boardDoneOpen ? '▾' : '▸') + ' 已完成 ' + done.length);
-        doneHead.title = boardDoneOpen ? '收起' : '展开';
-        doneHead.addEventListener('click', () => { boardDoneOpen = !boardDoneOpen; renderTodoMain(); });
-        doneSection.appendChild(doneHead);
-        if (boardDoneOpen) {
-          const list = el('div', 'todo-board-group-list');
-          const sorted = done.slice().sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
-          for (const t of sorted) list.appendChild(makeBoardItem(t, false));
-          doneSection.appendChild(list);
-        }
-        $todoBoard.appendChild(doneSection);
-      }
+      if (done.length) $todoBoard.appendChild(makeDoneSection(done, false));
     }
   }
 
@@ -255,6 +249,22 @@
     for (const t of items) list.appendChild(makeBoardItem(t, showProject, showDue));
     g.appendChild(list);
     return g;
+  }
+
+  // 已完成折叠区（时间轴 / 今天 / 扁平列表共用）
+  function makeDoneSection(done, showProject) {
+    const doneSection = el('div', 'todo-board-done');
+    const doneHead = el('button', 'todo-board-done-head', (boardDoneOpen ? '▾' : '▸') + ' 已完成 ' + done.length);
+    doneHead.title = boardDoneOpen ? '收起' : '展开';
+    doneHead.addEventListener('click', () => { boardDoneOpen = !boardDoneOpen; renderTodoMain(); });
+    doneSection.appendChild(doneHead);
+    if (boardDoneOpen) {
+      const list = el('div', 'todo-board-group-list');
+      const sorted = done.slice().sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
+      for (const t of sorted) list.appendChild(makeBoardItem(t, showProject, true));
+      doneSection.appendChild(list);
+    }
+    return doneSection;
   }
 
   function renderTimeline(today, q, searchMatch, projectScope) {
@@ -323,20 +333,39 @@
     $todoBoard.appendChild(tl);
 
     // 已完成（折叠，独立 footer，不参与时间轴竖线）
-    if (done.length) {
-      const doneSection = el('div', 'todo-board-done');
-      const doneHead = el('button', 'todo-board-done-head', (boardDoneOpen ? '▾' : '▸') + ' 已完成 ' + done.length);
-      doneHead.title = boardDoneOpen ? '收起' : '展开';
-      doneHead.addEventListener('click', () => { boardDoneOpen = !boardDoneOpen; renderTodoMain(); });
-      doneSection.appendChild(doneHead);
-      if (boardDoneOpen) {
-        const list = el('div', 'todo-board-group-list');
-        const sorted = done.slice().sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
-        for (const t of sorted) list.appendChild(makeBoardItem(t, crossProject, true));
-        doneSection.appendChild(list);
-      }
-      $todoBoard.appendChild(doneSection);
+    if (done.length) $todoBoard.appendChild(makeDoneSection(done, crossProject));
+  }
+
+  // 今天视图：逾期（滚入今天）+ 今天（含持续任务进行中）+ 已完成
+  function renderToday(today, q, searchMatch) {
+    const open = boardItems.filter((t) => !t.done && searchMatch(t));
+    const done = boardItems.filter((t) => t.done && searchMatch(t));
+    const overdue = open.filter((t) => t.due && t.due < today);
+    const todayItems = open.filter((t) => todoInRange(t, today));
+
+    // 视图头
+    $todoMainHead.innerHTML = '';
+    const head = el('div', 'todo-main-head');
+    head.appendChild(el('span', 'todo-main-title', '📅 今天'));
+    head.appendChild(el('span', 'todo-main-meta', '未完成 ' + (overdue.length + todayItems.length) + ' · 逾期 ' + overdue.length));
+    $todoMainHead.appendChild(head);
+
+    // 添加区（默认今天截止）
+    $todoBoardAdd.hidden = false;
+    $todoBoardInput.placeholder = '记一条待办…（今天截止）';
+
+    $todoBoard.innerHTML = '';
+    if (overdue.length === 0 && todayItems.length === 0 && done.length === 0) {
+      $todoBoard.appendChild(el('div', 'todo-empty', q ? '没有符合条件的待办' : '今天还没有待办'));
+      return;
     }
+
+    const tl = el('div', 'todo-timeline');
+    if (overdue.length) tl.appendChild(makeTimelineGroup('overdue', '⏰ 逾期', boardSort(overdue), true, true));
+    if (todayItems.length) tl.appendChild(makeTimelineGroup('today', '今天 · ' + fmtCalDate(today, false) + ' · ' + ttWeekday(today), boardSort(todayItems), false, true));
+    $todoBoard.appendChild(tl);
+
+    if (done.length) $todoBoard.appendChild(makeDoneSection(done, true));
   }
 
   function makeBoardItem(t, showProjectChip, showDue) {
@@ -518,7 +547,7 @@
     let project = null;
     let due = $todoBoardDue.value || null;
     if (todoView.indexOf('project:') === 0) { project = todoView.slice(8); due = due || todayStr(); }
-    else if (todoView === 'timeline') due = due || todayStr();
+    else if (todoView === 'today' || todoView === 'timeline') due = due || todayStr();
     const range = normalizeTodoRange($todoBoardStart.value || null, due);
     const body = { text, project, start: range.start, due: range.due };
     apiFetch('/todos/add', {

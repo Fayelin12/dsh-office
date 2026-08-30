@@ -1,11 +1,8 @@
   // ============================================================
-  // 💡 洞察视图（每日洞察：scripts.insights 脚本接入，配置驱动）
+  // 💡 洞察（每日洞察：已并入 📅 日程页右栏，scripts.insights 脚本接入，配置驱动）
   // 数据：GET /insights/status（前置条件+最近生成）· GET /insights/history?date=（历史）· POST /insights/generate（异步生成）· POST /insights/delete|to-session
-  // 📝 每日待办（右侧面板）：GET /todos/list?date= · POST /todos/add|update|remove
+  // 视图开关由日程视图（lark.js toggleCalendar）统一驱动，本模块只负责渲染/加载/日期切换
   // ============================================================
-  const $insightsBtn = document.getElementById('insightsBtn');
-  const $insightsView = document.getElementById('insightsView');
-  const $insightsIdentity = document.getElementById('insightsIdentity');
   const $insightsStatus = document.getElementById('insightsStatus');
   const $insightsRefreshBtn = document.getElementById('insightsRefreshBtn');
   const $insightsGenBtn = document.getElementById('insightsGenBtn');
@@ -14,14 +11,6 @@
   const $insightsDatePrev = document.getElementById('insightsDatePrev');
   const $insightsDateNext = document.getElementById('insightsDateNext');
   const $insightsDateToday = document.getElementById('insightsDateToday');
-  const $todoDateInput = document.getElementById('todoDateInput');
-  const $todoDatePrev = document.getElementById('todoDatePrev');
-  const $todoDateNext = document.getElementById('todoDateNext');
-  const $todoDateToday = document.getElementById('todoDateToday');
-  const $todoInput = document.getElementById('todoInput');
-  const $todoAddBtn = document.getElementById('todoAddBtn');
-  const $todoList = document.getElementById('todoList');
-  const $todoCount = document.getElementById('todoCount');
   const $confirmModal = document.getElementById('confirmModal');
   const $confirmTitle = document.getElementById('confirmTitle');
   const $confirmMessage = document.getElementById('confirmMessage');
@@ -34,14 +23,10 @@
   const $toSessionClose = document.getElementById('toSessionClose');
   const $toSessionOkBtn = document.getElementById('toSessionOkBtn');
 
-  let insightsViewOpen = false;
   let insightsGenerating = false;   // 前端生成轮询标志
   let insightsLazyFired = false;    // 本次打开是否已惰性触发（防重复）
   let insightsDate = null;          // 洞察查看日期（YYYY-MM-DD）
-  let todoDate = null;              // 待办查看日期（YYYY-MM-DD，独立于洞察）
   let currentInsightsDay = null;    // 当前渲染的整日快照（转会话取条目文本用）
-  let todos = [];                   // 当前日期的待办列表
-  let todoLoadedDate = null;        // todos 已加载的日期（避免重复渲染）
 
   function todayStr() {
     const d = new Date();
@@ -426,33 +411,11 @@
   $insightsDateToday.addEventListener('click', () => applyInsightsDate(todayStr()));
   $insightsDateInput.addEventListener('change', () => applyInsightsDate($insightsDateInput.value));
 
-  // ---------- 待办日期切换（只驱动待办） ----------
-  function applyTodoDate(next) {
-    if (!next) return;
-    todoDate = next;
-    syncTodoDateUI();
-    loadTodos();
-  }
-  function syncTodoDateUI() {
-    $todoDateInput.value = todoDate || todayStr();
-  }
-  $todoDatePrev.addEventListener('click', () => applyTodoDate(shiftDate(todoDate || todayStr(), -1)));
-  $todoDateNext.addEventListener('click', () => applyTodoDate(shiftDate(todoDate || todayStr(), 1)));
-  $todoDateToday.addEventListener('click', () => applyTodoDate(todayStr()));
-  $todoDateInput.addEventListener('change', () => applyTodoDate($todoDateInput.value));
   $toSessionClose.addEventListener('click', () => { $toSessionModal.hidden = true; });
   $toSessionModal.addEventListener('click', (e) => { if (e.target === $toSessionModal) $toSessionModal.hidden = true; });
   $toSessionOkBtn.addEventListener('click', submitToSession);
 
-  // ---------- 洞察视图开关（归属本模块） ----------
-  function toggleInsights() {
-    toggleView('insights',
-      () => insightsViewOpen, (v) => { insightsViewOpen = v; },
-      () => { insightsLazyFired = false; },
-      () => { loadInsights(false, false); }
-    );
-  }
-  $insightsBtn.addEventListener('click', toggleInsights);
+  // ---------- 洞察工具栏（视图开关由日程视图统一驱动，见 lark.js toggleCalendar） ----------
   $insightsRefreshBtn.addEventListener('click', () => loadInsights(true, true));
   $insightsGenBtn.addEventListener('click', () => insightsGenerate());
 

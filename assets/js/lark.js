@@ -558,7 +558,6 @@
   // ============================================================
   const $calendarBtn = document.getElementById('calendarBtn');
   const $calendarView = document.getElementById('calendarView');
-  const $calendarIdentity = document.getElementById('calendarIdentity');
   const $calendarStatus = document.getElementById('calendarStatus');
   const $calendarList = document.getElementById('calendarList');
   const $calendarRefreshBtn = document.getElementById('calendarRefreshBtn');
@@ -987,15 +986,15 @@
     }
   }
 
-  // ---------- 会议视图开关 ----------
+  // ---------- 日程·洞察视图开关（左栏日程列表 / 右栏每日洞察，合并单页） ----------
   function toggleCalendar() {
     toggleView('calendar',
       () => calendarViewOpen, (v) => { calendarViewOpen = v; },
-      () => { if (calendarTimer) { clearInterval(calendarTimer); calendarTimer = null; } },
+      () => { if (calendarTimer) { clearInterval(calendarTimer); calendarTimer = null; } insightsLazyFired = false; },
       () => {
         loadCalendarStatus();
         loadCalendarEvents();
-        loadTodos();
+        loadInsights(false, false);   // 右栏每日洞察同步加载
         if (calendarTimer) clearInterval(calendarTimer);
         calendarTimer = setInterval(() => {
           if (!calendarViewOpen) { clearInterval(calendarTimer); calendarTimer = null; return; }

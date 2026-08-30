@@ -1,4 +1,4 @@
-// 一次性后端冒烟：隔离临时 DSH_HOME，验证 todos v2（迁移 + 9 路由）
+// 一次性后端冒烟：隔离临时 DSH_HOME，验证 todos v2（迁移 + 8 路由）
 // 运行：node scripts/test-todos.mjs
 import { mkdtemp, writeFile, readFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -94,12 +94,6 @@ console.log("== 改期（move） ==");
 r = await call(routes["/office-ui/todos/move"], "/office-ui/todos/move", "POST", { id: newId, toDate: "2026-09-02" });
 assert(r.status === 200 && r.json.item.due === "2026-09-02", "move 改 due");
 
-console.log("== 按日 list（due 语义） ==");
-r = await call(routes["/office-ui/todos/list"], "/office-ui/todos/list?date=2026-09-02");
-assert(r.status === 200 && r.json.data.items.some((t) => t.id === newId), "list?date 命中 due==该日");
-r = await call(routes["/office-ui/todos/list"], "/office-ui/todos/list?date=2026-08-27");
-assert(r.status === 200 && r.json.data.items.length === 1 && r.json.data.items[0].id === "a3", "旧迁移条目按创建日列出");
-
 console.log("== 项目删除/重命名 ==");
 r = await call(routes["/office-ui/todos/projects/rename"], "/office-ui/todos/projects/rename", "POST", { oldName: "dsh-office", newName: "办公室插件" });
 assert(r.status === 200 && r.json.projects[0] === "办公室插件", "重命名项目");
@@ -119,8 +113,6 @@ assert(r.status === 404, "删除不存在 404");
 console.log("== 防护 ==");
 r = await call(routes["/office-ui/todos/board"], "/office-ui/todos/board", "GET", null, "1.2.3.4");
 assert(r.status === 403, "非 loopback 403");
-r = await call(routes["/office-ui/todos/list"], "/office-ui/todos/list?date=20260101");
-assert(r.status === 400, "非法日期 400");
 
 // 落盘验证（saveTodos 异步落盘，稍等）
 await new Promise((r) => setTimeout(r, 300));

@@ -144,7 +144,10 @@
     font-weight: 600;
     letter-spacing: 0.2px;
   }
-  .office-actions { display: flex; gap: 8px; }
+  .office-actions { display: flex; align-items: center; gap: 8px; }
+  .office-actions-tabs { display: flex; align-items: center; gap: 8px; }
+  .office-actions-tools { display: flex; align-items: center; gap: 8px; }
+  .office-actions-sep { width: 1px; height: 20px; background: var(--border); flex: none; }
   .header-btn {
     width: auto;
     height: 30px;
@@ -619,19 +622,18 @@
   .ws-item select option { background: var(--bg-surface); color: var(--text); }
 
   /* ============ 保存按钮 & 未保存提示 ============ */
+  /* 默认 display:none 不占位（与 .dirty-badge 一致）；此前用 opacity:0 隐藏但仍占宽度，
+     导致「帮助」按钮左侧留白。flex gap 对零宽元素仍计间距，故必须 display:none 才彻底消除。 */
   .save-btn {
+    display: none;
     width: auto;
     padding: 0 12px;
     font-size: var(--font-body);
     font-weight: 500;
     color: var(--text-dim);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .2s ease, background .15s ease, color .15s ease, border-color .15s ease;
   }
   .save-btn.visible {
-    opacity: 1;
-    pointer-events: auto;
+    display: grid;
   }
   .save-btn.dirty {
     color: #fff;
@@ -1026,14 +1028,6 @@
   .f-preview .fp-row:hover { color: var(--text); }
   .f-preview .fp-row b { font-weight: 600; color: var(--text); }
   /* ============ 日程视图（📅 飞书日历日程） ============ */
-  /* 日程页左右布局：左列 = 待办，右列 = 会议（单列），左右等宽 */
-  .calendar-layout {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    gap: 12px;
-    align-items: stretch;
-  }
   .calendar-list {
     flex: 1;
     min-height: 0;
@@ -1407,64 +1401,12 @@
   }
   .fm-more:hover { background: var(--bg-surface-hover); }
   .fm-more:disabled { cursor: default; opacity: 0.7; }
-  /* 📝 每日待办面板（会议视图左列） */
-  .todo-panel {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-surface);
-    padding: 12px;
-    overflow: hidden;
-  }
-  .todo-head {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .todo-title { font-weight: 600; color: var(--text); font-size: var(--font-body); }
   .todo-count {
     font-size: var(--font-sm);
     color: var(--text-faint);
     padding: 1px 8px;
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
-  }
-  .todo-date-nav {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .todo-date-nav .icon-btn { padding: 2px 8px; }
-  .todo-date-nav .insights-date-input { flex: 1; min-width: 0; }
-  .todo-add {
-    flex: none;
-    display: flex;
-    gap: 8px;
-  }
-  .todo-add input {
-    flex: 1;
-    min-width: 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--input-bg, transparent);
-    color: var(--text);
-    font-family: inherit;
-    font-size: var(--font-body);
-    padding: 7px 10px;
-  }
-  .todo-list {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
   }
   .todo-item {
     display: flex;
@@ -1517,14 +1459,23 @@
     padding: 3px 6px;
   }
   .todo-item .icon-btn { flex: none; }
-  .todo-move {
-    flex: none;
-    width: auto;
-    padding: 0 8px;
-    font-size: var(--font-sm);
-    color: var(--accent);
+  /* 动作按钮（编辑/删除）hover/focus 时显现降噪（Notion/Evernote 式）；备注图标作指示器常显。
+     仅在支持 hover 的精细指针设备隐藏，触屏常显避免按钮永不可达 */
+  @media (hover: hover) and (pointer: fine) {
+    .todo-item .icon-btn.todo-edit,
+    .todo-item .icon-btn.todo-del {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .12s ease;
+    }
+    .todo-item:hover .icon-btn.todo-edit,
+    .todo-item:hover .icon-btn.todo-del,
+    .todo-item:focus-within .icon-btn.todo-edit,
+    .todo-item:focus-within .icon-btn.todo-del {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
-  .todo-move:hover { color: #fff; background: var(--accent); }
   .todo-empty {
     padding: 18px;
     text-align: center;
@@ -1572,8 +1523,11 @@
   }
   .todo-board-more {
     flex: none;
+    width: auto;
+    padding: 0 10px;
     font-size: var(--font-sm);
     color: var(--text-dim);
+    white-space: nowrap;
   }
   .todo-board-more:hover { color: var(--text); }
 
@@ -1824,7 +1778,8 @@
   }
   .todo-cal-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    /* minmax(0,1fr) 而非 1fr：1fr 的隐式 min 是 auto，会被格内长标题撑开导致列宽不一致 */
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 6px;
   }
   .todo-cal-wd {
@@ -1895,7 +1850,13 @@
     cursor: pointer;
   }
   .todo-cal-more:hover { color: var(--text); }
-  /* .todo-cal-empty：空占位格，无样式 */
+  /* 空白占位格：与日格同尺寸的浅色格，让月历网格完整对齐（前导 + 末行补齐） */
+  .todo-cal-empty {
+    min-height: 76px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-subtle);
+  }
 
   /* 编辑弹层 */
   .todo-edit-form {
@@ -2007,43 +1968,43 @@
     outline: none;
   }
 
-  /* ============ 💡 洞察视图（左右布局） ============ */
-  .insights-layout {
+  /* ============ 📅 日程·洞察 合并视图（左右布局：左日程列表 / 右洞察） ============ */
+  .cal-insights-layout {
     flex: 1;
     min-height: 0;
     display: flex;
     gap: 12px;
     align-items: stretch;
   }
+  .cal-insights-layout > .calendar-list {
+    flex: 0 0 36%;
+    min-width: 0;
+    border-right: 1px solid var(--border);
+    padding-right: 12px;
+  }
+  .insights-pane {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .insights-pane-toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
   .insights-main {
-    flex: 0 0 62%;
+    flex: 1;
     min-width: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 12px;
     padding-right: 2px;
-  }
-  .insights-aside {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .insights-aside-hint {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px dashed var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-faint);
-    font-size: var(--font-body);
-    text-align: center;
-    line-height: 1.8;
-    user-select: none;
   }
 
   .insights-summary-card {
@@ -2319,6 +2280,18 @@
     resize: none;
     line-height: 1.6;
   }
+  .compose-preview {
+    flex: 1;
+    min-height: 160px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--text);
+    font-size: var(--font-sub);
+    line-height: 1.6;
+    padding: 9px 12px;
+  }
   .compose-foot {
     flex: none;
     display: flex;
@@ -2387,4 +2360,25 @@
       z-index: 20;
       background: rgba(0, 0, 0, 0.32);
     }
+  }
+
+  /* 窄屏（≤900px）：主看板/配置页列数收缩，飞书卡片降 2 列，日程·洞察改上下堆叠 */
+  @media (max-width: 900px) {
+    .office-body,
+    .config-grid { grid-template-columns: repeat(3, 1fr); }
+    .feishu-cards { grid-template-columns: repeat(2, 1fr); }
+    .cal-insights-layout { flex-direction: column; }
+    .cal-insights-layout > .calendar-list {
+      flex: 0 0 auto;
+      max-height: 45%;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding-right: 2px;
+      padding-bottom: 10px;
+    }
+  }
+  @media (max-width: 560px) {
+    .office-body,
+    .config-grid { grid-template-columns: repeat(1, 1fr); }
+    .feishu-cards { grid-template-columns: repeat(1, 1fr); }
   }

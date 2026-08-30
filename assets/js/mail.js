@@ -310,6 +310,9 @@
   const $composeBody = document.getElementById('composeBody');
   const $composeSendBtn = document.getElementById('composeSendBtn');
   const $composeError = document.getElementById('composeError');
+  const $composePreview = document.getElementById('composePreview');
+  const $composePreviewBtn = document.getElementById('composePreviewBtn');
+  let composePreviewOpen = false;
 
   function openCompose(mode, id, replyTo) {
     composeMode = mode || 'send';
@@ -321,6 +324,7 @@
     $composeHead.textContent = composeMode === 'reply' ? '↩ 回复邮件' : '✎ 写邮件';
     $composeTo.hidden = composeMode === 'reply';
     $composeModal.hidden = false;
+    setComposePreview(false);
     if (composeMode === 'reply') $composeBody.focus();
     else $composeTo.focus();
   }
@@ -329,6 +333,17 @@
   }
   $composeClose.addEventListener('click', closeCompose);
   $composeModal.addEventListener('click', (e) => { if (e.target === $composeModal) closeCompose(); });
+
+  // 写邮件 HTML 预览：切换到预览时直接渲染当前正文（用户自行输入的 HTML，信任其内容，仅本人可见）
+  function setComposePreview(open) {
+    composePreviewOpen = open;
+    $composeBody.hidden = open;
+    $composePreview.hidden = !open;
+    $composePreviewBtn.textContent = open ? '✎ 编辑' : '👁 预览';
+    $composePreviewBtn.title = open ? '返回编辑' : '预览 HTML 效果';
+    if (open) $composePreview.innerHTML = $composeBody.value;
+  }
+  $composePreviewBtn.addEventListener('click', () => setComposePreview(!composePreviewOpen));
 
   async function submitMail() {
     $composeSendBtn.disabled = true;

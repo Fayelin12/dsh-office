@@ -700,14 +700,12 @@
     feishuViewOpen = false;
     calendarViewOpen = false;
     todoViewOpen = false;
-    insightsViewOpen = false;
     showingConfig = false;
     $body.hidden = false;
     $mailView.hidden = true;
     $feishuView.hidden = true;
     $calendarView.hidden = true;
     $todoView.hidden = true;
-    $insightsView.hidden = true;
     $config.hidden = true;
     // 重置所有按钮状态（含视图切换的 header 按钮）
     document.querySelectorAll('.office-actions .header-btn, .office-actions .icon-btn').forEach(function(btn) {
@@ -736,19 +734,13 @@
       $calendarView.hidden = false;
       $body.hidden = true;
       $calendarBtn.classList.add('active');
-      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u65E5\u7A0B';
+      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u65E5\u7A0B\u00B7\u6D1E\u5BDF';
     } else if (viewName === 'todos') {
       todoViewOpen = true;
       $todoView.hidden = false;
       $body.hidden = true;
       $todoBoardBtn.classList.add('active');
       $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u5F85\u529E';
-    } else if (viewName === 'insights') {
-      insightsViewOpen = true;
-      $insightsView.hidden = false;
-      $body.hidden = true;
-      $insightsBtn.classList.add('active');
-      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u6D1E\u5BDF';
     } else if (viewName === 'config') {
       showingConfig = true;
       $config.hidden = false;

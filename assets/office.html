@@ -17,15 +17,19 @@
     <header class="office-header">
       <div class="office-title" id="officeTitle">🏢 办公室</div>
       <div class="office-actions">
-        <span class="dirty-badge" id="dirtyBadge"><span class="dirty-dot"></span>有未保存的更改</span>
-        <button class="icon-btn save-btn" id="saveBtn" title="保存更改">保存</button>
-        <button class="header-btn" id="feishuBtn" title="飞书消息">💬 飞书</button>
-        <button class="header-btn" id="calendarBtn" title="日程">📅 日程</button>
-        <button class="header-btn" id="todoBoardBtn" title="待办看板">📋 待办</button>
-        <button class="header-btn" id="insightsBtn" title="每日洞察">💡 洞察</button>
-        <button class="header-btn" id="mailBtn" title="邮箱">📧 邮箱</button>
-        <button class="header-btn" id="helpBtn" title="数据口径">❓ 帮助</button>
-        <button class="header-btn" id="configBtn" title="配置">⚙️ 配置</button>
+        <div class="office-actions-tabs">
+          <button class="header-btn" id="feishuBtn" title="飞书消息">💬 飞书</button>
+          <button class="header-btn" id="calendarBtn" title="日程与每日洞察">📅 日程</button>
+          <button class="header-btn" id="todoBoardBtn" title="待办看板">📋 待办</button>
+          <button class="header-btn" id="mailBtn" title="邮箱">📧 邮箱</button>
+        </div>
+        <div class="office-actions-sep"></div>
+        <div class="office-actions-tools">
+          <span class="dirty-badge" id="dirtyBadge"><span class="dirty-dot"></span>有未保存的更改</span>
+          <button class="icon-btn save-btn" id="saveBtn" title="保存更改">保存</button>
+          <button class="header-btn" id="helpBtn" title="数据口径">❓ 帮助</button>
+          <button class="header-btn" id="configBtn" title="配置">⚙️ 配置</button>
+        </div>
       </div>
     </header>
 
@@ -74,7 +78,7 @@
     </div>
     <div class="mail-view" id="calendarView" hidden>
       <div class="mail-toolbar">
-        <span class="mail-identity" id="calendarIdentity">📅 日程</span>
+        <span class="mail-identity" id="calendarIdentity">📅 日程·洞察</span>
         <div class="mail-actions">
           <span class="mail-status" id="calendarStatus"></span>
           <a class="guide-link" href="https://qcn7nupmeook.feishu.cn/docx/GIMZdIJjooOenjxcoJicn5sEnGc" target="_blank" rel="noopener" title="飞书消息 + 会议日程 从 0 到 1 配置指南">📖 指南</a>
@@ -82,25 +86,22 @@
           <button class="icon-btn" id="calendarSyncBtn" title="同步日程" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
         </div>
       </div>
-      <div class="calendar-layout">
-        <div class="todo-panel">
-          <div class="todo-head">
-            <span class="todo-title">📝 我的待办</span>
-            <span class="todo-count" id="todoCount"></span>
-          </div>
-          <div class="todo-date-nav">
-            <button class="icon-btn" id="todoDatePrev" title="前一天">‹</button>
-            <input type="date" class="insights-date-input" id="todoDateInput" title="点击选择任意日期" />
-            <button class="icon-btn" id="todoDateNext" title="后一天">›</button>
-            <button class="icon-btn" id="todoDateToday" title="回到今天" style="width:auto;padding:0 10px;font-size:var(--font-body)">今天</button>
-          </div>
-          <div class="todo-add">
-            <input type="text" id="todoInput" placeholder="记一条待办…" maxlength="500" autocomplete="off" />
-            <button class="icon-btn" id="todoAddBtn" title="添加待办" style="width:auto;padding:0 12px;font-size:var(--font-body)">添加</button>
-          </div>
-          <div class="todo-list" id="todoList"></div>
-        </div>
+      <div class="cal-insights-layout">
         <div class="calendar-list" id="calendarList"></div>
+        <div class="insights-pane">
+          <div class="insights-pane-toolbar">
+            <div class="insights-date-nav" id="insightsDateNav">
+              <button class="icon-btn" id="insightsDatePrev" title="前一天">‹</button>
+              <input type="date" class="insights-date-input" id="insightsDateInput" title="点击选择任意日期" />
+              <button class="icon-btn" id="insightsDateNext" title="后一天">›</button>
+              <button class="icon-btn" id="insightsDateToday" title="回到今天" style="width:auto;padding:0 10px;font-size:var(--font-body)">今天</button>
+            </div>
+            <span class="mail-status" id="insightsStatus"></span>
+            <button class="icon-btn" id="insightsRefreshBtn" title="刷新洞察">⟳</button>
+            <button class="icon-btn" id="insightsGenBtn" title="生成今日洞察" style="width:auto;padding:0 12px;font-size:var(--font-body)">生成今日洞察</button>
+          </div>
+          <div class="insights-main" id="insightsMain"></div>
+        </div>
       </div>
     </div>
     <div class="mail-view" id="todoView" hidden>
@@ -150,28 +151,6 @@
         </div>
       </div>
     </div>
-    <div class="mail-view" id="insightsView" hidden>
-      <div class="mail-toolbar">
-        <span class="mail-identity" id="insightsIdentity">💡 洞察</span>
-        <div class="insights-date-nav" id="insightsDateNav">
-          <button class="icon-btn" id="insightsDatePrev" title="前一天">‹</button>
-          <input type="date" class="insights-date-input" id="insightsDateInput" title="点击选择任意日期" />
-          <button class="icon-btn" id="insightsDateNext" title="后一天">›</button>
-          <button class="icon-btn" id="insightsDateToday" title="回到今天" style="width:auto;padding:0 10px;font-size:var(--font-body)">今天</button>
-        </div>
-        <div class="mail-actions">
-          <span class="mail-status" id="insightsStatus"></span>
-          <button class="icon-btn" id="insightsRefreshBtn" title="刷新">⟳</button>
-          <button class="icon-btn" id="insightsGenBtn" title="生成今日洞察" style="width:auto;padding:0 12px;font-size:var(--font-body)">生成今日洞察</button>
-        </div>
-      </div>
-      <div class="insights-layout">
-        <div class="insights-main" id="insightsMain"></div>
-        <div class="insights-aside" id="insightsAside">
-          <div class="insights-aside-hint">预留区<br/>（将来放别的东西）</div>
-        </div>
-      </div>
-    </div>
     <div class="compose-modal modal-overlay" id="composeModal" hidden>
       <div class="compose-card modal-card">
         <div class="compose-head">
@@ -182,9 +161,11 @@
           <input type="text" id="composeTo" placeholder="收件人邮箱（多个用逗号分隔）" autocomplete="off" />
           <input type="text" id="composeSubject" placeholder="主题" autocomplete="off" />
           <textarea id="composeBody" placeholder="正文（支持 HTML，如 <b>加粗</b> 或换行）"></textarea>
+          <div class="compose-preview" id="composePreview" hidden></div>
         </div>
         <div class="compose-foot">
           <span class="compose-error" id="composeError"></span>
+          <button class="icon-btn" id="composePreviewBtn" title="预览 HTML 效果" style="width:auto;padding:0 12px;font-size:var(--font-body)">👁 预览</button>
           <button class="icon-btn" id="composeSendBtn" style="width:auto;padding:0 18px;font-size:var(--font-body);font-weight:600">发送</button>
         </div>
       </div>

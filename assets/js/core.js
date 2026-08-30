@@ -732,7 +732,7 @@
       $todoView.hidden = false;
       $body.hidden = true;
       $todoBoardBtn.classList.add('active');
-      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u5F85\u529E';
+      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u65E5\u7A0B';
     } else if (viewName === 'config') {
       showingConfig = true;
       $config.hidden = false;

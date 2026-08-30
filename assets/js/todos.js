@@ -152,7 +152,7 @@
   // ---------- 左右布局渲染（左栏导航 + 右栏列表） ----------
   function renderTodoLayout() {
     collapseTodoNav();   // 窄屏下切换视图/刷新后自动收起抽屉（宽屏无影响）
-    // 当前项目被删除时，活动视图回退「全部」
+    // 当前项目被删除时，活动视图回退「日历」
     if (todoView.indexOf('project:') === 0 && boardProjects.indexOf(todoView.slice(8)) < 0) todoView = 'all';
     renderTodoNav();
     renderTodoMain();
@@ -308,7 +308,7 @@
     // 视图头
     $todoMainHead.innerHTML = '';
     const head = el('div', 'todo-main-head');
-    head.appendChild(el('span', 'todo-main-title', crossProject ? '🕐 时间轴' : '📁 ' + projectScope));
+    head.appendChild(el('span', 'todo-main-title', crossProject ? '🕐 全部' : '📁 ' + projectScope));
     head.appendChild(el('span', 'todo-main-meta', '未完成 ' + open.length + ' · 逾期 ' + overdueCount));
     $todoMainHead.appendChild(head);
 
@@ -318,7 +318,7 @@
 
     $todoBoard.innerHTML = '';
     if (open.length === 0 && done.length === 0) {
-      $todoBoard.appendChild(el('div', 'todo-empty', q ? '没有符合条件的待办' : (crossProject ? '时间轴里还没有待办' : '这个项目还没有待办')));
+      $todoBoard.appendChild(el('div', 'todo-empty', q ? '没有符合条件的待办' : (crossProject ? '还没有待办' : '这个项目还没有待办')));
       return;
     }
 
@@ -460,7 +460,7 @@
     return row;
   }
 
-  // ---------- 日历视图（左栏「全部」） ----------
+  // ---------- 日历视图（左栏「日历」） ----------
   // 项目色点色板（§10 token 取值，按 boardProjects 索引循环取模；未分配无点）
   const CAL_DOT_COLORS = ['var(--accent)', 'var(--ok)', 'var(--warn)', 'var(--danger)', 'var(--text-dim)'];
 

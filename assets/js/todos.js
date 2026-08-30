@@ -640,16 +640,16 @@
     }).catch((err) => toast('删除待办失败：' + (err && err.message ? err.message : err)));
   }
 
-  // 「下一天继续」：今天这条标记完成（删除线），明天新建一条同样内容继续。
-  // 顺序「先建明天副本、再完成今天」——建失败则今天保持原样可重试，避免"只完成没顺延"丢任务。
+  // 「下一天继续」：这条标记完成（删除线），在其截止日的下一天新建一条同样内容继续。
+  // 顺序「先建副本、再完成原条」——建失败则原条保持原样可重试，避免"只完成没顺延"丢任务。
   function continueTodoNextDay(id) {
     const t = boardItems.find((x) => x.id === id);
     if (!t) return;
-    const tomorrow = shiftDate(todayStr(), 1);
+    const nextDay = shiftDate(t.due || todayStr(), 1);   // 相对该条自身截止日 +1，无截止日则从今天算
     apiFetch('/todos/add', {
       method: 'POST',
       headers: JSON_HEADERS,
-      body: JSON.stringify({ text: t.text, project: t.project || null, priority: t.priority, note: t.note || null, due: tomorrow })
+      body: JSON.stringify({ text: t.text, project: t.project || null, priority: t.priority, note: t.note || null, due: nextDay })
     }).then((res) => res.json()).then((j) => {
       if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '新建失败');
       return apiFetch('/todos/update', {
@@ -745,8 +745,9 @@
       // 下一天继续：今天标记完成（删除线），明天新建一条同样的
       continueTodoNextDay(id);
     } else if (e.target.closest('.todo-defer')) {
-      // 改到下一天：移到明天、今天不做
-      boardUpdate(id, { start: null, due: shiftDate(todayStr(), 1) });
+      // 改到下一天：移到该条截止日的下一天（无截止日则从今天算），今天不做
+      const t = boardItems.find((x) => x.id === id);
+      boardUpdate(id, { start: null, due: shiftDate(t && t.due ? t.due : todayStr(), 1) });
     } else if (e.target.closest('.todo-edit')) {
       openTodoEdit(id);
     }

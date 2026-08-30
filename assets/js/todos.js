@@ -377,7 +377,7 @@
     // 视图头
     $todoMainHead.innerHTML = '';
     const head = el('div', 'todo-main-head');
-    head.appendChild(el('span', 'todo-main-title', '📅 今天'));
+    head.appendChild(el('span', 'todo-main-title', '⏳ 今天'));
     head.appendChild(el('span', 'todo-main-meta', '未完成 ' + (overdue.length + todayItems.length) + ' · 逾期 ' + overdue.length));
     $todoMainHead.appendChild(head);
 

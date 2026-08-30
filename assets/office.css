@@ -1423,6 +1423,13 @@
     accent-color: var(--ok);
     cursor: pointer;
   }
+  /* 日历日弹窗内：`.compose-body input` 通用规则（width:100%/padding/border/background）会撑爆 checkbox，需重置回原生尺寸 */
+  .compose-body .todo-item .todo-check {
+    width: auto;
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
   .todo-prio {
     flex: none;
     font-size: var(--font-sm);

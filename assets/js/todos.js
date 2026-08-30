@@ -352,6 +352,13 @@
       row.appendChild(dueEl);
     }
 
+    // 「明天」快捷：未完成条目点击改到明天（紧跟日期右边）
+    if (!t.done) {
+      const tmrBtn = el('button', 'todo-tomorrow', '明天');
+      tmrBtn.title = '改到明天';
+      row.appendChild(tmrBtn);
+    }
+
     // 跨项目视图（时间轴/单日）显示项目 chip
     if (showProjectChip && t.project) {
       const chip = el('span', 'todo-chip', t.project);
@@ -604,6 +611,8 @@
     } else if (e.target.classList.contains('todo-prio')) {
       const t = boardItems.find((x) => x.id === id);
       if (t) boardUpdate(id, { priority: nextTodoPriority(t.priority) });
+    } else if (e.target.closest('.todo-tomorrow')) {
+      boardUpdate(id, { due: shiftDate(todayStr(), 1) });
     } else if (e.target.closest('.todo-edit')) {
       openTodoEdit(id);
     } else if (e.target.closest('.todo-del')) {

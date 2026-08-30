@@ -343,9 +343,17 @@
     prio.title = '优先级（点击切换 高→中→低）';
     row.appendChild(prio);
 
-    const text = el('span', 'todo-text', t.text);
+    // 标题 + 备注（备注用灰色小字内联在标题下方，clamp 2 行）
+    const body = el('div', 'todo-body');
+    const text = el('div', 'todo-text', t.text);
     text.title = t.text;
-    row.appendChild(text);
+    body.appendChild(text);
+    if (t.note) {
+      const note = el('div', 'todo-note', t.note);
+      note.title = t.note;
+      body.appendChild(note);
+    }
+    row.appendChild(body);
 
     // 截止日徽标（逾期红 / 今天橙）；时间轴已按日期分组，组内条目可隐藏避免重复
     if (t.due && showDue !== false) {
@@ -361,13 +369,6 @@
       row.appendChild(chip);
     }
 
-    // 备注图标（有备注时显示，点击展开）
-    if (t.note) {
-      const noteBtn = el('button', 'icon-btn todo-note-toggle', '📝');
-      noteBtn.title = t.noteOpen ? '收起备注' : '展开备注';
-      row.appendChild(noteBtn);
-    }
-
     if (!t.done) {
       const editBtn = el('button', 'icon-btn todo-edit', '✎');
       editBtn.title = '编辑（项目/截止日/备注）';
@@ -378,16 +379,6 @@
     delBtn.title = '删除';
     row.appendChild(delBtn);
 
-    // 备注展开行（紧跟条目行）
-    if (t.note && t.noteOpen) {
-      const noteRow = el('div', 'todo-note-row', t.note);
-      noteRow.title = t.note;
-      const wrap = document.createElement('div');
-      wrap.className = 'todo-item-wrap';
-      wrap.appendChild(row);
-      wrap.appendChild(noteRow);
-      return wrap;
-    }
     return row;
   }
 
@@ -626,9 +617,6 @@
     } else if (e.target.classList.contains('todo-prio')) {
       const t = boardItems.find((x) => x.id === id);
       if (t) boardUpdate(id, { priority: nextTodoPriority(t.priority) });
-    } else if (e.target.closest('.todo-note-toggle')) {
-      const t = boardItems.find((x) => x.id === id);
-      if (t) { t.noteOpen = !t.noteOpen; renderTodoLayout(); }
     } else if (e.target.closest('.todo-edit')) {
       openTodoEdit(id);
     } else if (e.target.closest('.todo-del')) {

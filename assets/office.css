@@ -1436,14 +1436,31 @@
   .todo-prio.high { background: var(--warn-soft); color: var(--warn); }
   .todo-prio.mid  { background: var(--accent-soft); color: var(--accent); }
   .todo-prio.low  { background: var(--bg-subtle); color: var(--text-dim); }
-  .todo-text {
+  .todo-body {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .todo-text {
     min-width: 0;
     font-size: var(--font-body);
     color: var(--text);
     line-height: 1.5;
     word-break: break-word;
     cursor: default;
+  }
+  .todo-note {
+    min-width: 0;
+    font-size: var(--font-sm);
+    color: var(--text-dim);
+    line-height: 1.5;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .todo-item.done .todo-text { color: var(--text-faint); text-decoration: line-through; }
   .todo-edit-input {
@@ -1705,7 +1722,6 @@
   .todo-main-title { font-size: var(--font-lg); font-weight: 600; color: var(--text); }
   .todo-main-meta { font-size: var(--font-sm); color: var(--text-faint); }
 
-  .todo-item-wrap { display: flex; flex-direction: column; gap: 4px; }
   .todo-due {
     flex: none;
     font-size: var(--font-sm);
@@ -1718,19 +1734,6 @@
   }
   .todo-due.today { color: var(--warn); background: var(--warn-soft); }
   .todo-due.overdue { color: var(--danger); background: var(--danger-soft); font-weight: 600; }
-  .todo-note-toggle { flex: none; }
-  .todo-note-row {
-    margin: 0 8px 6px 30px;
-    padding: 8px 10px;
-    border-left: 2px solid var(--accent);
-    background: var(--bg-surface);
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    font-size: var(--font-sm);
-    color: var(--text-dim);
-    white-space: pre-wrap;
-    word-break: break-word;
-    line-height: 1.6;
-  }
   .todo-chip {
     flex: none;
     font-size: var(--font-sm);

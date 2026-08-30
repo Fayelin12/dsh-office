@@ -148,6 +148,23 @@
       return String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
     });
   }
+  // 项目分组排序：同项目聚拢（未分配沉底）→ 截止日 → 优先级 → 创建时间（「全部」时间轴组内用）
+  function boardSortByProject(items) {
+    const prioRank = (p) => (p === '高' ? 0 : (p === '中' ? 1 : 2));
+    const projectKey = (t) => (t.project ? t.project : '\uFFFF');
+    return items.slice().sort((a, b) => {
+      const pa = projectKey(a);
+      const pb = projectKey(b);
+      if (pa !== pb) return pa < pb ? -1 : 1;
+      const da = a.due || '9999-12-31';
+      const db = b.due || '9999-12-31';
+      if (da !== db) return da < db ? -1 : 1;
+      const pra = prioRank(a.priority);
+      const prb = prioRank(b.priority);
+      if (pra !== prb) return pra - prb;
+      return String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
+    });
+  }
 
   // ---------- 左右布局渲染（左栏导航 + 右栏列表） ----------
   function renderTodoLayout() {
@@ -269,7 +286,7 @@
   }
 
   // 单个时间轴分组：节点 + 日期标签 + 计数 + 条目列表（showDue=false 时隐藏条目内截止日 chip；showProject=false 时隐藏项目 chip，如单项目视图）
-  function makeTimelineGroup(state, label, items, showDue, showProject) {
+  function makeTimelineGroup(state, label, items, showDue, showProject, tintByProject) {
     const g = el('div', 'tt-group tt-' + state);
     const head = el('div', 'tt-head');
     head.appendChild(el('span', 'tt-dot'));
@@ -277,13 +294,13 @@
     head.appendChild(el('span', 'tt-count', String(items.length)));
     g.appendChild(head);
     const list = el('div', 'tt-items');
-    for (const t of items) list.appendChild(makeBoardItem(t, showProject, showDue));
+    for (const t of items) list.appendChild(makeBoardItem(t, showProject, showDue, tintByProject));
     g.appendChild(list);
     return g;
   }
 
   // 已完成折叠区（时间轴 / 今天 / 扁平列表共用）
-  function makeDoneSection(done, showProject) {
+  function makeDoneSection(done, showProject, tintByProject) {
     const doneSection = el('div', 'todo-board-done');
     const doneHead = el('button', 'todo-board-done-head', (boardDoneOpen ? '▾' : '▸') + ' 已完成 ' + done.length);
     doneHead.title = boardDoneOpen ? '收起' : '展开';
@@ -292,7 +309,7 @@
     if (boardDoneOpen) {
       const list = el('div', 'todo-board-group-list');
       const sorted = done.slice().sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
-      for (const t of sorted) list.appendChild(makeBoardItem(t, showProject, true));
+      for (const t of sorted) list.appendChild(makeBoardItem(t, showProject, true, tintByProject));
       doneSection.appendChild(list);
     }
     return doneSection;
@@ -333,13 +350,13 @@
     }
 
     const tl = el('div', 'todo-timeline');
-    if (overdue.length) tl.appendChild(makeTimelineGroup('overdue', '⏰ 逾期', boardSort(overdue), true, crossProject));
+    if (overdue.length) tl.appendChild(makeTimelineGroup('overdue', '⏰ 逾期', boardSortByProject(overdue), true, crossProject, crossProject));
     const tomorrow = shiftDate(today, 1);
-    if (buckets[today]) tl.appendChild(makeTimelineGroup('today', '今天 · ' + fmtCalDate(today, false) + ' · ' + ttWeekday(today), boardSort(buckets[today]), false, crossProject));
-    if (buckets[tomorrow]) tl.appendChild(makeTimelineGroup('tomorrow', '明天 · ' + fmtCalDate(tomorrow, false) + ' · ' + ttWeekday(tomorrow), boardSort(buckets[tomorrow]), false, crossProject));
+    if (buckets[today]) tl.appendChild(makeTimelineGroup('today', '今天 · ' + fmtCalDate(today, false) + ' · ' + ttWeekday(today), boardSortByProject(buckets[today]), false, crossProject, crossProject));
+    if (buckets[tomorrow]) tl.appendChild(makeTimelineGroup('tomorrow', '明天 · ' + fmtCalDate(tomorrow, false) + ' · ' + ttWeekday(tomorrow), boardSortByProject(buckets[tomorrow]), false, crossProject, crossProject));
     for (let i = 2; i <= 7; i++) {
       const d = shiftDate(today, i);
-      if (buckets[d]) tl.appendChild(makeTimelineGroup('future', fmtCalDate(d, false) + ' · ' + ttWeekday(d), boardSort(buckets[d]), false, crossProject));
+      if (buckets[d]) tl.appendChild(makeTimelineGroup('future', fmtCalDate(d, false) + ' · ' + ttWeekday(d), boardSortByProject(buckets[d]), false, crossProject, crossProject));
     }
 
     // 更晚（7 天之后，默认折叠）
@@ -354,17 +371,17 @@
       g.appendChild(laterHead);
       if (timelineLaterOpen) {
         const list = el('div', 'tt-items');
-        for (const t of boardSort(later)) list.appendChild(makeBoardItem(t, crossProject, true));
+        for (const t of boardSortByProject(later)) list.appendChild(makeBoardItem(t, crossProject, true, crossProject));
         g.appendChild(list);
       }
       tl.appendChild(g);
     }
 
-    if (noDue.length) tl.appendChild(makeTimelineGroup('none', '未安排 · 无截止日', boardSort(noDue), false, crossProject));
+    if (noDue.length) tl.appendChild(makeTimelineGroup('none', '未安排 · 无截止日', boardSortByProject(noDue), false, crossProject, crossProject));
     $todoBoard.appendChild(tl);
 
     // 已完成（折叠，独立 footer，不参与时间轴竖线）
-    if (done.length) $todoBoard.appendChild(makeDoneSection(done, crossProject));
+    if (done.length) $todoBoard.appendChild(makeDoneSection(done, crossProject, crossProject));
   }
 
   // 今天视图：逾期（滚入今天）+ 今天（含持续任务进行中）+ 已完成
@@ -399,9 +416,10 @@
     if (done.length) $todoBoard.appendChild(makeDoneSection(done, true));
   }
 
-  function makeBoardItem(t, showProjectChip, showDue) {
+  function makeBoardItem(t, showProjectChip, showDue, tintByProject) {
     const row = el('div', 'todo-item' + (t.done ? ' done' : ''));
     row.dataset.id = t.id;
+    if (tintByProject && t.project) row.style.background = calProjectSoftColor(t.project);
 
     const chk = document.createElement('input');
     chk.type = 'checkbox';
@@ -462,7 +480,8 @@
 
   // ---------- 日历视图（左栏「日历」） ----------
   // 项目色点色板（§10 token 取值，按 boardProjects 索引循环取模；未分配无点）
-  const CAL_DOT_COLORS = ['var(--accent)', 'var(--ok)', 'var(--warn)', 'var(--danger)', 'var(--text-dim)'];
+  const CAL_DOT_COLORS = ['var(--accent)', 'var(--ok)', 'var(--warn)', 'var(--danger)', 'var(--violet)'];
+  const CAL_SOFT_COLORS = ['var(--accent-soft)', 'var(--ok-soft)', 'var(--warn-soft)', 'var(--danger-soft)', 'var(--violet-soft)'];
 
   // 当前日历所在年/月（calMonth: 'YYYY-MM'，null 表示当月）
   function calBase() {
@@ -490,6 +509,11 @@
   function calProjectColor(name) {
     const i = boardProjects.indexOf(name);
     return CAL_DOT_COLORS[i < 0 ? 0 : i % CAL_DOT_COLORS.length];
+  }
+  // 项目浅色底（「全部」时间轴卡片背景用；与 calProjectColor 同序同项目，颜色保持一致）
+  function calProjectSoftColor(name) {
+    const i = boardProjects.indexOf(name);
+    return CAL_SOFT_COLORS[i < 0 ? 0 : i % CAL_SOFT_COLORS.length];
   }
 
   // 格内条目：项目色点 + 截断标题；已完成淡显划线，当月内已过且未完成标红

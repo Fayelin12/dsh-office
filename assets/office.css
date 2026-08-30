@@ -24,6 +24,8 @@
     --warn-soft: rgba(217, 119, 6, 0.14);
     --danger: #dc2626;
     --danger-soft: rgba(220, 38, 38, 0.12);
+    --violet: #8b5cf6;
+    --violet-soft: rgba(139, 92, 246, 0.14);
     --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
     --focus-ring: 0 0 0 3px rgba(10, 132, 255, 0.18);
     /* 状态点（继承语义色） */
@@ -73,6 +75,8 @@
       --warn-soft: rgba(255, 179, 64, 0.16);
       --danger: #ff6b5e;
       --danger-soft: rgba(255, 107, 94, 0.16);
+      --violet: #a78bfa;
+      --violet-soft: rgba(167, 139, 250, 0.18);
       --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
       --focus-ring: 0 0 0 3px rgba(77, 159, 255, 0.32);
       --dot-active: var(--ok);

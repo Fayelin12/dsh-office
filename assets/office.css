@@ -1741,6 +1741,81 @@
     white-space: nowrap;
   }
 
+  /* ============ 🕐 待办时间轴（timeline 视图） ============ */
+  .todo-timeline {
+    position: relative;
+    padding-left: 20px;
+  }
+  .todo-timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 12px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--border);
+  }
+  .tt-group {
+    position: relative;
+    padding-bottom: 14px;
+  }
+  .tt-group:last-child { padding-bottom: 0; }
+  .tt-head {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 22px;
+  }
+  .tt-toggle {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+  }
+  .tt-dot {
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 2px solid var(--text-faint);
+  }
+  .tt-label {
+    font-size: var(--font-body);
+    color: var(--text);
+  }
+  .tt-count {
+    margin-left: auto;
+    font-size: var(--font-sm);
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .tt-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  /* 节点状态：逾期红 / 今天高亮 / 明天实心灰 / 未来空心灰 / 更晚·未安排虚线灰 */
+  .tt-overdue .tt-dot { background: var(--danger); border-color: var(--danger); }
+  .tt-overdue .tt-label { color: var(--danger); font-weight: 600; }
+  .tt-today .tt-dot { background: var(--accent); border-color: var(--accent); }
+  .tt-today .tt-label { font-weight: 600; }
+  .tt-tomorrow .tt-dot { background: var(--text-dim); border-color: var(--text-dim); }
+  .tt-tomorrow .tt-label { font-weight: 600; }
+  .tt-future .tt-dot { background: var(--bg-surface); border-color: var(--text-faint); }
+  .tt-later .tt-dot,
+  .tt-none .tt-dot { background: var(--bg-surface); border-color: var(--text-faint); border-style: dashed; }
+  .tt-later .tt-label { color: var(--text-dim); }
+  .tt-none .tt-label { color: var(--text-faint); }
+
   /* ============ 📋 待办看板：日历视图（左栏「全部」，§5） ============ */
   .todo-calendar {
     display: flex;

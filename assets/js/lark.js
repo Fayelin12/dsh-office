@@ -538,12 +538,12 @@
     }
   }
 
-  // ---------- 飞书视图开关 ----------
+  // ---------- 飞书·洞察视图开关（左飞书消息 / 右每日洞察，合并单页） ----------
   function toggleFeishu() {
     toggleView('feishu',
       () => feishuViewOpen, (v) => { feishuViewOpen = v; },
-      () => { closeFeishuModal(); feishuLazyFired = false; },
-      () => { loadFeishuStatus(); loadFeishuMessages(); }
+      () => { closeFeishuModal(); feishuLazyFired = false; insightsLazyFired = false; },
+      () => { loadFeishuStatus(); loadFeishuMessages(); loadInsights(false, false); }
     );
   }
   $feishuBtn.addEventListener('click', toggleFeishu);
@@ -986,15 +986,14 @@
     }
   }
 
-  // ---------- 日程·洞察视图开关（左栏日程列表 / 右栏每日洞察，合并单页） ----------
+  // ---------- 会议视图开关（日程列表） ----------
   function toggleCalendar() {
     toggleView('calendar',
       () => calendarViewOpen, (v) => { calendarViewOpen = v; },
-      () => { if (calendarTimer) { clearInterval(calendarTimer); calendarTimer = null; } insightsLazyFired = false; },
+      () => { if (calendarTimer) { clearInterval(calendarTimer); calendarTimer = null; } },
       () => {
         loadCalendarStatus();
         loadCalendarEvents();
-        loadInsights(false, false);   // 右栏每日洞察同步加载
         if (calendarTimer) clearInterval(calendarTimer);
         calendarTimer = setInterval(() => {
           if (!calendarViewOpen) { clearInterval(calendarTimer); calendarTimer = null; return; }

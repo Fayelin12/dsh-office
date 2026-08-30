@@ -65,29 +65,8 @@
           <button class="icon-btn" id="feishuSyncBtn" title="同步消息" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
         </div>
       </div>
-      <div class="feishu-cards" id="feishuList"></div>
-      <div class="feishu-modal modal-overlay" id="feishuModal" hidden>
-        <div class="fm-card modal-card">
-          <div class="fm-head">
-            <span id="fmTitle"></span>
-            <button class="icon-btn" id="fmClose" title="关闭">✕</button>
-          </div>
-          <div class="fm-body" id="fmBody"></div>
-        </div>
-      </div>
-    </div>
-    <div class="mail-view" id="calendarView" hidden>
-      <div class="mail-toolbar">
-        <span class="mail-identity" id="calendarIdentity">📅 会议·洞察</span>
-        <div class="mail-actions">
-          <span class="mail-status" id="calendarStatus"></span>
-          <a class="guide-link" href="https://qcn7nupmeook.feishu.cn/docx/GIMZdIJjooOenjxcoJicn5sEnGc" target="_blank" rel="noopener" title="飞书消息 + 会议日程 从 0 到 1 配置指南">📖 指南</a>
-          <button class="icon-btn" id="calendarRefreshBtn" title="刷新">⟳</button>
-          <button class="icon-btn" id="calendarSyncBtn" title="同步日程" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
-        </div>
-      </div>
-      <div class="cal-insights-layout">
-        <div class="calendar-list" id="calendarList"></div>
+      <div class="feishu-insights-layout">
+        <div class="feishu-cards" id="feishuList"></div>
         <div class="insights-pane">
           <div class="insights-pane-toolbar">
             <div class="insights-date-nav" id="insightsDateNav">
@@ -103,6 +82,27 @@
           <div class="insights-main" id="insightsMain"></div>
         </div>
       </div>
+      <div class="feishu-modal modal-overlay" id="feishuModal" hidden>
+        <div class="fm-card modal-card">
+          <div class="fm-head">
+            <span id="fmTitle"></span>
+            <button class="icon-btn" id="fmClose" title="关闭">✕</button>
+          </div>
+          <div class="fm-body" id="fmBody"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mail-view" id="calendarView" hidden>
+      <div class="mail-toolbar">
+        <span class="mail-identity" id="calendarIdentity">📅 会议</span>
+        <div class="mail-actions">
+          <span class="mail-status" id="calendarStatus"></span>
+          <a class="guide-link" href="https://qcn7nupmeook.feishu.cn/docx/GIMZdIJjooOenjxcoJicn5sEnGc" target="_blank" rel="noopener" title="飞书消息 + 会议日程 从 0 到 1 配置指南">📖 指南</a>
+          <button class="icon-btn" id="calendarRefreshBtn" title="刷新">⟳</button>
+          <button class="icon-btn" id="calendarSyncBtn" title="同步日程" style="width:auto;padding:0 12px;font-size:var(--font-body)">同步</button>
+        </div>
+      </div>
+      <div class="calendar-list" id="calendarList"></div>
     </div>
     <div class="mail-view" id="todoView" hidden>
       <div class="mail-toolbar">

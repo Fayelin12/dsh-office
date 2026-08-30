@@ -2073,18 +2073,23 @@
   }
 
   /* ============ 📅 日程·洞察 合并视图（左右布局：左日程列表 / 右洞察） ============ */
-  .cal-insights-layout {
+  .feishu-insights-layout {
     flex: 1;
     min-height: 0;
     display: flex;
     gap: 12px;
     align-items: stretch;
   }
-  .cal-insights-layout > .calendar-list {
-    flex: 0 0 36%;
+  .feishu-insights-layout > .feishu-cards {
+    flex: 1;
     min-width: 0;
-    border-right: 1px solid var(--border);
-    padding-right: 12px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .feishu-insights-layout > .insights-pane {
+    flex: 0 0 42%;
+    min-width: 0;
+    border-left: 1px solid var(--border);
+    padding-left: 12px;
   }
   .insights-pane {
     flex: 1;
@@ -2471,23 +2476,27 @@
     }
   }
 
-  /* 窄屏（≤900px）：主看板/配置页列数收缩，飞书卡片降 2 列，日程·洞察改上下堆叠 */
+  /* 窄屏（≤900px）：主看板/配置页列数收缩，飞书卡片降 2 列，飞书·洞察改上下堆叠 */
   @media (max-width: 900px) {
     .office-body,
     .config-grid { grid-template-columns: repeat(3, 1fr); }
     .feishu-cards { grid-template-columns: repeat(2, 1fr); }
-    .cal-insights-layout { flex-direction: column; }
-    .cal-insights-layout > .calendar-list {
+    .feishu-insights-layout { flex-direction: column; }
+    .feishu-insights-layout > .feishu-cards {
       flex: 0 0 auto;
       max-height: 45%;
-      border-right: none;
-      border-bottom: 1px solid var(--border);
-      padding-right: 2px;
-      padding-bottom: 10px;
+    }
+    .feishu-insights-layout > .insights-pane {
+      flex: 1;
+      border-left: none;
+      border-top: 1px solid var(--border);
+      padding-left: 0;
+      padding-top: 10px;
     }
   }
   @media (max-width: 560px) {
     .office-body,
     .config-grid { grid-template-columns: repeat(1, 1fr); }
-    .feishu-cards { grid-template-columns: repeat(1, 1fr); }
+    .feishu-cards,
+    .feishu-insights-layout > .feishu-cards { grid-template-columns: repeat(1, 1fr); }
   }

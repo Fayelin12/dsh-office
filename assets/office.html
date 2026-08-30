@@ -139,6 +139,10 @@
           </div>
           <div class="todo-board-opts" id="todoBoardOpts" hidden>
             <div class="todo-opt-field">
+              <span class="todo-opt-label">📅 开始</span>
+              <input type="date" id="todoBoardStart" title="开始日（可空，配合截止日=持续任务）" />
+            </div>
+            <div class="todo-opt-field">
               <span class="todo-opt-label">📅 截止日</span>
               <input type="date" id="todoBoardDue" title="截止日（可空）" />
               <button class="icon-btn todo-date-quick" data-shift="0" title="今天截止">今天</button>
@@ -205,6 +209,7 @@
           <input type="text" id="todoEditText" placeholder="待办内容" maxlength="500" autocomplete="off" />
           <div class="todo-edit-row">
             <select id="todoEditProject" title="项目"></select>
+            <input type="date" id="todoEditStart" title="开始日（可空，配合截止日=持续任务）" />
             <input type="date" id="todoEditDue" title="截止日（可空）" />
           </div>
           <textarea id="todoEditNote" placeholder="备注（链接、上下文、验收标准…）" maxlength="2000"></textarea>

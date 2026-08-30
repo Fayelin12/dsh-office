@@ -80,6 +80,17 @@ const newId = r.json.item.id;
 r = await call(routes["/office-ui/todos/add"], "/office-ui/todos/add", "POST", { date: "2026-08-28", text: "洞察加入（date 兼容）" });
 assert(r.status === 200 && r.json.item.due === "2026-08-28", "date 参数兼容为 due");
 
+console.log("== 持续任务 start ==");
+r = await call(routes["/office-ui/todos/add"], "/office-ui/todos/add", "POST", { text: "持续任务", start: "2026-08-24", due: "2026-08-26" });
+assert(r.status === 200 && r.json.item.start === "2026-08-24" && r.json.item.due === "2026-08-26", "添加持续任务 start~due");
+const durId = r.json.item.id;
+r = await call(routes["/office-ui/todos/add"], "/office-ui/todos/add", "POST", { text: "反向区间", start: "2026-08-30", due: "2026-08-28" });
+assert(r.status === 200 && r.json.item.start === "2026-08-28" && r.json.item.due === "2026-08-30", "start>due 自动交换");
+r = await call(routes["/office-ui/todos/add"], "/office-ui/todos/add", "POST", { text: "只填开始", start: "2026-08-27" });
+assert(r.status === 200 && r.json.item.start === null && r.json.item.due === "2026-08-27", "只填 start → 归为单日 due");
+r = await call(routes["/office-ui/todos/update"], "/office-ui/todos/update", "POST", { id: durId, patch: { start: null } });
+assert(r.status === 200 && r.json.item.start === null && r.json.item.due === "2026-08-26", "清除 start 保留 due");
+
 console.log("== 更新 ==");
 r = await call(routes["/office-ui/todos/update"], "/office-ui/todos/update", "POST", { id: newId, patch: { done: true } });
 assert(r.status === 200 && r.json.item.completedAt === "2026-08-28T10:00:00", "勾选完成写 completedAt");
@@ -123,7 +134,7 @@ try {
   console.error("  [diag] 落盘读取失败:", e.message);
 }
 assert(onDisk && onDisk.version === 2 && Array.isArray(onDisk.items) && Array.isArray(onDisk.projects), "落盘为 v2 结构");
-assert(onDisk && onDisk.items.length === 4, "落盘含 4 条（实际 " + (onDisk ? onDisk.items.length : 0) + "）");
+assert(onDisk && onDisk.items.length === 7, "落盘含 7 条（实际 " + (onDisk ? onDisk.items.length : 0) + "）");
 
 console.log(failed === 0 ? "\n全部通过 ✔" : "\n失败 " + failed + " 项 ✘");
 process.exit(failed === 0 ? 0 : 1);

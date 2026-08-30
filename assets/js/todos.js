@@ -11,6 +11,25 @@
     if (due === today) return 'today';
     return 'future';
   }
+  // 条目是否落在某天：单日看 due，持续任务看 [start, due] 区间（YYYY-MM-DD 字符串比较）
+  function todoInRange(t, dateStr) {
+    if (!t.due) return false;
+    const start = t.start || t.due;
+    return dateStr >= start && dateStr <= t.due;
+  }
+  // start/due 归一：start 有而 due 无→单日(due=start)；start>due→交换（保证 start<=due）
+  function normalizeTodoRange(start, due) {
+    if (start && !due) { due = start; start = null; }
+    else if (start && due && start > due) { const t = start; start = due; due = t; }
+    return { start, due };
+  }
+  // 截止日显示文案：单日「📅 8月30日」；持续「📅 8月24日 ~ 8月26日」
+  function fmtTodoDue(t) {
+    const dueTxt = fmtCalDate(t.due, false);
+    return (t.start && t.start !== t.due)
+      ? '📅 ' + fmtCalDate(t.start, false) + ' ~ ' + dueTxt
+      : '📅 ' + dueTxt;
+  }
 
   // ---------- 待办看板元素 ----------
   const $todoView = document.getElementById('todoView');
@@ -23,6 +42,7 @@
   const $todoBoard = document.getElementById('todoBoard');
   const $todoBoardAdd = document.getElementById('todoBoardAdd');
   const $todoBoardInput = document.getElementById('todoBoardInput');
+  const $todoBoardStart = document.getElementById('todoBoardStart');
   const $todoBoardDue = document.getElementById('todoBoardDue');
   const $todoBoardAddBtn = document.getElementById('todoBoardAddBtn');
   const $todoBoardMoreBtn = document.getElementById('todoBoardMoreBtn');
@@ -35,6 +55,7 @@
   const $todoEditModal = document.getElementById('todoEditModal');
   const $todoEditText = document.getElementById('todoEditText');
   const $todoEditProject = document.getElementById('todoEditProject');
+  const $todoEditStart = document.getElementById('todoEditStart');
   const $todoEditDue = document.getElementById('todoEditDue');
   const $todoEditNote = document.getElementById('todoEditNote');
   const $todoEditError = document.getElementById('todoEditError');
@@ -345,10 +366,10 @@
     }
     row.appendChild(body);
 
-    // 截止日徽标（逾期红 / 今天橙）；时间轴已按日期分组，组内条目可隐藏避免重复
+    // 截止日徽标（逾期红 / 今天橙；持续任务显示 start~due 区间）；时间轴已按日期分组，组内条目可隐藏避免重复
     if (t.due && showDue !== false) {
-      const dueEl = el('span', 'todo-due ' + todoDueState(t.due, t.done), '📅 ' + t.due);
-      dueEl.title = '截止日' + (todoDueState(t.due, t.done) === 'overdue' ? '（已逾期）' : '');
+      const dueEl = el('span', 'todo-due ' + todoDueState(t.due, t.done), fmtTodoDue(t));
+      dueEl.title = (t.start && t.start !== t.due ? '持续 ' + t.start + ' ~ ' + t.due : '截止日') + (todoDueState(t.due, t.done) === 'overdue' ? '（已逾期）' : '');
       row.appendChild(dueEl);
     }
 
@@ -465,7 +486,7 @@
       const cell = el('div', 'todo-cal-cell' + (dateStr === today ? ' today' : ''));
       cell.dataset.date = dateStr;
       cell.appendChild(el('span', 'todo-cal-day', String(d)));
-      const dayItems = boardItems.filter((t) => t.due === dateStr);
+      const dayItems = boardItems.filter((t) => todoInRange(t, dateStr));
       for (const t of boardSort(dayItems).slice(0, 2)) cell.appendChild(makeCalItem(t));
       if (dayItems.length > 2) {
         const more = el('button', 'todo-cal-more', '+' + (dayItems.length - 2));
@@ -498,7 +519,8 @@
     let due = $todoBoardDue.value || null;
     if (todoView.indexOf('project:') === 0) { project = todoView.slice(8); due = due || todayStr(); }
     else if (todoView === 'timeline') due = due || todayStr();
-    const body = { text, project, due };
+    const range = normalizeTodoRange($todoBoardStart.value || null, due);
+    const body = { text, project, start: range.start, due: range.due };
     apiFetch('/todos/add', {
       method: 'POST',
       headers: JSON_HEADERS,
@@ -506,6 +528,7 @@
     }).then((res) => res.json()).then((j) => {
       if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '添加失败');
       $todoBoardInput.value = '';
+      $todoBoardStart.value = '';
       $todoBoardDue.value = '';
       loadBoard();
     }).catch((err) => toast('添加待办失败：' + (err && err.message ? err.message : err)));
@@ -612,7 +635,7 @@
       const t = boardItems.find((x) => x.id === id);
       if (t) boardUpdate(id, { priority: nextTodoPriority(t.priority) });
     } else if (e.target.closest('.todo-tomorrow')) {
-      boardUpdate(id, { due: shiftDate(todayStr(), 1) });
+      boardUpdate(id, { start: null, due: shiftDate(todayStr(), 1) });
     } else if (e.target.closest('.todo-edit')) {
       openTodoEdit(id);
     } else if (e.target.closest('.todo-del')) {
@@ -629,6 +652,7 @@
     editingTodoId = id;
     $todoEditText.value = t.text || '';
     $todoEditProject.value = t.project || '';
+    $todoEditStart.value = t.start || '';
     $todoEditDue.value = t.due || '';
     $todoEditNote.value = t.note || '';
     $todoEditError.textContent = '';
@@ -643,10 +667,12 @@
     const text = $todoEditText.value.trim();
     if (!text) { $todoEditError.textContent = '待办内容不能为空'; return; }
     if (!editingTodoId) return;
+    const range = normalizeTodoRange($todoEditStart.value || null, $todoEditDue.value || null);
     const patch = {
       text,
       project: $todoEditProject.value || null,
-      due: $todoEditDue.value || null,
+      start: range.start,
+      due: range.due,
       note: $todoEditNote.value
     };
     boardUpdate(editingTodoId, patch);
@@ -668,8 +694,8 @@
   function renderTodoDayModal() {
     if (!dayModalDate) return;
     const date = dayModalDate;
-    const open = boardItems.filter((t) => !t.done && t.due === date);
-    const done = boardItems.filter((t) => t.done && t.due === date);
+    const open = boardItems.filter((t) => !t.done && todoInRange(t, date));
+    const done = boardItems.filter((t) => t.done && todoInRange(t, date));
     $todoDayTitle.textContent = '📅 ' + fmtCalDate(date, true) + ' · ' + ttWeekday(date);
     $todoDayList.innerHTML = '';
     if (open.length === 0 && done.length === 0) {

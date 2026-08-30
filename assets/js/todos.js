@@ -165,6 +165,12 @@
       return String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
     });
   }
+  // 时间轴组内排序：未完成在前（按项目聚拢），已完成在后（按完成时间倒序）
+  function sortTimelineGroup(items) {
+    const open = boardSortByProject(items.filter((t) => !t.done));
+    const done = items.filter((t) => t.done).sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
+    return open.concat(done);
+  }
 
   // ---------- 左右布局渲染（左栏导航 + 右栏列表） ----------
   function renderTodoLayout() {
@@ -291,7 +297,7 @@
     const head = el('div', 'tt-head');
     head.appendChild(el('span', 'tt-dot'));
     head.appendChild(el('span', 'tt-label', label));
-    head.appendChild(el('span', 'tt-count', String(items.length)));
+    head.appendChild(el('span', 'tt-count', String(items.filter((t) => !t.done).length)));
     g.appendChild(head);
     const list = el('div', 'tt-items');
     for (const t of items) list.appendChild(makeBoardItem(t, showProject, showDue, tintByProject));
@@ -349,14 +355,22 @@
       else (buckets[t.due] = buckets[t.due] || []).push(t);
     }
 
+    // 已完成条目：截止日 >= 今天的内联进对应日期组；历史（<今天）或无截止日的归档到「已完成」
+    const archivedDone = [];
+    for (const t of done) {
+      if (!t.due || t.due < today) { archivedDone.push(t); continue; }
+      if (t.due > horizon) later.push(t);
+      else (buckets[t.due] = buckets[t.due] || []).push(t);
+    }
+
     const tl = el('div', 'todo-timeline');
-    if (overdue.length) tl.appendChild(makeTimelineGroup('overdue', '⏰ 逾期', boardSortByProject(overdue), true, crossProject, crossProject));
+    if (overdue.length) tl.appendChild(makeTimelineGroup('overdue', '⏰ 逾期', sortTimelineGroup(overdue), true, crossProject, crossProject));
     const tomorrow = shiftDate(today, 1);
-    if (buckets[today]) tl.appendChild(makeTimelineGroup('today', '今天 · ' + fmtCalDate(today, false) + ' · ' + ttWeekday(today), boardSortByProject(buckets[today]), false, crossProject, crossProject));
-    if (buckets[tomorrow]) tl.appendChild(makeTimelineGroup('tomorrow', '明天 · ' + fmtCalDate(tomorrow, false) + ' · ' + ttWeekday(tomorrow), boardSortByProject(buckets[tomorrow]), false, crossProject, crossProject));
+    if (buckets[today]) tl.appendChild(makeTimelineGroup('today', '今天 · ' + fmtCalDate(today, false) + ' · ' + ttWeekday(today), sortTimelineGroup(buckets[today]), false, crossProject, crossProject));
+    if (buckets[tomorrow]) tl.appendChild(makeTimelineGroup('tomorrow', '明天 · ' + fmtCalDate(tomorrow, false) + ' · ' + ttWeekday(tomorrow), sortTimelineGroup(buckets[tomorrow]), false, crossProject, crossProject));
     for (let i = 2; i <= 7; i++) {
       const d = shiftDate(today, i);
-      if (buckets[d]) tl.appendChild(makeTimelineGroup('future', fmtCalDate(d, false) + ' · ' + ttWeekday(d), boardSortByProject(buckets[d]), false, crossProject, crossProject));
+      if (buckets[d]) tl.appendChild(makeTimelineGroup('future', fmtCalDate(d, false) + ' · ' + ttWeekday(d), sortTimelineGroup(buckets[d]), false, crossProject, crossProject));
     }
 
     // 更晚（7 天之后，默认折叠）
@@ -367,21 +381,21 @@
       laterHead.addEventListener('click', () => { timelineLaterOpen = !timelineLaterOpen; renderTodoMain(); });
       laterHead.appendChild(el('span', 'tt-dot'));
       laterHead.appendChild(el('span', 'tt-label', (timelineLaterOpen ? '▾ ' : '▸ ') + '更晚'));
-      laterHead.appendChild(el('span', 'tt-count', String(later.length)));
+      laterHead.appendChild(el('span', 'tt-count', String(later.filter((t) => !t.done).length)));
       g.appendChild(laterHead);
       if (timelineLaterOpen) {
         const list = el('div', 'tt-items');
-        for (const t of boardSortByProject(later)) list.appendChild(makeBoardItem(t, crossProject, true, crossProject));
+        for (const t of sortTimelineGroup(later)) list.appendChild(makeBoardItem(t, crossProject, true, crossProject));
         g.appendChild(list);
       }
       tl.appendChild(g);
     }
 
-    if (noDue.length) tl.appendChild(makeTimelineGroup('none', '未安排 · 无截止日', boardSortByProject(noDue), false, crossProject, crossProject));
+    if (noDue.length) tl.appendChild(makeTimelineGroup('none', '未安排 · 无截止日', sortTimelineGroup(noDue), false, crossProject, crossProject));
     $todoBoard.appendChild(tl);
 
-    // 已完成（折叠，独立 footer，不参与时间轴竖线）
-    if (done.length) $todoBoard.appendChild(makeDoneSection(done, crossProject, crossProject));
+    // 已完成（历史/无截止日，折叠，独立 footer，不参与时间轴竖线）
+    if (archivedDone.length) $todoBoard.appendChild(makeDoneSection(archivedDone, crossProject, crossProject));
   }
 
   // 今天视图：逾期（滚入今天）+ 今天（含持续任务进行中）+ 已完成

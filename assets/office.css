@@ -1499,6 +1499,25 @@
     font-size: var(--font-body);
   }
 
+  /* 日历日待办弹窗 */
+  .todo-day-body { padding: 10px 12px; }
+  .todo-day-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .todo-day-sep {
+    flex: none;
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    font-size: var(--font-sm);
+    color: var(--text-faint);
+  }
+
   /* ============ 📋 待办看板（独立视图） ============ */
   .todo-board-tools {
     flex: 1;

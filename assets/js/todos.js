@@ -45,13 +45,18 @@
   const $todoProjAddBtn = document.getElementById('todoProjAddBtn');
   const $todoProjList = document.getElementById('todoProjList');
   const $todoProjectsClose = document.getElementById('todoProjectsClose');
+  const $todoDayModal = document.getElementById('todoDayModal');
+  const $todoDayTitle = document.getElementById('todoDayTitle');
+  const $todoDayList = document.getElementById('todoDayList');
+  const $todoDayClose = document.getElementById('todoDayClose');
 
   let todoViewOpen = false;          // 看板视图是否打开
-  let todoView = 'all';              // 左栏选中视图：all | timeline | unassigned | project:<项目名> | day:<YYYY-MM-DD>
+  let todoView = 'all';              // 左栏选中视图：all | timeline | unassigned | project:<项目名>
   let boardItems = [];               // 看板全量条目
   let boardProjects = [];            // 项目列表
   let boardDoneOpen = false;         // 已完成区是否展开
   let timelineLaterOpen = false;     // 时间轴「更晚」区是否展开
+  let dayModalDate = null;           // 日历格子弹窗正在查看的日期（YYYY-MM-DD）
   let editingTodoId = null;          // 编辑弹层目标 id
   let editingProjName = null;        // 项目管理弹层正在重命名的项目
   let calMonth = null;               // 日历视图所在月（'YYYY-MM'，null 表示当月）
@@ -78,6 +83,7 @@
     } catch (_) { boardItems = []; boardProjects = []; }
     refreshProjectOptions();
     renderTodoLayout();
+    if (dayModalDate) renderTodoDayModal();   // 日历格子弹窗打开时，数据变更后同步刷新
   }
 
   // 同步编辑弹层项目下拉
@@ -127,8 +133,7 @@
       timeline: open.length,
       unassigned: open.filter((t) => !t.project).length
     };
-    // day 视图无对应左栏项，语义上高亮「全部」（从日历上下文进入）
-    const activeView = todoView.indexOf('day:') === 0 ? 'all' : todoView;
+    const activeView = todoView;
     for (const btn of $todoNav.querySelectorAll('.todo-nav-scroll > .todo-nav-item[data-view]')) {
       const n = counts[btn.dataset.view] || 0;
       btn.classList.toggle('active', activeView === btn.dataset.view);
@@ -170,43 +175,28 @@
       return;
     }
 
-    // 其余列表视图：未分配 / 单日
-    let title = '未分配';
-    let dayDate = null;
-    if (todoView.indexOf('day:') === 0) { dayDate = todoView.slice(4); title = fmtCalDate(dayDate, true); }
-
-    const inScope = (t) => {
-      if (todoView === 'unassigned') return !t.project;
-      if (todoView.indexOf('day:') === 0) return t.due === dayDate;
-      return false;
-    };
-    const open = boardItems.filter((t) => !t.done && inScope(t) && searchMatch(t));
-    const done = boardItems.filter((t) => t.done && inScope(t) && searchMatch(t));
+    // 未分配视图（唯一剩余的扁平列表）
+    const open = boardItems.filter((t) => !t.done && !t.project && searchMatch(t));
+    const done = boardItems.filter((t) => t.done && !t.project && searchMatch(t));
 
     // 视图头：标题 + 未完成/逾期计数
     const overdueInScope = open.filter((t) => t.due && t.due < today).length;
     $todoMainHead.innerHTML = '';
     const head = el('div', 'todo-main-head');
-    head.appendChild(el('span', 'todo-main-title', title));
+    head.appendChild(el('span', 'todo-main-title', '未分配'));
     head.appendChild(el('span', 'todo-main-meta', '未完成 ' + open.length + ' · 逾期 ' + overdueInScope));
     $todoMainHead.appendChild(head);
 
-    // 添加区：所有列表视图均显示；placeholder 提示当前视图归属
+    // 添加区
     $todoBoardAdd.hidden = false;
-    if (todoView.indexOf('day:') === 0) $todoBoardInput.placeholder = '记一条待办…（' + fmtCalDate(dayDate, false) + '截止）';
-    else $todoBoardInput.placeholder = '记一条待办…';
+    $todoBoardInput.placeholder = '记一条待办…';
 
-    // 条目列表（单日视图跨项目加项目 chip）+ 已完成折叠区
-    const crossProject = todoView.indexOf('day:') === 0;
+    // 条目列表 + 已完成折叠区
     $todoBoard.innerHTML = '';
     if (open.length === 0 && done.length === 0) {
-      const msg = q ? '没有符合条件的待办'
-        : todoView === 'unassigned' ? '还没有未分配的待办'
-        : todoView.indexOf('day:') === 0 ? '这一天还没有待办'
-        : '还没有待办';
-      $todoBoard.appendChild(el('div', 'todo-empty', msg));
+      $todoBoard.appendChild(el('div', 'todo-empty', q ? '没有符合条件的待办' : '还没有未分配的待办'));
     } else {
-      for (const t of boardSort(open)) $todoBoard.appendChild(makeBoardItem(t, crossProject));
+      for (const t of boardSort(open)) $todoBoard.appendChild(makeBoardItem(t, false));
       if (done.length) {
         const doneSection = el('div', 'todo-board-done');
         const doneHead = el('button', 'todo-board-done-head', (boardDoneOpen ? '▾' : '▸') + ' 已完成 ' + done.length);
@@ -216,7 +206,7 @@
         if (boardDoneOpen) {
           const list = el('div', 'todo-board-group-list');
           const sorted = done.slice().sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
-          for (const t of sorted) list.appendChild(makeBoardItem(t, crossProject));
+          for (const t of sorted) list.appendChild(makeBoardItem(t, false));
           doneSection.appendChild(list);
         }
         $todoBoard.appendChild(doneSection);
@@ -484,19 +474,16 @@
     return cal;
   }
 
-  // 日历交互：点格内条目打开编辑弹窗；点日期数字/空白格/「+N」进入该日列表视图
+  // 日历交互：点格内条目打开编辑弹窗；点日期数字/空白格/「+N」打开该日待办弹窗
   $todoBoard.addEventListener('click', (e) => {
     const calItem = e.target.closest('.todo-cal-item');
     if (calItem) { openTodoEdit(calItem.dataset.id); return; }
     const cell = e.target.closest('.todo-cal-cell');
-    if (cell && cell.dataset.date) {
-      todoView = 'day:' + cell.dataset.date;
-      renderTodoLayout();
-    }
+    if (cell && cell.dataset.date) openTodoDay(cell.dataset.date);
   });
 
   // ---------- 看板操作 ----------
-  // 添加归属由当前视图决定：project:X → 归入该项目且默认今天截止；timeline → 默认今天截止；day:X → 归该日；unassigned → 不设项目、due 取附属行
+  // 添加归属由当前视图决定：project:X → 归入该项目且默认今天截止；timeline → 默认今天截止；unassigned → 不设项目、due 取附属行
   function boardAdd() {
     const text = $todoBoardInput.value.trim();
     if (!text) { $todoBoardInput.focus(); return; }
@@ -504,7 +491,6 @@
     let due = $todoBoardDue.value || null;
     if (todoView.indexOf('project:') === 0) { project = todoView.slice(8); due = due || todayStr(); }
     else if (todoView === 'timeline') due = due || todayStr();
-    else if (todoView.indexOf('day:') === 0) due = due || todoView.slice(4);
     const body = { text, project, due };
     apiFetch('/todos/add', {
       method: 'POST',
@@ -608,7 +594,8 @@
     if (e.target.closest('#todoDueClearBtn')) $todoBoardDue.value = '';
   });
 
-  $todoBoard.addEventListener('click', (e) => {
+  // 待办条目行交互（看板列表 + 日历日弹窗共用）
+  function onTodoItemClick(e) {
     const row = e.target.closest('.todo-item');
     if (!row) return;
     const id = row.dataset.id;
@@ -622,7 +609,9 @@
     } else if (e.target.closest('.todo-del')) {
       showConfirm('删除这条待办？', '删除后不可恢复。', () => boardRemove(id));
     }
-  });
+  }
+  $todoBoard.addEventListener('click', onTodoItemClick);
+  $todoDayList.addEventListener('click', onTodoItemClick);
 
   // ---------- 编辑弹层 ----------
   function openTodoEdit(id) {
@@ -660,6 +649,37 @@
   $todoEditText.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); todoEditSave(); }
   });
+
+  // ---------- 日历日待办弹窗 ----------
+  function openTodoDay(date) {
+    dayModalDate = date;
+    renderTodoDayModal();
+    $todoDayModal.hidden = false;
+  }
+  function renderTodoDayModal() {
+    if (!dayModalDate) return;
+    const date = dayModalDate;
+    const open = boardItems.filter((t) => !t.done && t.due === date);
+    const done = boardItems.filter((t) => t.done && t.due === date);
+    $todoDayTitle.textContent = '📅 ' + fmtCalDate(date, true) + ' · ' + ttWeekday(date);
+    $todoDayList.innerHTML = '';
+    if (open.length === 0 && done.length === 0) {
+      $todoDayList.appendChild(el('div', 'todo-empty', '这一天还没有待办'));
+      return;
+    }
+    for (const t of boardSort(open)) $todoDayList.appendChild(makeBoardItem(t, true, false));
+    if (done.length) {
+      $todoDayList.appendChild(el('div', 'todo-day-sep', '已完成 ' + done.length));
+      const sorted = done.slice().sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
+      for (const t of sorted) $todoDayList.appendChild(makeBoardItem(t, true, false));
+    }
+  }
+  function closeTodoDay() {
+    $todoDayModal.hidden = true;
+    dayModalDate = null;
+  }
+  $todoDayClose.addEventListener('click', closeTodoDay);
+  $todoDayModal.addEventListener('click', (e) => { if (e.target === $todoDayModal) closeTodoDay(); });
 
   // ---------- 项目管理弹层 ----------
   function renderProjectList() {

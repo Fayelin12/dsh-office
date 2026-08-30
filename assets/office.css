@@ -1466,19 +1466,16 @@
     padding: 3px 6px;
   }
   .todo-item .icon-btn { flex: none; }
-  /* 动作按钮（编辑/删除）hover/focus 时显现降噪（Notion/Evernote 式）；备注图标作指示器常显。
+  /* 编辑按钮 hover/focus 时显现降噪（Notion/Evernote 式）。
      仅在支持 hover 的精细指针设备隐藏，触屏常显避免按钮永不可达 */
   @media (hover: hover) and (pointer: fine) {
-    .todo-item .icon-btn.todo-edit,
-    .todo-item .icon-btn.todo-del {
+    .todo-item .icon-btn.todo-edit {
       opacity: 0;
       pointer-events: none;
       transition: opacity .12s ease;
     }
     .todo-item:hover .icon-btn.todo-edit,
-    .todo-item:hover .icon-btn.todo-del,
-    .todo-item:focus-within .icon-btn.todo-edit,
-    .todo-item:focus-within .icon-btn.todo-del {
+    .todo-item:focus-within .icon-btn.todo-edit {
       opacity: 1;
       pointer-events: auto;
     }

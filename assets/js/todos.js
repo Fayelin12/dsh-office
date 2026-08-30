@@ -60,6 +60,7 @@
   const $todoEditError = document.getElementById('todoEditError');
   const $todoEditClose = document.getElementById('todoEditClose');
   const $todoEditSaveBtn = document.getElementById('todoEditSaveBtn');
+  const $todoEditDeleteBtn = document.getElementById('todoEditDeleteBtn');
   const $todoProjectsModal = document.getElementById('todoProjectsModal');
   const $todoProjNew = document.getElementById('todoProjNew');
   const $todoProjAddBtn = document.getElementById('todoProjAddBtn');
@@ -419,15 +420,10 @@
       row.appendChild(chip);
     }
 
-    if (!t.done) {
-      const editBtn = el('button', 'icon-btn todo-edit', '✎');
-      editBtn.title = '编辑（项目/截止日/备注）';
-      row.appendChild(editBtn);
-    }
-
-    const delBtn = el('button', 'icon-btn todo-del', '🗑');
-    delBtn.title = '删除';
-    row.appendChild(delBtn);
+    // 编辑按钮所有条目均显示（删除已迁入编辑弹窗，已完成条目也需入口）
+    const editBtn = el('button', 'icon-btn todo-edit', '✎');
+    editBtn.title = '编辑（项目/截止日/备注）';
+    row.appendChild(editBtn);
 
     return row;
   }
@@ -674,8 +670,6 @@
       boardUpdate(id, { start: null, due: shiftDate(todayStr(), 1) });
     } else if (e.target.closest('.todo-edit')) {
       openTodoEdit(id);
-    } else if (e.target.closest('.todo-del')) {
-      showConfirm('删除这条待办？', '删除后不可恢复。', () => boardRemove(id));
     }
   }
   $todoBoard.addEventListener('click', onTodoItemClick);
@@ -714,7 +708,16 @@
     boardUpdate(editingTodoId, patch);
     closeTodoEdit();
   }
+  function todoEditDelete() {
+    if (!editingTodoId) return;
+    const id = editingTodoId;
+    showConfirm('删除这条待办？', '删除后不可恢复。', () => {
+      closeTodoEdit();
+      boardRemove(id);
+    });
+  }
   $todoEditSaveBtn.addEventListener('click', todoEditSave);
+  $todoEditDeleteBtn.addEventListener('click', todoEditDelete);
   $todoEditClose.addEventListener('click', closeTodoEdit);
   $todoEditModal.addEventListener('click', (e) => { if (e.target === $todoEditModal) closeTodoEdit(); });
   $todoEditText.addEventListener('keydown', (e) => {

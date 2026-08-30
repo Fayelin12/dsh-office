@@ -381,13 +381,13 @@
     prio.title = '优先级（点击切换 高→中→低）';
     row.appendChild(prio);
 
-    // 标题 + 备注（备注用灰色小字内联在标题下方，clamp 2 行）
+    // 标题 + 备注（备注与标题同行，用「 | 」分隔，灰色区分）
     const body = el('div', 'todo-body');
-    const text = el('div', 'todo-text', t.text);
+    const text = el('span', 'todo-text', t.text);
     text.title = t.text;
     body.appendChild(text);
     if (t.note) {
-      const note = el('div', 'todo-note', t.note);
+      const note = el('span', 'todo-note', ' | ' + t.note);
       note.title = t.note;
       body.appendChild(note);
     }

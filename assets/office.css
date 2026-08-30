@@ -1718,10 +1718,6 @@
     transition: background .15s ease, transform .1s ease;
   }
   .todo-nav-manage:hover { background: var(--bg-surface-hover); color: var(--text); }
-  .todo-nav-stats {
-    font-size: var(--font-sm);
-    color: var(--text-faint);
-  }
   .todo-main {
     flex: 1;
     min-width: 0;

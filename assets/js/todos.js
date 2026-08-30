@@ -36,7 +36,6 @@
   const $todoBoardBtn = document.getElementById('todoBoardBtn');
   const $todoNav = document.getElementById('todoNav');
   const $todoNavProjects = document.getElementById('todoNavProjects');
-  const $todoNavStats = document.getElementById('todoNavStats');
   const $todoMain = document.getElementById('todoMain');
   const $todoMainHead = document.getElementById('todoMainHead');
   const $todoBoard = document.getElementById('todoBoard');
@@ -171,7 +170,6 @@
       btn.appendChild(el('span', 'todo-nav-count', String(n)));
       $todoNavProjects.appendChild(btn);
     }
-    $todoNavStats.textContent = '合计 ' + counts.all + ' · 逾期 ' + open.filter((t) => t.due && t.due < today).length;
   }
 
   // 右栏：视图头 + 添加区（按视图显隐）+ 条目列表

@@ -734,7 +734,7 @@
       $calendarView.hidden = false;
       $body.hidden = true;
       $calendarBtn.classList.add('active');
-      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u65E5\u7A0B\u00B7\u6D1E\u5BDF';
+      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u4F1A\u8BAE\u00B7\u6D1E\u5BDF';
     } else if (viewName === 'todos') {
       todoViewOpen = true;
       $todoView.hidden = false;

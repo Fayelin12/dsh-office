@@ -1753,7 +1753,7 @@
   }
   .todo-due.today { color: var(--warn); background: var(--warn-soft); }
   .todo-due.overdue { color: var(--danger); background: var(--danger-soft); font-weight: 600; }
-  .todo-tomorrow {
+  .todo-quick {
     flex: none;
     width: auto;
     height: auto;
@@ -1769,7 +1769,7 @@
     cursor: pointer;
     transition: background .15s ease, color .15s ease, border-color .15s ease;
   }
-  .todo-tomorrow:hover { color: var(--accent); border-color: var(--accent); }
+  .todo-quick:hover { color: var(--accent); border-color: var(--accent); }
   .todo-chip {
     flex: none;
     font-size: var(--font-sm);

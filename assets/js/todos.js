@@ -402,11 +402,16 @@
       row.appendChild(dueEl);
     }
 
-    // 「明天」快捷：未完成条目点击改到明天（紧跟日期右边）
+    // 快捷改期（未完成条目，紧跟日期右边）：
+    // 「下一天继续」→ 今天继续、明天截止（start=今天, due=明天，今天+明天都有）
+    // 「改到下一天」→ 移到明天、今天不做（清 start，due=明天）
     if (!t.done) {
-      const tmrBtn = el('button', 'todo-tomorrow', '明天');
-      tmrBtn.title = '改到明天';
-      row.appendChild(tmrBtn);
+      const contBtn = el('button', 'todo-quick todo-continue', '下一天继续');
+      contBtn.title = '今天继续，明天截止（今天+明天都有）';
+      row.appendChild(contBtn);
+      const deferBtn = el('button', 'todo-quick todo-defer', '改到下一天');
+      deferBtn.title = '移到明天，今天不做';
+      row.appendChild(deferBtn);
     }
 
     // 跨项目视图（时间轴/单日）显示项目 chip
@@ -663,7 +668,11 @@
     } else if (e.target.classList.contains('todo-prio')) {
       const t = boardItems.find((x) => x.id === id);
       if (t) boardUpdate(id, { priority: nextTodoPriority(t.priority) });
-    } else if (e.target.closest('.todo-tomorrow')) {
+    } else if (e.target.closest('.todo-continue')) {
+      // 下一天继续：今天继续、明天截止（今天+明天都有）
+      boardUpdate(id, { start: todayStr(), due: shiftDate(todayStr(), 1) });
+    } else if (e.target.closest('.todo-defer')) {
+      // 改到下一天：移到明天、今天不做
       boardUpdate(id, { start: null, due: shiftDate(todayStr(), 1) });
     } else if (e.target.closest('.todo-edit')) {
       openTodoEdit(id);

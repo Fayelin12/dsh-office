@@ -164,23 +164,21 @@
       return;
     }
 
-    // 时间轴视图：逾期 → 今天 → 明天 → 未来7天 → 更晚 → 未安排
-    if (todoView === 'timeline') {
-      renderTimeline(today, q, searchMatch);
+    // 时间轴视图（主 + 项目）：逾期 → 今天 → 明天 → 未来7天 → 更晚 → 未安排
+    if (todoView === 'timeline' || todoView.indexOf('project:') === 0) {
+      renderTimeline(today, q, searchMatch, todoView === 'timeline' ? null : todoView.slice(8));
       return;
     }
 
-    // 其余列表视图：未分配 / 项目 / 单日
+    // 其余列表视图：未分配 / 单日
     let title = '未分配';
-    let projectScope = null;
     let dayDate = null;
-    if (todoView.indexOf('project:') === 0) { projectScope = todoView.slice(8); title = '📁 ' + projectScope; }
-    else if (todoView.indexOf('day:') === 0) { dayDate = todoView.slice(4); title = fmtCalDate(dayDate, true); }
+    if (todoView.indexOf('day:') === 0) { dayDate = todoView.slice(4); title = fmtCalDate(dayDate, true); }
 
     const inScope = (t) => {
       if (todoView === 'unassigned') return !t.project;
       if (todoView.indexOf('day:') === 0) return t.due === dayDate;
-      return t.project === projectScope;
+      return false;
     };
     const open = boardItems.filter((t) => !t.done && inScope(t) && searchMatch(t));
     const done = boardItems.filter((t) => t.done && inScope(t) && searchMatch(t));
@@ -195,8 +193,7 @@
 
     // 添加区：所有列表视图均显示；placeholder 提示当前视图归属
     $todoBoardAdd.hidden = false;
-    if (projectScope !== null) $todoBoardInput.placeholder = '记一条待办…（将归入 ' + projectScope + '）';
-    else if (todoView.indexOf('day:') === 0) $todoBoardInput.placeholder = '记一条待办…（' + fmtCalDate(dayDate, false) + '截止）';
+    if (todoView.indexOf('day:') === 0) $todoBoardInput.placeholder = '记一条待办…（' + fmtCalDate(dayDate, false) + '截止）';
     else $todoBoardInput.placeholder = '记一条待办…';
 
     // 条目列表（单日视图跨项目加项目 chip）+ 已完成折叠区
@@ -205,7 +202,6 @@
     if (open.length === 0 && done.length === 0) {
       const msg = q ? '没有符合条件的待办'
         : todoView === 'unassigned' ? '还没有未分配的待办'
-        : todoView.indexOf('project:') === 0 ? '这个项目还没有待办'
         : todoView.indexOf('day:') === 0 ? '这一天还没有待办'
         : '还没有待办';
       $todoBoard.appendChild(el('div', 'todo-empty', msg));
@@ -236,8 +232,8 @@
     return isNaN(d.getTime()) ? '' : '周' + WD[d.getDay()];
   }
 
-  // 单个时间轴分组：节点 + 日期标签 + 计数 + 条目列表（showDue=false 时隐藏条目内截止日 chip，日期已在组头）
-  function makeTimelineGroup(state, label, items, showDue) {
+  // 单个时间轴分组：节点 + 日期标签 + 计数 + 条目列表（showDue=false 时隐藏条目内截止日 chip；showProject=false 时隐藏项目 chip，如单项目视图）
+  function makeTimelineGroup(state, label, items, showDue, showProject) {
     const g = el('div', 'tt-group tt-' + state);
     const head = el('div', 'tt-head');
     head.appendChild(el('span', 'tt-dot'));
@@ -245,30 +241,32 @@
     head.appendChild(el('span', 'tt-count', String(items.length)));
     g.appendChild(head);
     const list = el('div', 'tt-items');
-    for (const t of items) list.appendChild(makeBoardItem(t, true, showDue));
+    for (const t of items) list.appendChild(makeBoardItem(t, showProject, showDue));
     g.appendChild(list);
     return g;
   }
 
-  function renderTimeline(today, q, searchMatch) {
-    const open = boardItems.filter((t) => !t.done && searchMatch(t));
-    const done = boardItems.filter((t) => t.done && searchMatch(t));
+  function renderTimeline(today, q, searchMatch, projectScope) {
+    const crossProject = projectScope == null;
+    const inScope = (t) => crossProject || t.project === projectScope;
+    const open = boardItems.filter((t) => !t.done && inScope(t) && searchMatch(t));
+    const done = boardItems.filter((t) => t.done && inScope(t) && searchMatch(t));
     const overdueCount = open.filter((t) => t.due && t.due < today).length;
 
     // 视图头
     $todoMainHead.innerHTML = '';
     const head = el('div', 'todo-main-head');
-    head.appendChild(el('span', 'todo-main-title', '🕐 时间轴'));
+    head.appendChild(el('span', 'todo-main-title', crossProject ? '🕐 时间轴' : '📁 ' + projectScope));
     head.appendChild(el('span', 'todo-main-meta', '未完成 ' + open.length + ' · 逾期 ' + overdueCount));
     $todoMainHead.appendChild(head);
 
     // 添加区（默认今天截止）
     $todoBoardAdd.hidden = false;
-    $todoBoardInput.placeholder = '记一条待办…（今天截止）';
+    $todoBoardInput.placeholder = crossProject ? '记一条待办…（今天截止）' : '记一条待办…（将归入 ' + projectScope + ' · 今天截止）';
 
     $todoBoard.innerHTML = '';
     if (open.length === 0 && done.length === 0) {
-      $todoBoard.appendChild(el('div', 'todo-empty', q ? '没有符合条件的待办' : '时间轴里还没有待办'));
+      $todoBoard.appendChild(el('div', 'todo-empty', q ? '没有符合条件的待办' : (crossProject ? '时间轴里还没有待办' : '这个项目还没有待办')));
       return;
     }
 
@@ -283,13 +281,13 @@
     }
 
     const tl = el('div', 'todo-timeline');
-    if (overdue.length) tl.appendChild(makeTimelineGroup('overdue', '⏰ 逾期', boardSort(overdue), true));
+    if (overdue.length) tl.appendChild(makeTimelineGroup('overdue', '⏰ 逾期', boardSort(overdue), true, crossProject));
     const tomorrow = shiftDate(today, 1);
-    if (buckets[today]) tl.appendChild(makeTimelineGroup('today', '今天 · ' + fmtCalDate(today, false) + ' · ' + ttWeekday(today), boardSort(buckets[today]), false));
-    if (buckets[tomorrow]) tl.appendChild(makeTimelineGroup('tomorrow', '明天 · ' + fmtCalDate(tomorrow, false) + ' · ' + ttWeekday(tomorrow), boardSort(buckets[tomorrow]), false));
+    if (buckets[today]) tl.appendChild(makeTimelineGroup('today', '今天 · ' + fmtCalDate(today, false) + ' · ' + ttWeekday(today), boardSort(buckets[today]), false, crossProject));
+    if (buckets[tomorrow]) tl.appendChild(makeTimelineGroup('tomorrow', '明天 · ' + fmtCalDate(tomorrow, false) + ' · ' + ttWeekday(tomorrow), boardSort(buckets[tomorrow]), false, crossProject));
     for (let i = 2; i <= 7; i++) {
       const d = shiftDate(today, i);
-      if (buckets[d]) tl.appendChild(makeTimelineGroup('future', fmtCalDate(d, false) + ' · ' + ttWeekday(d), boardSort(buckets[d]), false));
+      if (buckets[d]) tl.appendChild(makeTimelineGroup('future', fmtCalDate(d, false) + ' · ' + ttWeekday(d), boardSort(buckets[d]), false, crossProject));
     }
 
     // 更晚（7 天之后，默认折叠）
@@ -304,13 +302,13 @@
       g.appendChild(laterHead);
       if (timelineLaterOpen) {
         const list = el('div', 'tt-items');
-        for (const t of boardSort(later)) list.appendChild(makeBoardItem(t, true, true));
+        for (const t of boardSort(later)) list.appendChild(makeBoardItem(t, crossProject, true));
         g.appendChild(list);
       }
       tl.appendChild(g);
     }
 
-    if (noDue.length) tl.appendChild(makeTimelineGroup('none', '未安排 · 无截止日', boardSort(noDue), false));
+    if (noDue.length) tl.appendChild(makeTimelineGroup('none', '未安排 · 无截止日', boardSort(noDue), false, crossProject));
     $todoBoard.appendChild(tl);
 
     // 已完成（折叠，独立 footer，不参与时间轴竖线）
@@ -323,7 +321,7 @@
       if (boardDoneOpen) {
         const list = el('div', 'todo-board-group-list');
         const sorted = done.slice().sort((a, b) => String(b.completedAt || '').localeCompare(String(a.completedAt || '')));
-        for (const t of sorted) list.appendChild(makeBoardItem(t, true, true));
+        for (const t of sorted) list.appendChild(makeBoardItem(t, crossProject, true));
         doneSection.appendChild(list);
       }
       $todoBoard.appendChild(doneSection);
@@ -507,13 +505,13 @@
   });
 
   // ---------- 看板操作 ----------
-  // 添加归属由当前视图决定：project:X → 归入该项目；timeline → 默认今天截止；day:X → 归该日；unassigned → 不设项目、due 取附属行
+  // 添加归属由当前视图决定：project:X → 归入该项目且默认今天截止；timeline → 默认今天截止；day:X → 归该日；unassigned → 不设项目、due 取附属行
   function boardAdd() {
     const text = $todoBoardInput.value.trim();
     if (!text) { $todoBoardInput.focus(); return; }
     let project = null;
     let due = $todoBoardDue.value || null;
-    if (todoView.indexOf('project:') === 0) project = todoView.slice(8);
+    if (todoView.indexOf('project:') === 0) { project = todoView.slice(8); due = due || todayStr(); }
     else if (todoView === 'timeline') due = due || todayStr();
     else if (todoView.indexOf('day:') === 0) due = due || todoView.slice(4);
     const body = { text, project, due };

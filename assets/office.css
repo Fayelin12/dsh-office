@@ -38,10 +38,10 @@
     --radius-lg: 16px;
     --radius-pill: 999px;
     /* 字号 */
-    --font-sm: 11px;
-    --font-body: 12px;
-    --font-sub: 13px;
-    --font-lg: 14px;
+    --font-sm: 13px;
+    --font-body: 14px;
+    --font-sub: 15px;
+    --font-lg: 16px;
     /* 阴影（hover 收敛至卡片阴影） */
     --shadow-hover: var(--shadow-card);
     /* 渐变色（仅 --grad-blue 用于 .f-new badge） */
@@ -336,8 +336,8 @@
     flex: none;
     padding: 0 6px;
     border-radius: var(--radius-pill);
-    font-size: 10px;
-    line-height: 16px;
+    font-size: 12px;
+    line-height: 18px;
   }
   .log-level.info  { color: var(--accent);  background: var(--accent-soft); }
   .log-level.warn  { color: var(--warn); background: var(--warn-soft); }

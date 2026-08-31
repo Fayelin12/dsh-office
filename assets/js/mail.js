@@ -256,7 +256,7 @@
       replyBtn.textContent = '↩ 回复';
       replyBtn.style.width = 'auto';
       replyBtn.style.padding = '0 14px';
-      replyBtn.style.fontSize = '12px';
+      replyBtn.style.fontSize = 'var(--font-body)';
       replyBtn.addEventListener('click', () => openCompose('reply', id, d.from && d.from.email));
       actions.appendChild(replyBtn);
 

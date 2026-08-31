@@ -656,6 +656,7 @@
 
   // 「下一天继续」：这条标记完成（删除线），在其截止日的下一天新建一条同样内容继续。
   // 顺序「先建副本、再完成原条」——建失败则原条保持原样可重试，避免"只完成没顺延"丢任务。
+  // originId 让后端把新副本的 traceId 对齐到原条（同一链条共享，供排重）。
   function continueTodoNextDay(id) {
     const t = boardItems.find((x) => x.id === id);
     if (!t) return;
@@ -663,7 +664,7 @@
     apiFetch('/todos/add', {
       method: 'POST',
       headers: JSON_HEADERS,
-      body: JSON.stringify({ text: t.text, project: t.project || null, priority: t.priority, note: t.note || null, due: nextDay })
+      body: JSON.stringify({ text: t.text, project: t.project || null, priority: t.priority, note: t.note || null, due: nextDay, originId: id })
     }).then((res) => res.json()).then((j) => {
       if (!j || !j.ok) throw new Error((j && j.error && j.error.message) || '新建失败');
       return apiFetch('/todos/update', {

@@ -62,6 +62,7 @@ assert(r.json.data.items.length === 3, "迁移 3 条：实际 " + r.json.data.it
 const a1 = r.json.data.items.find((t) => t.id === "a1");
 assert(a1 && a1.due === "2026-08-26" && a1.completedAt !== null && a1.note === "" && a1.project === null,
   "旧条目：due=创建日、完成带 completedAt、无备注无项目");
+assert(a1 && a1.traceId === "a1", "旧条目迁移补 traceId = 自身 id");
 assert(r.json.data.projects.length === 0, "迁移无项目");
 
 console.log("== 项目管理 ==");
@@ -79,6 +80,15 @@ assert(r.status === 200 && r.json.item.project === "dsh-office" && r.json.item.d
 const newId = r.json.item.id;
 r = await call(routes["/office-ui/todos/add"], "/office-ui/todos/add", "POST", { date: "2026-08-28", text: "洞察加入（date 兼容）" });
 assert(r.status === 200 && r.json.item.due === "2026-08-28", "date 参数兼容为 due");
+
+console.log("== 溯源 traceId（下一天继续共享，排重用） ==");
+r = await call(routes["/office-ui/todos/add"], "/office-ui/todos/add", "POST", { text: "链条起点", due: "2026-09-03" });
+assert(r.status === 200 && r.json.item.traceId === r.json.item.id, "首次新建 traceId = 自身 id");
+const chainRoot = r.json.item.id;
+r = await call(routes["/office-ui/todos/add"], "/office-ui/todos/add", "POST", { text: "链条延续", due: "2026-09-04", originId: chainRoot });
+assert(r.status === 200 && r.json.item.traceId === chainRoot, "continue 副本继承原条 traceId");
+r = await call(routes["/office-ui/todos/add"], "/office-ui/todos/add", "POST", { text: "链条再延续", due: "2026-09-05", originId: r.json.item.id });
+assert(r.status === 200 && r.json.item.traceId === chainRoot, "二次延续仍共享最初链根 traceId（不漂移）");
 
 console.log("== 持续任务 start ==");
 r = await call(routes["/office-ui/todos/add"], "/office-ui/todos/add", "POST", { text: "持续任务", start: "2026-08-24", due: "2026-08-26" });
@@ -134,7 +144,7 @@ try {
   console.error("  [diag] 落盘读取失败:", e.message);
 }
 assert(onDisk && onDisk.version === 2 && Array.isArray(onDisk.items) && Array.isArray(onDisk.projects), "落盘为 v2 结构");
-assert(onDisk && onDisk.items.length === 7, "落盘含 7 条（实际 " + (onDisk ? onDisk.items.length : 0) + "）");
+assert(onDisk && onDisk.items.length === 10, "落盘含 10 条（实际 " + (onDisk ? onDisk.items.length : 0) + "）");
 
 console.log(failed === 0 ? "\n全部通过 ✔" : "\n失败 " + failed + " 项 ✘");
 process.exit(failed === 0 ? 0 : 1);

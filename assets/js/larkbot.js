@@ -112,7 +112,7 @@
   "enabled": false,
   "cliPath": "",
   "profile": "",
-  "as": "user",
+  "as": "bot",
   "workspaceRoot": "",
   "allowChats": ["oc_你的群chat_id"],
   "pollIntervalSec": 15,

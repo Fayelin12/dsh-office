@@ -78,6 +78,9 @@
   "engines": {
     "node": ">=18"
   },
+  "dependencies": {
+    "@larksuite/channel": "^0.6.1"
+  },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.0"
   }

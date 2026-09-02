@@ -706,11 +706,13 @@
     mailViewOpen = false;
     feishuViewOpen = false;
     todoViewOpen = false;
+    larkbotViewOpen = false;
     showingConfig = false;
     $body.hidden = false;
     $mailView.hidden = true;
     $feishuView.hidden = true;
     $todoView.hidden = true;
+    $larkbotView.hidden = true;
     $config.hidden = true;
     // 重置所有按钮状态（含视图切换的 header 按钮）
     document.querySelectorAll('.office-actions .header-btn, .office-actions .icon-btn').forEach(function(btn) {
@@ -740,6 +742,12 @@
       $body.hidden = true;
       $todoBoardBtn.classList.add('active');
       setOfficeTitle('\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u65E5\u7A0B');
+    } else if (viewName === 'larkbot') {
+      larkbotViewOpen = true;
+      $larkbotView.hidden = false;
+      $body.hidden = true;
+      $larkbotBtn.classList.add('active');
+      setOfficeTitle('\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u7FA4\u804A\u52A9\u7406');
     } else if (viewName === 'config') {
       showingConfig = true;
       $config.hidden = false;

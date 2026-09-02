@@ -2526,3 +2526,62 @@
     .feishu-cards,
     .feishu-insights-layout > .feishu-cards { grid-template-columns: repeat(1, 1fr); }
   }
+
+/* ============================================================
+   🤖 群聊助理（larkbot）视图
+   ============================================================ */
+.larkbot-wrap {
+  padding: 12px 16px;
+  overflow-y: auto;
+}
+.larkbot-status-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border, rgba(128,128,128,0.25));
+  border-radius: var(--radius-md, 10px);
+  background: var(--card-bg, rgba(128,128,128,0.06));
+  font-size: var(--font-body);
+}
+.larkbot-row { line-height: 1.7; }
+.larkbot-row.ok   { color: var(--ok, #2e9e5b); }
+.larkbot-row.warn { color: var(--warn, #b8860b); }
+.larkbot-row.error{ color: var(--danger, #c0392b); }
+.larkbot-row.dim  { color: var(--text-faint, #999); font-size: var(--font-sm); }
+.larkbot-decisions {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border, rgba(128,128,128,0.25));
+  border-radius: var(--radius-md, 10px);
+  background: var(--card-bg, rgba(128,128,128,0.06));
+  overflow: hidden;
+}
+.larkbot-decisions-head {
+  padding: 8px 14px;
+  font-size: var(--font-sm);
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border, rgba(128,128,128,0.25));
+  background: rgba(128,128,128,0.05);
+}
+#larkbotDecisionList {
+  max-height: 480px;
+  overflow-y: auto;
+  padding: 8px 14px;
+}
+.larkbot-config-pre {
+  background: rgba(0,0,0,0.06);
+  border-radius: 6px;
+  padding: 10px;
+  overflow-x: auto;
+  white-space: pre;
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+.larkbot-wrap code {
+  background: rgba(128,128,128,0.15);
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: var(--font-sm);
+}

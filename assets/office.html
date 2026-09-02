@@ -21,6 +21,7 @@
           <button class="header-btn" id="todoBoardBtn" title="日程">📋 日程</button>
           <button class="header-btn" id="feishuBtn" title="飞书消息">💬 飞书</button>
           <button class="header-btn" id="mailBtn" title="邮箱">📧 邮箱</button>
+          <button class="header-btn" id="larkbotBtn" title="群聊助理">🤖 助理</button>
         </div>
         <div class="office-actions-sep"></div>
         <div class="office-actions-tools">
@@ -88,6 +89,27 @@
             <button class="icon-btn" id="fmClose" title="关闭">✕</button>
           </div>
           <div class="fm-body" id="fmBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🤖 群聊助理：机器人身份监听群聊 → LLM 门控 → dsh 会话执行 → 文本回群 -->
+    <div class="mail-view" id="larkbotView" hidden>
+      <div class="mail-toolbar">
+        <span class="mail-identity" id="larkbotIdentity">🤖 群聊助理</span>
+        <div class="mail-actions">
+          <span class="mail-status" id="larkbotStatus"></span>
+          <button class="icon-btn" id="larkbotRefreshBtn" title="刷新">⟳</button>
+          <button class="icon-btn" id="larkbotEnableBtn" title="启用/停用机器人" style="width:auto;padding:0 12px;font-size:var(--font-body)">启用</button>
+          <button class="icon-btn" id="larkbotReloadBtn" title="重新加载配置并重连" style="width:auto;padding:0 12px;font-size:var(--font-body)">重载配置</button>
+        </div>
+      </div>
+      <div class="larkbot-wrap">
+        <div id="larkbotSetup" hidden></div>
+        <div class="larkbot-status-card" id="larkbotStatusCard"></div>
+        <div class="larkbot-decisions">
+          <div class="larkbot-decisions-head">🕐 最近决策（门控判断与回复记录）</div>
+          <div class="log-list" id="larkbotDecisionList"></div>
         </div>
       </div>
     </div>
@@ -315,6 +337,7 @@
 <script src="/office-ui/assets/js/core.js"></script>
 <script src="/office-ui/assets/js/mail.js"></script>
 <script src="/office-ui/assets/js/lark.js"></script>
+<script src="/office-ui/assets/js/larkbot.js"></script>
 <script src="/office-ui/assets/js/insights.js"></script>
 <script src="/office-ui/assets/js/todos.js"></script>
 <script src="/office-ui/assets/js/boot.js"></script>

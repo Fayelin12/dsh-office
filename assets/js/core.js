@@ -149,6 +149,7 @@
 
   // 当前数据：初始为空骨架，优先 /office-ui/data，独立打开时用演示兜底
   let DATA = { columns: emptyColumns(), assignments: {} };
+  let LOCAL_IP = '';  // 本机 IPv4（Host 端 /office-ui/data 下发，标题栏展示用）
   let dataLoaded = false;
   // 快照实时状态：客户端 useSessions 的 active/pending 比服务端 agents.list() 更快
   // fetchData 返回后用此映射覆盖服务端数据，避免"客户端已知 running 但面板显示 idle"的竞态
@@ -185,6 +186,7 @@
       const json = await res.json();
       if (json && Array.isArray(json.columns) && json.columns.length) {
         DATA = json;
+        LOCAL_IP = (json && json.localIP) || '';
         dataLoaded = true;
       }
     } catch (e) {
@@ -270,6 +272,11 @@
   const $config = document.getElementById('configView');
   const $configBtn = document.getElementById('configBtn');
   const $officeTitle = document.getElementById('officeTitle');
+
+  // 标题统一拼接本机 IP：🏢 办公室（本机IP：192.168.x.x）；IP 未拿到（独立打开兜底）时不带括号
+  function setOfficeTitle(base) {
+    $officeTitle.textContent = base + (LOCAL_IP ? '（本机IP：' + LOCAL_IP + '）' : '');
+  }
 
   // ---------- 渲染 6 列 ----------
   // FIX: renderColumns() no longer re-checks getDataKey() — refresh() already
@@ -713,33 +720,33 @@
     $configBtn.textContent = '\u2699\uFE0F \u914D\u7F6E';
     $configBtn.title = '配置';
     // 重置标题
-    $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4';
+    setOfficeTitle('\uD83C\uDFE2 \u529E\u516C\u5BA4');
     // 打开目标视图
     if (viewName === 'mail') {
       mailViewOpen = true;
       $mailView.hidden = false;
       $body.hidden = true;
       $mailBtn.classList.add('active');
-      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u90AE\u7BB1';
+      setOfficeTitle('\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u90AE\u7BB1');
     } else if (viewName === 'feishu') {
       feishuViewOpen = true;
       $feishuView.hidden = false;
       $body.hidden = true;
       $feishuBtn.classList.add('active');
-      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u98DE\u4E66';
+      setOfficeTitle('\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u98DE\u4E66');
     } else if (viewName === 'todos') {
       todoViewOpen = true;
       $todoView.hidden = false;
       $body.hidden = true;
       $todoBoardBtn.classList.add('active');
-      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u65E5\u7A0B';
+      setOfficeTitle('\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u65E5\u7A0B');
     } else if (viewName === 'config') {
       showingConfig = true;
       $config.hidden = false;
       $body.hidden = true;
       $configBtn.textContent = '\u2713 \u5B8C\u6210';
       $configBtn.title = '完成';
-      $officeTitle.textContent = '\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u914D\u7F6E';
+      setOfficeTitle('\uD83C\uDFE2 \u529E\u516C\u5BA4 \u00B7 \u914D\u7F6E');
     }
     refresh();
   }

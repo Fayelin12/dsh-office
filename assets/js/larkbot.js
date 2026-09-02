@@ -56,13 +56,13 @@
     if (!d.configured) {
       parts.push('<div class="larkbot-row warn">配置缺失：' + escHtml(d.configError || '未找到 larkbot-config.json') + '</div>');
     } else if (!d.enabled) {
-      parts.push('<div class="larkbot-row warn">已注册但未启用 —— 点右上「启用」开始轮询（需先配置好 allowChats）</div>');
+      parts.push('<div class="larkbot-row warn">已注册但未启用 —— 点右上「启用」开始轮询（需配置 allowChats）</div>');
     } else if (!d.running) {
       parts.push('<div class="larkbot-row error">启动失败：' + escHtml(d.lastError || '未知错误') + '</div>');
     } else {
-      parts.push('<div class="larkbot-row ok">✅ 运行中 · 轮询 ' + d.chatCount + ' 个群（每 ' + (d.pollIntervalSec || 15) + 's）· 身份 ' + escHtml(d.identity || 'user')
+      parts.push('<div class="larkbot-row ok">✅ 运行中 · 监听 ' + (d.pollChats || 0) + ' 个会话（群 ' + d.chatCount + (d.allowP2p ? ' + 私聊「' + escHtml(d.p2pBotName || '') + '」' : '') + '）· 每 ' + (d.pollIntervalSec || 15) + 's · 身份 ' + escHtml(d.identity || 'bot')
         + (d.activeSessions ? ' · 活跃会话 ' + d.activeSessions : '')
-        + (d.busyCount ? ' · 处理中 ' + d.busyCount + ' 群' : '')
+        + (d.busyCount ? ' · 处理中 ' + d.busyCount + ' 会话' : '')
         + (d.pendingCount ? ' · 排队 ' + d.pendingCount + ' 条' : '') + '</div>');
       if (d.startedAt) parts.push('<div class="larkbot-row dim">启动于 ' + larkbotTime(new Date(d.startedAt).toISOString()) + '</div>');
     }
@@ -114,7 +114,9 @@
   "profile": "",
   "as": "bot",
   "workspaceRoot": "",
-  "allowChats": ["oc_你的群chat_id"],
+  "allowChats": ["oc_群1", "oc_群2"],
+  "allowP2p": true,
+  "p2pBotName": "超能干",
   "pollIntervalSec": 15,
   "mentionOnly": false,
   "agentPreset": "",
@@ -153,6 +155,7 @@
       const rows = list.slice(0, LARKBOT_DECISION_SHOW).map((d) => {
         const badge = larkbotBadge(d.decision);
         const label = larkbotDecisionLabel(d.decision);
+        const where = d.chatName ? escHtml(d.chatName) + ' ' : '';
         const reason = d.decision === 'skip' && d.reason ? ' · ' + escHtml(d.reason) : '';
         const err = d.decision === 'reply-error' || d.decision === 'gate-error'
           ? ' <span class="log-level error">' + escHtml(d.reason || '') + '</span>' : '';
@@ -160,7 +163,7 @@
           '<span class="log-time">' + escHtml(larkbotTime(d.at)) + '</span>' +
           '<span class="log-level">' + badge + ' ' + label + '</span>' +
           '<span class="log-msg" title="' + escHtml(d.text || '') + '">' +
-          escHtml((d.sender || '?') + '：' + (d.text || '')) +
+          where + escHtml((d.sender || '?') + '：' + (d.text || '')) +
           '</span>' + reason + err +
           '</div>';
       });

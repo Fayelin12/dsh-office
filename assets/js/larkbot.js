@@ -31,7 +31,8 @@
   function larkbotBadge(decision) {
     switch (decision) {
       case 'replied':    return '✅';
-      case 'reply':      return '▶️';
+      case 'run':        return '🧠';
+      case 'direct':     return '💬';
       case 'skip':       return '⏭️';
       case 'reply-error':return '⚠️';
       case 'gate-error': return '❌';
@@ -41,8 +42,9 @@
   function larkbotDecisionLabel(decision) {
     switch (decision) {
       case 'replied':     return '已回复';
-      case 'reply':       return '执行中';
-      case 'skip':        return '不回复';
+      case 'run':         return '开会话';
+      case 'direct':      return '直接回';
+      case 'skip':        return '不回';
       case 'reply-error': return '回复失败';
       case 'gate-error':  return '门控失败';
       default:            return decision || '';
@@ -121,7 +123,8 @@
   "workspaceRoot": "",
   "allowChats": ["oc_群1", "oc_群2"],
   "allowP2p": true,
-  "mentionOnly": false,
+  "botName": "超能干",
+  "kbPaths": ["D:\\你的知识库目录1", "D:\\你的知识库目录2"],
   "agentPreset": "",
   "provider": "",
   "model": ""

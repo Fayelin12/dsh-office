@@ -56,16 +56,17 @@
     if (!d.configured) {
       parts.push('<div class="larkbot-row warn">配置缺失：' + escHtml(d.configError || '未找到 larkbot-config.json') + '</div>');
     } else if (!d.enabled) {
-      parts.push('<div class="larkbot-row warn">已注册但未启用 —— 点右上「启用」开始监听（需先配置好 allowChats 与机器人凭据）</div>');
+      parts.push('<div class="larkbot-row warn">已注册但未启用 —— 点右上「启用」开始轮询（需先配置好 allowChats）</div>');
     } else if (!d.running) {
       parts.push('<div class="larkbot-row error">启动失败：' + escHtml(d.lastError || '未知错误') + '</div>');
     } else {
-      parts.push('<div class="larkbot-row ok">✅ 运行中 · 监听 ' + d.chatCount + ' 个群 · 活跃会话 ' + d.activeSessions
+      parts.push('<div class="larkbot-row ok">✅ 运行中 · 轮询 ' + d.chatCount + ' 个群（每 ' + (d.pollIntervalSec || 15) + 's）· 身份 ' + escHtml(d.identity || 'user')
+        + (d.activeSessions ? ' · 活跃会话 ' + d.activeSessions : '')
         + (d.busyCount ? ' · 处理中 ' + d.busyCount + ' 群' : '')
         + (d.pendingCount ? ' · 排队 ' + d.pendingCount + ' 条' : '') + '</div>');
       if (d.startedAt) parts.push('<div class="larkbot-row dim">启动于 ' + larkbotTime(new Date(d.startedAt).toISOString()) + '</div>');
-      if (d.botOpenId) parts.push('<div class="larkbot-row dim">机器人 open_id：' + escHtml(d.botOpenId) + '</div>');
     }
+    if (d.cliPath) parts.push('<div class="larkbot-row dim">lark-cli：' + escHtml(d.cliPath) + '</div>');
     if (d.workspaceRoot) parts.push('<div class="larkbot-row dim">一群一项目空间：' + escHtml(d.workspaceRoot) + ' / &lt;chatId&gt;</div>');
     parts.push('<div class="larkbot-row dim">决策记录 ' + d.decisionsCount + ' 条（最多展示 ' + LARKBOT_DECISION_SHOW + ' 条）</div>');
     $larkbotStatusCard.innerHTML = parts.join('');
@@ -92,9 +93,10 @@
           '<div class="mail-setup"><div class="mail-setup-card">' +
           '<div class="fm-head"><span>🤖 群聊助理 / 配置</span></div>' +
           '<div class="fm-body"><p>未找到配置 ' + escHtml(j.error && j.error.message || '') + '</p>' +
+          '<p>本功能复用你已授权的 <b>lark-cli</b>（超能干应用 + 用户身份）收发飞书消息，<b>不需要任何机器人凭据</b>。</p>' +
           '<p>请在本机创建 ' + escHtml((j.data && j.data.configPath) || '~/.dsh/office/larkbot-config.json') + '：</p>' +
           '<pre class="larkbot-config-pre">' + escHtml(CONFIG_TEMPLATE) + '</pre>' +
-          '<p>机器人凭据（app_id / app_secret）写入 dsh 凭据库（ref：<code>LARK_BOT_APP_ID</code> / <code>LARK_BOT_APP_SECRET</code>），不在本文件出现。</p>' +
+          '<p>把机器人所在的目标群 chat_id 填入 <code>allowChats</code>（可在飞书群里 @ 后看办公室日志，或运行 <code>lark-cli im +chat-list</code> 查）。</p>' +
           '<button class="cal-tr-btn" onclick="larkbotCopyConfig()">复制配置模板</button>' +
           '<button class="cal-tr-btn" onclick="larkbotReload()">我已配置，重载</button>' +
           '</div></div></div>';
@@ -108,12 +110,12 @@
 
   const CONFIG_TEMPLATE = `{
   "enabled": false,
-  "appIdRef": "LARK_BOT_APP_ID",
-  "appSecretRef": "LARK_BOT_APP_SECRET",
-  "tenant": "feishu",
+  "cliPath": "",
+  "profile": "",
+  "as": "user",
   "workspaceRoot": "",
   "allowChats": ["oc_你的群chat_id"],
-  "allowUsers": [],
+  "pollIntervalSec": 15,
   "mentionOnly": false,
   "agentPreset": "",
   "provider": "",

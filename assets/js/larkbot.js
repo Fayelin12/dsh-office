@@ -56,15 +56,16 @@
     if (!d.configured) {
       parts.push('<div class="larkbot-row warn">配置缺失：' + escHtml(d.configError || '未找到 larkbot-config.json') + '</div>');
     } else if (!d.enabled) {
-      parts.push('<div class="larkbot-row warn">已注册但未启用 —— 点右上「启用」开始轮询（需配置 allowChats）</div>');
+      parts.push('<div class="larkbot-row warn">已注册但未启用 —— 点右上「启用」开始处理（需配置 allowChats）</div>');
     } else if (!d.running) {
       parts.push('<div class="larkbot-row error">启动失败：' + escHtml(d.lastError || '未知错误') + '</div>');
     } else {
-      parts.push('<div class="larkbot-row ok">✅ 运行中 · 监听 ' + (d.pollChats || 0) + ' 个会话（群 ' + d.chatCount + (d.allowP2p ? ' + 私聊「' + escHtml(d.p2pBotName || '') + '」' : '') + '）· 每 ' + (d.pollIntervalSec || 15) + 's · 身份 ' + escHtml(d.identity || 'bot')
-        + (d.activeSessions ? ' · 活跃会话 ' + d.activeSessions : '')
-        + (d.busyCount ? ' · 处理中 ' + d.busyCount + ' 会话' : '')
-        + (d.pendingCount ? ' · 排队 ' + d.pendingCount + ' 条' : '') + '</div>');
-      if (d.startedAt) parts.push('<div class="larkbot-row dim">启动于 ' + larkbotTime(new Date(d.startedAt).toISOString()) + '</div>');
+      parts.push('<div class="larkbot-row ok">✅ 已启用 · 目标：群 ' + d.chatCount + (d.allowP2p ? ' + 私聊「' + escHtml(d.p2pBotName || '') + '」' : '') + ' · 回复身份 ' + escHtml(d.identity || 'bot') + '</div>');
+      parts.push('<div class="larkbot-row ok">⏱ 挂接飞书每小时同步：同步完成后自动取新消息过 LLM 门控，需要则开 dsh 任务</div>');
+      if (d.lastRunAt) parts.push('<div class="larkbot-row dim">上次处理 ' + larkbotTime(d.lastRunAt) + (d.lastProcessedAt ? '（游标 ' + escHtml(d.lastProcessedAt) + '）' : '') + '</div>');
+      if (d.activeSessions || d.busyCount || d.pendingCount) {
+        parts.push('<div class="larkbot-row dim">活跃会话 ' + d.activeSessions + (d.busyCount ? ' · 处理中 ' + d.busyCount : '') + (d.pendingCount ? ' · 排队 ' + d.pendingCount : '') + '</div>');
+      }
     }
     if (d.cliPath) parts.push('<div class="larkbot-row dim">lark-cli：' + escHtml(d.cliPath) + '</div>');
     if (d.workspaceRoot) parts.push('<div class="larkbot-row dim">一群一项目空间：' + escHtml(d.workspaceRoot) + ' / &lt;chatId&gt;</div>');
@@ -117,7 +118,6 @@
   "allowChats": ["oc_群1", "oc_群2"],
   "allowP2p": true,
   "p2pBotName": "超能干",
-  "pollIntervalSec": 15,
   "mentionOnly": false,
   "agentPreset": "",
   "provider": "",

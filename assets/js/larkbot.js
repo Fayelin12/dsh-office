@@ -60,7 +60,11 @@
     } else if (!d.running) {
       parts.push('<div class="larkbot-row error">启动失败：' + escHtml(d.lastError || '未知错误') + '</div>');
     } else {
-      parts.push('<div class="larkbot-row ok">✅ 已启用 · 目标：群 ' + d.chatCount + (d.allowP2p ? ' + 私聊「' + escHtml(d.p2pBotName || '') + '」' : '') + ' · 回复身份 ' + escHtml(d.identity || 'bot') + '</div>');
+      parts.push('<div class="larkbot-row ok">✅ 已启用 · 群 ' + d.chatCount + ' 个（同步后处理）· 回复身份 ' + escHtml(d.identity || 'bot') + '</div>');
+      parts.push('<div class="larkbot-row ' + (d.allowP2p ? (d.p2pEventRunning ? 'ok' : 'error') : 'dim') + '">' +
+        (d.allowP2p
+          ? (d.p2pEventReady ? '📩 私聊事件已就绪：所有人私聊「超能干」实时处理' : (d.p2pEventRunning ? '📩 私聊事件连接中…' : '📩 私聊事件未连接：' + escHtml(d.lastError || '')))
+          : '📩 私聊监听已关闭（allowP2p=false）') + '</div>');
       parts.push('<div class="larkbot-row ok">⏱ 挂接飞书每小时同步：同步完成后自动取新消息过 LLM 门控，需要则开 dsh 任务</div>');
       if (d.lastRunAt) parts.push('<div class="larkbot-row dim">上次处理 ' + larkbotTime(d.lastRunAt) + (d.lastProcessedAt ? '（游标 ' + escHtml(d.lastProcessedAt) + '）' : '') + '</div>');
       if (d.activeSessions || d.busyCount || d.pendingCount) {
@@ -117,7 +121,6 @@
   "workspaceRoot": "",
   "allowChats": ["oc_群1", "oc_群2"],
   "allowP2p": true,
-  "p2pBotName": "超能干",
   "mentionOnly": false,
   "agentPreset": "",
   "provider": "",

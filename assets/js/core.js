@@ -797,6 +797,8 @@
   const $helpTabLogs = document.getElementById('helpTabLogs');
   const $helpPanelCaliber = document.getElementById('helpPanelCaliber');
   const $helpPanelLogs = document.getElementById('helpPanelLogs');
+  const $helpTabDonate = document.getElementById('helpTabDonate');
+  const $helpPanelDonate = document.getElementById('helpPanelDonate');
   const $logToggleBtn = document.getElementById('logToggleBtn');
   const $logStatus = document.getElementById('logStatus');
   const $logList = document.getElementById('logList');
@@ -907,15 +909,19 @@
 
   function switchHelpTab(name) {
     const isLogs = name === 'logs';
-    $helpTabCaliber.classList.toggle('active', !isLogs);
+    const isDonate = name === 'donate';
+    $helpTabCaliber.classList.toggle('active', !isLogs && !isDonate);
     $helpTabLogs.classList.toggle('active', isLogs);
-    $helpPanelCaliber.hidden = isLogs;
+    $helpTabDonate.classList.toggle('active', isDonate);
+    $helpPanelCaliber.hidden = isLogs || isDonate;
     $helpPanelLogs.hidden = !isLogs;
+    $helpPanelDonate.hidden = !isDonate;
     syncLogPolling();
   }
 
   $helpTabCaliber.addEventListener('click', () => switchHelpTab('caliber'));
   $helpTabLogs.addEventListener('click', () => switchHelpTab('logs'));
+  $helpTabDonate.addEventListener('click', () => switchHelpTab('donate'));
 
   $helpBtn.addEventListener('click', () => {
     $helpModal.hidden = !$helpModal.hidden;

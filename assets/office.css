@@ -292,6 +292,24 @@
     color: var(--accent);
     font-weight: 600;
   }
+  /* 打赏 tab：收款码居中展示 */
+  .help-body.donate-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding-top: 20px;
+    text-align: center;
+  }
+  .donate-title { color: var(--text); font-size: var(--font-body); }
+  .donate-qr {
+    width: 220px;
+    max-width: 70%;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+  }
+  .donate-hint { color: var(--text-dim); font-size: 13px; }
   /* 办公室日志：工具行 + 滚动列表 */
   .help-body.logs-body {
     display: flex;

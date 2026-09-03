@@ -310,6 +310,10 @@
     background: #fff;
   }
   .donate-hint { color: var(--text-dim); font-size: 13px; }
+  .donate-divider { width: 100%; border-top: 1px solid var(--border); }
+  .donate-community { color: var(--text-dim); font-size: var(--font-body); }
+  .donate-community a { color: var(--accent); text-decoration: none; }
+  .donate-community a:hover { text-decoration: underline; }
   /* 办公室日志：工具行 + 滚动列表 */
   .help-body.logs-body {
     display: flex;

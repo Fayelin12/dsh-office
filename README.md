@@ -75,7 +75,7 @@ pnpm add dsh-office@file:<path/to/dsh-office>
 
 数据目录：`~/.dsh/office/`（`office-config.json`、`token-usage.json`）。
 
-> 需要 Node.js **22.5+**（飞书消息脚本依赖内置 `node:sqlite`），建议 Node 24。
+> 需要 Node.js **22.5+**（飞书消息脚本依赖 Node **内置的 `node:sqlite`**，无需单独安装 SQLite 数据库），建议 Node 24。
 
 ## Usage / 使用
 

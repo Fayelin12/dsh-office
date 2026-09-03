@@ -228,6 +228,7 @@ A: 拉取后暂存 `~/.dsh/office/transcripts/`；点卡片【保存】可输入
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) — the harness this plugin runs on
 - [dsh-plugin topic](https://github.com/topics/dsh-plugin) — more DSH plugins
 - [awesome-deepseek-harness](https://github.com/0xsline/awesome-deepseek-harness) — curated DSH ecosystem
+- 🐦 **飞书答疑群**：[加入群聊](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=78du72ef-3e28-412f-bbfe-2b077b737c4e)
 
 ## License
 

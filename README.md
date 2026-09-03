@@ -88,6 +88,7 @@ pnpm add dsh-office@file:<path/to/dsh-office>
 | @tencent-qqmail/agently-cli | 📧 邮箱 | 用邮箱需装 | `npm install -g @tencent-qqmail/agently-cli`（见下方邮箱章节） |
 | @photostructure/sqlite-vec | 飞书语义召回 | 可选 | 需要语义召回时在插件目录安装 |
 | embedding API key | 飞书语义召回 | 可选 | dashscope / OpenAI 兼容 |
+| —（复用飞书授权 + dsh 模型） | 🤖 助理（群聊助理） | 可选，默认关闭 | 配 `~/.dsh/office/larkbot-config.json`（`enabled: true` + `allowChats`）；LLM 走 dsh 模型路由，无需独立 key |
 
 > 飞书消息流 / 洞察**不装 sqlite-vec、不配 embedding 也能用**（降级为「无语义召回」）。
 

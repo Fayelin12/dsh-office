@@ -26,12 +26,10 @@ export const PROFILE = process.env.LARK_PROFILE || 'default';
 export function resolveRunJs() {
   if (LARK_CLI_RUN_JS && existsSync(LARK_CLI_RUN_JS)) return LARK_CLI_RUN_JS;
   // 兜底：尝试常见全局安装位置
-  // 注：与 lib/index.js 的 resolveLarkCliRunJs 同逻辑（互指维护）。本版含本机私有路径候选
-  // （D:\npm-global），属本机工具脚本约定值；lib 版为公开包不含私有路径（隐私红线）。
+  // 注：与 lib/lark.js 的 resolveLarkCliRunJs 同逻辑（互指维护）。仅含通用全局安装位置，不含本机私有路径（隐私红线）。
   const candidates = [];
   if (process.env.APPDATA) candidates.push(join(process.env.APPDATA, 'npm', 'node_modules', '@larksuite', 'cli', 'scripts', 'run.js'));
-  // 自定义 npm 全局 prefix（如 nvm / `npm --prefix` 安装；本机 lark-cli 装在 D:\npm-global，与飞书项目 lark-cli.js 的 RUN_JS 保持一致）
-  candidates.push(join('D:', 'npm-global', 'node_modules', '@larksuite', 'cli', 'scripts', 'run.js'));
+  // 自定义 npm 全局 prefix（如 nvm / `npm --prefix` 安装）：经 npm_config_prefix 环境变量探测（见下一行）
   if (process.env.npm_config_prefix) candidates.push(join(process.env.npm_config_prefix, 'node_modules', '@larksuite', 'cli', 'scripts', 'run.js'));
   if (process.env.LOCALAPPDATA) candidates.push(join(process.env.LOCALAPPDATA, 'npm', 'node_modules', '@larksuite', 'cli', 'scripts', 'run.js'));
   if (process.platform !== 'win32') {

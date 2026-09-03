@@ -281,7 +281,7 @@
 
   // 当前标题基础串（不含 IP 括号），供 IP 异步到达后补设标题
   let currentTitleBase = '\uD83C\uDFE2 \u529E\u516C\u5BA4';
-  // 标题统一拼接公网 IP：🏢 办公室（公网IP：124.64.23.252）；IP 未查到（查询失败/独立打开兜底）时不带括号
+  // 标题统一拼接公网 IP：🏢 办公室（公网IP：<出口 IPv4>）；IP 未查到（查询失败/独立打开兜底）时不带括号
   function setOfficeTitle(base) {
     currentTitleBase = base;
     $officeTitle.textContent = base + (PUBLIC_IP ? '（公网IP：' + PUBLIC_IP + '）' : '');

@@ -6,9 +6,10 @@ node_modules/
 *.jsonl
 *.jsonl.zstd
 
-# 内部调试/规划文档（不随包发布）
+# 内部调试/规划文档（不随包发布，含本机路径/凭据引用等敏感信息）
 ERROR-ANALYSIS.md
 DEPLOY-PLAN.md
+DEVLOG.md
 
 # 生产文件替换前的本地备份
 *.bak

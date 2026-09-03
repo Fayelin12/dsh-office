@@ -1,5 +1,5 @@
   // ============================================================
-  // 💡 洞察（每日洞察：已并入 📅 日程页右栏，scripts.insights 脚本接入，配置驱动）
+  // 💡 洞察（每日洞察：已并入 💬 飞书页右栏，scripts.insights 脚本接入，配置驱动）
   // 数据：GET /insights/status（前置条件+最近生成）· GET /insights/history?date=（历史）· POST /insights/generate（异步生成）· POST /insights/delete|to-session
   // 视图开关由飞书视图（lark.js toggleFeishu）统一驱动，本模块只负责渲染/加载/日期切换
   // ============================================================

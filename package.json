@@ -76,7 +76,7 @@
     "LICENSE"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=22.5"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.0"

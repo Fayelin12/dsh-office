@@ -13,6 +13,8 @@
  * 消息流/洞察只依赖 msg_metadata，脚本照常运行不崩。
  */
 
+const { mkdirSync } = require('node:fs');
+const { dirname } = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 const { logInfo, logError, float32ToJson } = require('./utils.js');
 
@@ -36,6 +38,7 @@ try {
  */
 function init(dbPath, dim) {
   if (dim) embeddingDim = dim;
+  mkdirSync(dirname(dbPath), { recursive: true });
   db = new DatabaseSync(dbPath, { allowExtension: true });
   db.exec('PRAGMA journal_mode = WAL');
   logInfo('db', `数据库初始化 | path=${dbPath} mode=WAL`);

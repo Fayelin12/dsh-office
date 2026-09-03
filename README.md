@@ -131,10 +131,10 @@ agently-cli auth login
 {
   "profile": "<你的 lark-cli profile>",        // ← 授权身份（见飞书配置指南）
   "scripts": {
-    // sync / latest 可不填：消息脚本已随包提供（scripts/feishu/）
-    "calendar": "<calendar.js 路径>",          // ← 可选：会议日程（仓库 scripts/calendar.js 开箱）
-    "transcript": "<transcript.js 路径>",      // ← 可选：妙记逐字稿（仓库 scripts/transcript.js 开箱）
-    "permission": "<permission.js 路径>"       // ← 可选：妙记权限申请（仓库 scripts/permission.js 开箱）
+    // sync / latest / calendar / transcript / permission 可不填：默认用随包脚本
+    "calendar": "",                            // ← 可选：会议日程（仓库 scripts/calendar.js 开箱）
+    "transcript": "",                          // ← 可选：妙记逐字稿（仓库 scripts/transcript.js 开箱）
+    "permission": ""                           // ← 可选：妙记权限申请（仓库 scripts/permission.js 开箱）
   }
 }
 ```

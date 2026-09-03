@@ -559,11 +559,13 @@
   // ============================================================
   const $calendarStatus = document.getElementById('calendarStatus');
   const $calendarList = document.getElementById('calendarList');
+  const $calendarArchive = document.getElementById('calendarArchive');
   const $calendarRefreshBtn = document.getElementById('calendarRefreshBtn');
   const $calendarSyncBtn = document.getElementById('calendarSyncBtn');
 
   let calendarEvents = [];       // 全部日程（按开始时间升序）
   let calendarFetchedAt = '';    // 缓存拉取时间
+  let calendarArchive = [];      // 🗂 历史妙记档案（窗口外会议，来自 transcripts-state.json）
 
   function calMinLeft(e) {
     if (typeof e.start_ts !== 'number' || !isFinite(e.start_ts)) return null;
@@ -634,6 +636,49 @@
     // 纯卡片流：未开始（含进行中）在前、已结束在后，靠卡片状态色区分（绿=进行中/橙=即将/灰=已结束），无标题栏
     for (const e of upcoming) $calendarList.appendChild(buildCalCard(e));
     for (const e of past) $calendarList.appendChild(buildCalCard(e));
+  }
+
+  // ---------- 🗂 历史妙记档案（窗口外会议永久入口，transcripts-state 反查） ----------
+  async function loadCalendarArchive() {
+    try {
+      const res = await apiFetch('/calendar/archive', { cache: 'no-store' });
+      const json = await res.json();
+      if (!json || !json.ok) { $calendarArchive.hidden = true; return; }
+      calendarArchive = (json.data && json.data.items) || [];
+      renderCalendarArchive();
+    } catch (e) {
+      $calendarArchive.hidden = true;
+    }
+  }
+  function renderCalendarArchive() {
+    if (!calendarArchive.length) { $calendarArchive.hidden = true; return; }
+    $calendarArchive.hidden = false;
+    $calendarArchive.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'cal-archive-head';
+    head.textContent = '🗂 历史妙记 · ' + calendarArchive.length + ' 场';
+    const tip = document.createElement('span');
+    tip.className = 'cal-archive-tip';
+    tip.textContent = '滑出 7 天窗口的会议档案，可随时打开妙记/补转/查看保存地址';
+    head.appendChild(tip);
+    $calendarArchive.appendChild(head);
+    for (const e of calendarArchive) $calendarArchive.appendChild(buildArchiveItem(e));
+  }
+  function buildArchiveItem(e) {
+    const card = document.createElement('div');
+    card.className = 'cal-card cal-archive-item';
+    const title = document.createElement('div');
+    title.className = 'cal-title';
+    title.textContent = e.summary || '(未命名会议)';
+    card.appendChild(title);
+    const meta = document.createElement('div');
+    meta.className = 'cal-meta';
+    const when = (e.start || '').slice(0, 16);
+    meta.textContent = when || '时间未知';
+    card.appendChild(meta);
+    const actions = buildCalActions(e);
+    if (actions) card.appendChild(actions);
+    return card;
   }
 
   function buildCalCard(e) {
@@ -728,11 +773,12 @@
     return row.children.length ? row : null;
   }
 
-  // 转逐字稿按钮：有妙记且未生成（无状态或 failed 重试）时显示；done/saved/pending/new 不显示
+  // 转逐字稿按钮：有妙记且未生成时显示；done/saved/pending 不显示。
+  // new（出窗后不再自动拉取）与 failed 同样可手动补转
   function buildConvertBtn(e) {
     if (!e || !e.minute_token) return null;
     const st = e.transcript;
-    if (st && (st.status === 'done' || st.status === 'saved' || st.status === 'pending' || st.status === 'new')) return null;
+    if (st && (st.status === 'done' || st.status === 'saved' || st.status === 'pending')) return null;
     return trBtn('转逐字稿', () => convertTranscript(e.event_id));
   }
 
@@ -944,6 +990,8 @@
   }
 
   async function loadCalendarEvents() {
+    // 历史档案独立于窗口内日程：每次刷新日程时一并刷新（补转/保存后也经此路径重绘）
+    loadCalendarArchive();
     try {
       const res = await apiFetch('/calendar/events', { cache: 'no-store' });
       const json = await res.json();

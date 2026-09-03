@@ -149,7 +149,7 @@
 
   // 当前数据：初始为空骨架，优先 /office-ui/data，独立打开时用演示兜底
   let DATA = { columns: emptyColumns(), assignments: {} };
-  let LOCAL_IP = '';  // 本机 IPv4（Host 端 /office-ui/data 下发，标题栏展示用）
+  let PUBLIC_IP = '';  // 公网 IPv4（Host 端 /office-ui/data 下发，标题栏展示用）
   let dataLoaded = false;
   // 快照实时状态：客户端 useSessions 的 active/pending 比服务端 agents.list() 更快
   // fetchData 返回后用此映射覆盖服务端数据，避免"客户端已知 running 但面板显示 idle"的竞态
@@ -186,12 +186,12 @@
       const json = await res.json();
       if (json && Array.isArray(json.columns) && json.columns.length) {
         DATA = json;
-        const ip = (json && json.localIP) || '';
+        const ip = (json && json.publicIP) || '';
         // IP 首次到达/变化时补设当前视图标题：初始 HTML 标题是静态「🏢 办公室」，
         // 只有切 tab 走 switchView 才拼括号，主视图要靠这里覆盖
-        if (ip !== LOCAL_IP) {
-          LOCAL_IP = ip;
-          if (LOCAL_IP) setOfficeTitle(currentTitleBase);
+        if (ip !== PUBLIC_IP) {
+          PUBLIC_IP = ip;
+          if (PUBLIC_IP) setOfficeTitle(currentTitleBase);
         }
         dataLoaded = true;
       }
@@ -281,10 +281,10 @@
 
   // 当前标题基础串（不含 IP 括号），供 IP 异步到达后补设标题
   let currentTitleBase = '\uD83C\uDFE2 \u529E\u516C\u5BA4';
-  // 标题统一拼接本机 IP：🏢 办公室（本机IP：192.168.x.x）；IP 未拿到（独立打开兜底）时不带括号
+  // 标题统一拼接公网 IP：🏢 办公室（公网IP：124.64.23.252）；IP 未查到（查询失败/独立打开兜底）时不带括号
   function setOfficeTitle(base) {
     currentTitleBase = base;
-    $officeTitle.textContent = base + (LOCAL_IP ? '（本机IP：' + LOCAL_IP + '）' : '');
+    $officeTitle.textContent = base + (PUBLIC_IP ? '（公网IP：' + PUBLIC_IP + '）' : '');
   }
 
   // ---------- 渲染 6 列 ----------

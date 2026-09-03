@@ -129,7 +129,9 @@
   "kbPaths": ["D:\\你的知识库目录1", "D:\\你的知识库目录2"],
   "agentPreset": "",
   "provider": "",
-  "model": ""
+  "model": "",
+  "llmKeyFile": "",
+  "llmEndpoint": ""
 }`;
 
   window.larkbotCopyConfig = function () {

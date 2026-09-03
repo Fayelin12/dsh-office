@@ -24,9 +24,9 @@
  * 本文件为开箱示例：自带 lark-cli spawn 封装，不依赖本地其它文件。
  */
 
-const { spawn } = require('child_process');
-const { existsSync } = require('fs');
-const { join } = require('path');
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 // ---- 配置区（按需修改） ----
 // lark-cli 的 Node 入口。全局安装后可用 `npm prefix -g` 查到：

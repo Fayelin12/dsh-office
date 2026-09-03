@@ -82,6 +82,13 @@
     });
     actions.appendChild(copyBtn);
     actions.appendChild(retryBtn);
+    const guideLink = document.createElement('a');
+    guideLink.className = 'guide-link';
+    guideLink.href = 'https://agent.qq.com/doc/cli-setup.md';
+    guideLink.target = '_blank';
+    guideLink.rel = 'noopener';
+    guideLink.textContent = '📖 安装文档';
+    actions.appendChild(guideLink);
 
     card.appendChild(title);
     card.appendChild(steps);

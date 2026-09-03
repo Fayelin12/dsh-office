@@ -38,7 +38,7 @@
   const TEXT_RETRY = '重新检测';
   const TEXT_COPY_OK = '已复制 ✓';
   const TEXT_COPY_FAIL = '复制失败';
-  // 飞书消息 + 会议日程 从 0 到 1 配置指南（在线文档，引导卡与提示词统一引用）
+  // 飞书消息 + 会议 + 洞察 从 0 到 1 配置指南（在线文档，引导卡与提示词统一引用）
   const GUIDE_URL = 'https://qcn7nupmeook.feishu.cn/docx/SILkdkE4xo8jF8x3SMGcOrFVnSf';
   const GUIDE_LABEL = '📖 配置指南（在线文档）';
   const FEISHU_PER_CHAT = 20;

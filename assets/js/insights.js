@@ -103,7 +103,7 @@
 
     const note = document.createElement('div');
     note.className = 'insights-guide-note';
-    note.textContent = '洞察 = 今日飞书日报：LLM 通读当天全部消息，生成要点式日报（今日要点/待办/值得回顾的讨论），另附未回复清单（私聊末条非我 + 群聊@我）。LLM key 复用 dsh 凭据（DEEPSEEK_API_KEY），无需额外配置。';
+    note.textContent = '洞察 = 今日飞书日报：LLM 通读当天全部消息，生成要点式日报（今日要点/待办/值得回顾的讨论），另附未回复清单（私聊末条非我 + 群聊@我）。LLM key 走 feishu-config 的 insights.llmKeyFile 文件（未配置时降级为规则判定）。';
     wrap.appendChild(note);
 
     const actions = document.createElement('div');
@@ -112,6 +112,13 @@
     recheck.style.cssText = 'width:auto;padding:0 12px;font-size:var(--font-body)';
     recheck.addEventListener('click', () => loadInsights(true));
     actions.appendChild(recheck);
+    const guideLink = document.createElement('a');
+    guideLink.className = 'guide-link';
+    guideLink.href = GUIDE_URL;
+    guideLink.target = '_blank';
+    guideLink.rel = 'noopener';
+    guideLink.textContent = '📖 配置指南';
+    actions.appendChild(guideLink);
     wrap.appendChild(actions);
 
     $insightsMain.innerHTML = '';

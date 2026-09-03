@@ -92,6 +92,10 @@ pnpm add dsh-office@file:<path/to/dsh-office>
 
 > 飞书消息流 / 洞察**不装 sqlite-vec、不配 embedding 也能用**（降级为「无语义召回」）。
 
+📖 **配置指南**：
+- 飞书（消息 + 会议 + 洞察）：<https://qcn7nupmeook.feishu.cn/docx/SILkdkE4xo8jF8x3SMGcOrFVnSf>
+- 群聊助理：<https://qcn7nupmeook.feishu.cn/docx/BpNLdm7LsoaCHjxdEJWcdL87nGz>
+
 ## Usage / 使用
 
 1. 右下角点 **🏢 办公室** FAB。

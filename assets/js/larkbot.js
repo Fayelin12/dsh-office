@@ -17,6 +17,7 @@
   let larkbotPollTimer = null;
   const LARKBOT_POLL_MS = 10000;      // 视图打开时的轮询间隔
   const LARKBOT_DECISION_SHOW = 30;   // 决策列表最多渲染条数
+  const LARKBOT_GUIDE_URL = 'https://qcn7nupmeook.feishu.cn/docx/BpNLdm7LsoaCHjxdEJWcdL87nGz';
 
   function larkbotTime(iso) {
     if (!iso) return '';
@@ -101,6 +102,7 @@
           '<div class="fm-head"><span>🤖 群聊助理 / 配置</span></div>' +
           '<div class="fm-body"><p>未找到配置 ' + escHtml(j.error && j.error.message || '') + '</p>' +
           '<p>本功能复用你已授权的 <b>lark-cli</b>（你的飞书应用 + 用户身份）收发飞书消息，<b>不需要任何机器人凭据</b>。</p>' +
+          '<p>📖 完整配置指南：<a class="guide-link" href="' + LARKBOT_GUIDE_URL + '" target="_blank" rel="noopener">群聊助理 从 0 到 1 配置指南</a></p>' +
           '<p>请在本机创建 ' + escHtml((j.data && j.data.configPath) || '~/.dsh/office/larkbot-config.json') + '：</p>' +
           '<pre class="larkbot-config-pre">' + escHtml(CONFIG_TEMPLATE) + '</pre>' +
           '<p>把机器人所在的目标群 chat_id 填入 <code>allowChats</code>（可在飞书群里 @ 后看办公室日志，或运行 <code>lark-cli im +chat-list</code> 查）。</p>' +

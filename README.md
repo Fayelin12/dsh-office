@@ -77,6 +77,20 @@ pnpm add dsh-office@file:<path/to/dsh-office>
 
 > 需要 Node.js **22.5+**（飞书消息脚本依赖 Node **内置的 `node:sqlite`**，无需单独安装 SQLite 数据库），建议 Node 24。
 
+### 依赖清单 / Dependencies
+
+插件本体零依赖（纯 JS、无构建）。以下为各功能的**外部 CLI / 服务**依赖，按需安装：
+
+| 依赖 | 对应功能 | 必须？ | 安装 |
+|---|---|---|---|
+| Node.js 22.5+ | 飞书消息脚本（内置 `node:sqlite`） | ✅ 必须 | — |
+| @larksuite/cli | 💬 飞书 / 📋 日程·会议 / 💡 洞察 | 用飞书需装 | `npm install -g @larksuite/cli`（详见 feishu-setup 指南） |
+| @tencent-qqmail/agently-cli | 📧 邮箱 | 用邮箱需装 | `npm install -g @tencent-qqmail/agently-cli`（见下方邮箱章节） |
+| @photostructure/sqlite-vec | 飞书语义召回 | 可选 | 需要语义召回时在插件目录安装 |
+| embedding API key | 飞书语义召回 | 可选 | dashscope / OpenAI 兼容 |
+
+> 飞书消息流 / 洞察**不装 sqlite-vec、不配 embedding 也能用**（降级为「无语义召回」）。
+
 ## Usage / 使用
 
 1. 右下角点 **🏢 办公室** FAB。

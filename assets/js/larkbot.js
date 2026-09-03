@@ -65,7 +65,7 @@
       parts.push('<div class="larkbot-row ok">✅ 已启用 · 群 ' + d.chatCount + ' 个（同步后处理）· 回复身份 ' + escHtml(d.identity || 'bot') + '</div>');
       parts.push('<div class="larkbot-row ' + (d.allowP2p ? (d.p2pEventRunning ? 'ok' : 'error') : 'dim') + '">' +
         (d.allowP2p
-          ? (d.p2pEventReady ? '📩 私聊事件已就绪：所有人私聊「超能干」实时处理' : (d.p2pEventRunning ? '📩 私聊事件连接中…' : '📩 私聊事件未连接：' + escHtml(d.lastError || '')))
+          ? (d.p2pEventReady ? '📩 私聊事件已就绪：所有人私聊你的机器人实时处理' : (d.p2pEventRunning ? '📩 私聊事件连接中…' : '📩 私聊事件未连接：' + escHtml(d.lastError || '')))
           : '📩 私聊监听已关闭（allowP2p=false）') + '</div>');
       parts.push('<div class="larkbot-row ok">⏱ 挂接飞书每小时同步：同步完成后自动取新消息过 LLM 门控，需要则开 dsh 任务</div>');
       if (d.lastRunAt) parts.push('<div class="larkbot-row dim">上次处理 ' + larkbotTime(d.lastRunAt) + (d.lastProcessedAt ? '（游标 ' + escHtml(d.lastProcessedAt) + '）' : '') + '</div>');
@@ -100,7 +100,7 @@
           '<div class="mail-setup"><div class="mail-setup-card">' +
           '<div class="fm-head"><span>🤖 群聊助理 / 配置</span></div>' +
           '<div class="fm-body"><p>未找到配置 ' + escHtml(j.error && j.error.message || '') + '</p>' +
-          '<p>本功能复用你已授权的 <b>lark-cli</b>（超能干应用 + 用户身份）收发飞书消息，<b>不需要任何机器人凭据</b>。</p>' +
+          '<p>本功能复用你已授权的 <b>lark-cli</b>（你的飞书应用 + 用户身份）收发飞书消息，<b>不需要任何机器人凭据</b>。</p>' +
           '<p>请在本机创建 ' + escHtml((j.data && j.data.configPath) || '~/.dsh/office/larkbot-config.json') + '：</p>' +
           '<pre class="larkbot-config-pre">' + escHtml(CONFIG_TEMPLATE) + '</pre>' +
           '<p>把机器人所在的目标群 chat_id 填入 <code>allowChats</code>（可在飞书群里 @ 后看办公室日志，或运行 <code>lark-cli im +chat-list</code> 查）。</p>' +
@@ -123,7 +123,7 @@
   "workspaceRoot": "",
   "allowChats": ["oc_群1", "oc_群2"],
   "allowP2p": true,
-  "botName": "超能干",
+  "botName": "",
   "kbPaths": ["D:\\你的知识库目录1", "D:\\你的知识库目录2"],
   "agentPreset": "",
   "provider": "",

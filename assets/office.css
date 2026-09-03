@@ -1287,17 +1287,21 @@
     border-color: var(--border);
     background: transparent;
   }
-  /* 🗂 历史妙记档案（窗口外会议，transcripts-state 反查；独立于 calendar-list 滚动区） */
-  .calendar-archive {
-    flex: 0 1 auto;
+  /* 🗂 历史妙记档案（窗口外会议，transcripts-state 反查）——会议视图右列，与日程列表双列并排 */
+  .todo-meeting-cols {
+    flex: 1;
     min-height: 0;
-    max-height: 42%;
+    display: flex;
+    gap: 10px;
+  }
+  .calendar-archive {
+    flex: 0 0 clamp(240px, 32%, 360px);
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 8px;
     overflow-y: auto;
-    border-top: 1px dashed var(--border);
-    padding: 10px 2px 0 0;
+    padding-right: 2px;
   }
   .cal-archive-head {
     flex: none;

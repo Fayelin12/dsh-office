@@ -19,6 +19,8 @@
 [![license](https://img.shields.io/npm/l/dsh-office)](./LICENSE)
 [![dsh-plugin](https://img.shields.io/badge/dsh-plugin-deepseek--harness-4D6BFE)](https://github.com/topics/dsh-plugin)
 
+> 📈 **日均 50+ 次下载**（npm，持续增长）—— 别看 GitHub star 少，真实用户每天都在装。
+
 ---
 
 ## What is dsh-office? / 这是什么
@@ -62,6 +64,10 @@ token 用量、子代理、Agent 邮箱、飞书消息、会议日程**变成一
 ```bash
 dsh plugin --profile web add dsh-office
 ```
+
+> 🤖 **给 AI 助手的安装提示词**（大家现在都让 AI 去 GitHub 搜项目来装，复制这句发给你的 AI）：
+>
+> 帮我安装 DeepSeek Harness 的 dsh-office 插件：运行 `dsh plugin --profile web add dsh-office`，然后重启 dsh web。装好后告诉我怎么打开右下角的「办公室」面板。
 
 ### 本地开发安装 / Local (file:) install
 
@@ -198,10 +204,18 @@ agently-cli auth login
 
 > 未配置 `scripts.calendar` 时，会议视图显示引导卡，不影响其它功能；未配置 `scripts.transcript` 时，逐字稿功能不显示。
 
-## Why dsh-office? / 解决什么问题
+## Why dsh-office? / 解决什么痛点
 
-- **Before / 之前**：工作区多、会话散、token 不可见、子代理混在主列表里。
-- **After / 之后**：一屏总览所有 agent 状态与资源占用。
+> 用 AI 写代码久了，后台常挂着一堆会话：这个在跑、那个在等你审批、还有个在问你问题——
+> 但它们长得几乎一模一样，你只能一个个点进去读文字才知道状态。**凭什么要我费劲去读？直接让我"看"不就行了。**
+
+- **🔴 痛点 1：会话状态靠文字读，判断成本高** → 把每个工作区映射成「工位小人」，动画替你说话：空闲站着、工作走路、忙疯小跑、等你审批时**举手 + ⚠️**。0 秒扫一眼就知道先回谁。
+- **🔴 痛点 2：token 用量不可见** → 单次输入 vs 累计，活跃会话实时、历史会话冷读，谁在烧 token 一眼看清。
+- **🔴 痛点 3：待办会漏** → 审批、提问、「已回复但我还没看」的会话都会举手或亮角标，不再悄悄烂在列表里。
+- **🔴 痛点 4：子代理混在主列表造成噪声** → 自动过滤子代理会话，父会话聚合显示「有子代理在跑」，token 仍计入父会话。
+- **🔴 痛点 5：邮箱 / 飞书 / 会议分散在多个外部工具** → 全部内置到面板，一个地方收发邮件、看飞书消息、盯会议日程、记待办、看日报。
+
+一句话：**它把「需要你关注」这件抽象的事，翻译成「一眼能懂」的信号。**
 
 ## FAQ / 常见问题
 

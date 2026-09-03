@@ -32,6 +32,18 @@
     const from = m.from || {};
     return from.name || from.email || '';
   }
+  // 往邮件 HTML 的 <head> 注入片段：无 <head> 时退到 doctype 后 / 文档最前
+  function injectIntoMailHead(html, frag) {
+    const headMatch = html.match(/<head[^>]*>/i);
+    const doctypeMatch = html.match(/^\s*<!doctype[^>]*>/i);
+    if (headMatch) {
+      return html.slice(0, headMatch.index + headMatch[0].length) + frag + html.slice(headMatch.index + headMatch[0].length);
+    }
+    if (doctypeMatch) {
+      return html.slice(0, doctypeMatch.index + doctypeMatch[0].length) + frag + html.slice(doctypeMatch.index + doctypeMatch[0].length);
+    }
+    return frag + html;
+  }
 
   // ---------- 未配置邮箱：安装/授权引导卡片 ----------
   let mailSetupRequired = false;   // true 时禁用写邮件按钮
@@ -267,30 +279,26 @@
       replyBtn.addEventListener('click', () => openCompose('reply', id, d.from && d.from.email));
       actions.appendChild(replyBtn);
 
-      // 邮件正文是不可信外部输入：用 sandbox 无脚本 iframe 渲染（srcdoc 继承 CSP，sandbox 再兜一层）
+      // 邮件正文是不可信外部输入：sandbox 无脚本 iframe 渲染（srcdoc 继承 CSP，sandbox 再兜一层）。
+      // 只放开 allow-popups（仍无 allow-scripts / allow-same-origin，保持隔离），配合下方注入的
+      // <base target="_blank">，使正文链接一律在浏览器新标签页打开——若留在沙箱 iframe 内导航，
+      // 目标站用 X-Frame-Options/CSP 拒绝嵌入时，面板里会显示「内容被屏蔽」且读信区被跳走。
       const bodyFrame = document.createElement('iframe');
       bodyFrame.className = 'mail-read-body';
-      bodyFrame.sandbox = '';
-      // 深色阅读：父页面 CSS 无法穿透 sandbox iframe，改为在邮件文档内注入反色样式；
-      // 图片用双重反色抵消保持原色。不依赖邮件自身的 prefers-color-scheme（对声明
-      // color-scheme: light only 的邮件同样生效）。
+      bodyFrame.sandbox = 'allow-popups';
       let emailHtml = d.body || '<p>' + TEXT_NO_BODY + '</p>';
-      // 清理危险标签（防止 sandbox 逃逸）
+      // 清理危险标签（防止 sandbox 逃逸 / 暗链跳转），随后注入我们自己的 base target
       emailHtml = emailHtml.replace(/<meta\s[^>]*http-equiv[^>]*>/gi, '');
       emailHtml = emailHtml.replace(/<base\s[^>]*>/gi, '');
       emailHtml = emailHtml.replace(/<link\s[^>]*>/gi, '');
+      // 深色阅读：父页面 CSS 无法穿透 sandbox iframe，改为在邮件文档内注入反色样式；
+      // 图片用双重反色抵消保持原色。不依赖邮件自身的 prefers-color-scheme（对声明
+      // color-scheme: light only 的邮件同样生效）。
+      let mailHeadFrag = '<base target="_blank">';
       if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        const darkStyle = '<style>html{filter:invert(' + DARK_INVERT_STRENGTH + ') hue-rotate(180deg)}img,picture,video{filter:invert(' + DARK_INVERT_STRENGTH + ') hue-rotate(180deg)}</style>';
-        const headMatch = emailHtml.match(/<head[^>]*>/i);
-        const doctypeMatch = emailHtml.match(/^\s*<!doctype[^>]*>/i);
-        if (headMatch) {
-          emailHtml = emailHtml.slice(0, headMatch.index + headMatch[0].length) + darkStyle + emailHtml.slice(headMatch.index + headMatch[0].length);
-        } else if (doctypeMatch) {
-          emailHtml = emailHtml.slice(0, doctypeMatch.index + doctypeMatch[0].length) + darkStyle + emailHtml.slice(doctypeMatch.index + doctypeMatch[0].length);
-        } else {
-          emailHtml = darkStyle + emailHtml;
-        }
+        mailHeadFrag += '<style>html{filter:invert(' + DARK_INVERT_STRENGTH + ') hue-rotate(180deg)}img,picture,video{filter:invert(' + DARK_INVERT_STRENGTH + ') hue-rotate(180deg)}</style>';
       }
+      emailHtml = injectIntoMailHead(emailHtml, mailHeadFrag);
       bodyFrame.srcdoc = emailHtml;
 
       $mailRead.innerHTML = '';

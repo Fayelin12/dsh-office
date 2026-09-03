@@ -473,7 +473,7 @@
     prompt.appendChild(document.createTextNode('也可以把下面这句发给你的 AI，让它帮你完成配置：'));
     const promptText = document.createElement('div');
     promptText.className = 'ms-prompt-text';
-    promptText.textContent = '请阅读飞书配置指南（' + GUIDE_URL + '），按照文档为我安装并配置 lark-cli（含用户授权），准备消息同步脚本与读取脚本（ingestor.js / latest.js），并写入 ~/.dsh/office/feishu-config.json。';
+    promptText.textContent = '请阅读飞书配置指南（' + GUIDE_URL + '），按照文档为我安装并配置 lark-cli（含用户授权），并生成 ~/.dsh/office/feishu-config.json（配 profile；消息脚本已随插件包提供，无需自写）。';
     card.appendChild(prompt);
     card.appendChild(promptText);
     // 显式文档链接入口
@@ -919,7 +919,7 @@
     prompt.className = 'cs-step';
     prompt.textContent = '也可以把下面这句发给你的 AI，让它帮你完成配置：';
     const promptText = document.createElement('code');
-    promptText.textContent = '请阅读飞书配置指南（' + GUIDE_URL + '），按照文档为我安装并配置 lark-cli（含用户授权，scope 需含 calendar / vc / minutes），准备 calendar.js 脚本并写入 ~/.dsh/office/feishu-config.json 的 scripts.calendar。';
+    promptText.textContent = '请阅读飞书配置指南（' + GUIDE_URL + '），按照文档为我安装并配置 lark-cli（含用户授权，scope 需含 calendar / vc / minutes），并在 ~/.dsh/office/feishu-config.json 配置 scripts.calendar（calendar.js 已随插件包提供，无需自写）。';
     card.appendChild(h); card.appendChild(p1); card.appendChild(guideLink); card.appendChild(p2);
     card.appendChild(p3); card.appendChild(p4); card.appendChild(code2); card.appendChild(p5);
     card.appendChild(prompt); card.appendChild(promptText);

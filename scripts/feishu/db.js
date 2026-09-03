@@ -64,9 +64,10 @@ function init(dbPath, dim) {
  */
 const META_COLUMNS = ['id','rowid','chat_id','user_id','message_id','msg_type','chat_type','message_type','text','root_id','sender_name','chat_name','created_at','resource_type','resource_key','file_name'];
 
-function createMetaTableSql(tableName) {
+function createMetaTableSql(tableName, ifNotExists) {
+  const create = ifNotExists ? 'CREATE TABLE IF NOT EXISTS' : 'CREATE TABLE';
   return `
-    CREATE TABLE ${tableName} (
+    ${create} ${tableName} (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
       rowid      INTEGER,
       chat_id    TEXT NOT NULL,
@@ -100,7 +101,7 @@ function runMigration() {
   }
 
   try {
-    db.exec(createMetaTableSql('msg_metadata'));
+    db.exec(createMetaTableSql('msg_metadata', true));
     try { db.exec('ALTER TABLE msg_metadata ADD COLUMN message_type TEXT'); } catch (e) { /* 已存在 */ }
     try { db.exec('ALTER TABLE msg_metadata ADD COLUMN sender_name TEXT'); } catch (e) { /* 已存在 */ }
     try { db.exec('ALTER TABLE msg_metadata ADD COLUMN chat_name TEXT'); } catch (e) { /* 已存在 */ }

@@ -1287,16 +1287,18 @@
     border-color: var(--border);
     background: transparent;
   }
-  /* 🗂 历史妙记档案（窗口外会议，transcripts-state 反查）——会议视图右列，与日程列表双列并排 */
+  /* 🗂 历史妙记档案（窗口外会议，transcripts-state 反查）——会议视图右列，与日程列表左右各 50% 等宽 */
   .todo-meeting-cols {
     flex: 1;
     min-height: 0;
     display: flex;
     gap: 10px;
   }
-  .calendar-archive {
-    flex: 0 0 clamp(240px, 32%, 360px);
+  .todo-meeting-cols > * {
+    flex: 1 1 0;
     min-width: 0;
+  }
+  .calendar-archive {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -1691,9 +1693,6 @@
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-  }
-  .todo-meeting .calendar-list {
-    flex: 1;
   }
   .todo-board-group-list {
     display: flex;

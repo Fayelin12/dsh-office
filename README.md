@@ -47,6 +47,7 @@ token 用量、子代理、Agent 邮箱、飞书消息、会议日程**变成一
 - 📅 **会议日程视图 + ⏰ 悬浮提醒** / Meetings & reminders（与飞书消息共用 lark-cli 授权，提前 1 小时提醒、每 5 分钟刷新倒计时，已开完会议自动关联妙记/纪要）
 - 📋 **待办看板** / Todo board（独立 tab：按项目分组的未完成看板，备注、截止日逾期标红、完成归档；日程页左列保留按日截止视图）
 - 📄 **妙记逐字稿 + 一键保存** / Transcripts（自动拉取已结束会议逐字稿到本地缓存，卡片提醒「逐字稿已生成」，点【保存】移动到目标目录）
+- 💡 **每日洞察** / Daily insights（飞书日报：LLM 通读当天消息生成要点式日报 + 待办 + 未回复 + 值得回顾的讨论）
 - 🪵 **办公室日志** / Office logs（帮助弹窗内 tab：实时查看加载 / 调用 / 同步等全部动作，排查问题）
 - 🏢 6-column sprite office / 6 列精灵办公室
 - 🔵 悬浮入口 + 一键开关 / floating FAB + toggle
@@ -73,6 +74,8 @@ pnpm add dsh-office@file:<path/to/dsh-office>
 > `"dsh-office"`，然后重启 `dsh web`。
 
 数据目录：`~/.dsh/office/`（`office-config.json`、`token-usage.json`）。
+
+> 需要 Node.js **22.5+**（飞书消息脚本依赖内置 `node:sqlite`），建议 Node 24。
 
 ## Usage / 使用
 
@@ -103,18 +106,19 @@ agently-cli auth login
 
 ## 💬 飞书消息流 / Feishu messages
 
-飞书消息视图把**本机消息库**（如飞书群聊/私聊消息）汇总到办公室面板一屏查看，
-由 `feishu-config.json` 的 `scripts.sync`（采集入库）与 `scripts.latest`（读取）两个本地脚本驱动：
+飞书消息视图把**本机消息库**（如飞书群聊/私聊消息）汇总到办公室面板一屏查看。
+消息采集/读取脚本**已随包提供**（`scripts/feishu/`），只需装好 lark-cli 并授权、在 `feishu-config.json` 配 `profile`，无需自己写脚本：
 
-- 插件**不直接调用飞书 API、不上传任何数据**——只执行你配置的本地脚本并解析其 stdout JSON；
+- 插件**不直接调用飞书 API、不上传任何数据**——只执行本地脚本（随包 `scripts/feishu/` 或你自定义）并解析其 stdout JSON；
 - 面板以**会话卡片流**展示：会话名 + 群/私聊标签 + 新增徽标（+N）+ 最近 3 条预览 + 最后活跃时间，
   点卡片打开消息弹窗，点消息行展开完整正文；
 - **同步**：手动点「同步」深捞最近 30 天（`manualWindowDays` 可调），或开启 `autoSync` 定时增量同步
   （整点对齐，无后台守护进程）；
 - **「提到我」悬浮提示**：定时同步后若新消息提到 `mention` 关键词，办公室按钮旁闪过 📢 提示。
+- **可选语义召回**：配 `embedding` 段（apiKey 等）后对文本消息做向量化，支持按语义检索历史群消息；不配也能用消息流。
 
 > 未配置 `feishu-config.json` 时，💬 飞书视图显示引导卡（含步骤、配置模板、在线指南链接），不影响其它功能。
-> 完整「飞书消息 + 会议日程 从 0 到 1」配置指南见面板内 📖 指南链接。
+> 完整「飞书消息 + 会议 + 洞察 从 0 到 1」配置指南见面板内 📖 指南链接。
 
 ## 📅 会议日程 + ⏰ 提醒 / Meetings & reminders
 
@@ -125,12 +129,12 @@ agently-cli auth login
 ```jsonc
 // ~/.dsh/office/feishu-config.json
 {
+  "profile": "<你的 lark-cli profile>",        // ← 授权身份（见飞书配置指南）
   "scripts": {
-    "sync": "<ingestor.js 绝对路径>",
-    "latest": "<latest.js 绝对路径>",
-    "calendar": "<calendar.js 绝对路径>",      // ← 可选：会议日程脚本
-    "transcript": "<transcript.js 绝对路径>",   // ← 可选：妙记逐字稿脚本
-    "permission": "<permission.js 绝对路径>"    // ← 可选：妙记权限申请脚本
+    // sync / latest 可不填：消息脚本已随包提供（scripts/feishu/）
+    "calendar": "<calendar.js 路径>",          // ← 可选：会议日程（仓库 scripts/calendar.js 开箱）
+    "transcript": "<transcript.js 路径>",      // ← 可选：妙记逐字稿（仓库 scripts/transcript.js 开箱）
+    "permission": "<permission.js 路径>"       // ← 可选：妙记权限申请（仓库 scripts/permission.js 开箱）
   }
 }
 ```

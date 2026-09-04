@@ -782,6 +782,10 @@
     return trBtn('转逐字稿', () => convertTranscript(e.event_id));
   }
 
+  // 本会话内已发出妙记查看申请的会议：重绘/切视图后仍保持「已申请」禁用态，
+  // 防重复申请撞飞书限流（批准发生在飞书侧，状态机感知不到，等用户手动点转逐字稿重试）
+  const appliedPermissions = new Set();
+
   // 状态元素：done（已生成+保存）/ saved / failed（附申请权限）/ pending / new
   // 返回元素数组，由 buildCalActions 统一排入操作行
   function buildTranscriptStatus(e) {
@@ -819,13 +823,27 @@
     } else if (tr.status === 'failed') {
       // 失败原因由 toast 一次性提示，卡片不常驻失败文案；无权限时保留申请入口
       if (tr.errorCode === 'NO_PERMISSION') {
-        const applyBtn = trBtn('申请权限', async () => {
-          applyBtn.disabled = true;
-          const r = await applyPermission(e.event_id);
-          toast(r.ok ? '已向妙记 owner 发出查看申请' : ('申请失败：' + friendlyLarkError(r.message || '请稍后重试')));
-          applyBtn.disabled = false;
-        });
-        els.push(applyBtn);
+        if (appliedPermissions.has(e.event_id)) {
+          // 本会话已申请过（等批准）：按钮置「已申请」禁用，批准后点转逐字稿即可拉取
+          const appliedBtn = trBtn('✅ 已申请 · 等待批准', () => {});
+          appliedBtn.disabled = true;
+          els.push(appliedBtn);
+        } else {
+          const applyBtn = trBtn('申请权限', async () => {
+            applyBtn.disabled = true;
+            const r = await applyPermission(e.event_id);
+            if (r.ok) {
+              appliedPermissions.add(e.event_id);
+              applyBtn.textContent = '✅ 已申请 · 等待批准';
+              applyBtn.disabled = true;
+              toast('已向妙记 owner 发出查看申请；批准后点【转逐字稿】即可拉取');
+            } else {
+              toast('申请失败：' + friendlyLarkError(r.message || '请稍后重试'));
+              applyBtn.disabled = false;
+            }
+          });
+          els.push(applyBtn);
+        }
       }
     } else if (tr.status === 'pending') {
       els.push(trBadge('⏳ 逐字稿拉取中…'));

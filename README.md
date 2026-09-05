@@ -102,6 +102,20 @@ pnpm add dsh-office@file:<path/to/dsh-office>
 - 飞书（消息 + 会议 + 洞察）：<https://qcn7nupmeook.feishu.cn/docx/SILkdkE4xo8jF8x3SMGcOrFVnSf>
 - 群聊助理：<https://qcn7nupmeook.feishu.cn/docx/BpNLdm7LsoaCHjxdEJWcdL87nGz>
 
+## 🤖 群聊助理提示词热加载 / Hot-reload assistant prompts (0.4.2+)
+
+群聊助理的 3 块提示词已**外置为插件包内文件**，每次使用实时读盘：**改动即时生效、无需重启 DSH**，也不用改 node_modules / 重新安装。
+
+| 文件（包内 `assets/prompts/`） | 作用 | 生效 |
+|---|---|---|
+| `gate-system.md` | 门控判断（run / direct / skip）+ direct 的回复文本 | 下一条消息即生效 |
+| `reply-style.md` | run 会话的回复风格（注入会话 system prompt） | 下一次该会话回合生效 |
+| `bridge-protocol.md` | 群聊运行约定与安全规则（注入会话 system prompt） | 下一次该会话回合生效 |
+
+**本机定制（升级不覆盖）**：把同名 `.md` 复制到 `~/.dsh/office/prompts/` 再修改——该目录优先于包内默认。
+
+> ⚠️ 提示词正文不要写 `{{变量}}`——DSH 组装系统提示时会当模板变量插值，未注册的变量名会报错。
+
 ## Usage / 使用
 
 1. 右下角点 **🏢 办公室** FAB。

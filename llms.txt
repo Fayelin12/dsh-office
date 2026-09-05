@@ -7,7 +7,8 @@
 
 - 类型 / Type: DeepSeek Harness (DSH) web plugin（bundle）
 - 安装 / Install: `dsh plugin --profile web add dsh-office`
-- 功能 / Function: 6 列精灵办公室，可视化工作区、会话、token 用量、子代理状态；内置 Agent 邮箱（收件箱/已发送/读信/写信/回复）、飞书消息流（会话卡片流+同步+提到我提示）、会议日程视图 + ⏰ 悬浮提醒、妙记/纪要关联、逐字稿生成与一键保存、每日洞察（飞书日报）、待办看板（按项目分组 + 备注 + 截止日 + 完成归档）、办公室日志 tab（实时查看加载/调用/同步动作，排查问题）
+- 功能 / Function: 6 列精灵办公室，可视化工作区、会话、token 用量、子代理状态；内置 Agent 邮箱（收件箱/已发送/读信/写信/回复）、飞书消息流（会话卡片流+同步+提到我提示）、会议日程视图 + ⏰ 悬浮提醒、妙记/纪要关联、逐字稿生成与一键保存、每日洞察（飞书日报）、待办看板（按项目分组 + 备注 + 截止日 + 完成归档）、办公室日志 tab（实时查看加载/调用/同步动作，排查问题）、群聊助理（监听群/私聊 → LLM 门控 → dsh 会话执行 → 回消息）
+- 提示词热加载 / Prompt hot-reload: 群聊助理提示词外置为包内 `assets/prompts/{gate-system,reply-style,bridge-protocol}.md`，每次使用实时读盘；复制同名文件到 `~/.dsh/office/prompts/` 可覆盖（升级不丢定制）；改完即时生效、无需重启 DSH。详见 README「群聊助理提示词热加载」
 - 技术栈 / Stack: 纯 JavaScript，零构建；Host = Node ESM，Client = React
 - 路由 / Routes: HTTP `/office-ui/*`（面板与数据，含 `/office-ui/mail/*` 邮箱、`/office-ui/feishu/*` 飞书、`/office-ui/calendar/*` 会议、`/office-ui/transcript/*` 逐字稿、`/office-ui/todos/*` 待办、`/office-ui/logs` 日志接口），RPC `/office`（会话跳转/徽标同步）
 - 邮箱 / Mail: 依赖全局 `agently-cli`（@tencent-qqmail/agently-cli），Host 直接以 Node 执行其 `scripts/run.js`，不走 cmd 外壳；未安装/未授权时面板内显示安装引导卡片，引导文案指向 https://agent.qq.com/doc/cli-setup.md
@@ -26,4 +27,5 @@
 
 DeepSeek Harness, DSH, plugin, office, workspace, session, dashboard,
 visualization, subagent, token usage, agent mail, feishu, lark, meeting, calendar,
-transcript, 办公室, 工作区, 会话, 可视化, 邮箱, 飞书, 会议, 妙记, 逐字稿
+transcript, 办公室, 工作区, 会话, 可视化, 邮箱, 飞书, 会议, 妙记, 逐字稿,
+群聊助理, larkbot, 提示词, 热加载, prompt, hot-reload

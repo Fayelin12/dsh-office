@@ -853,15 +853,37 @@
     return els;
   }
 
-  // ---------- 保存对话框（目标目录输入，记忆上次目录） ----------
+  // ---------- 保存对话框（目标目录输入 + 历史记录下拉，最多 5 条） ----------
   let saveEventId = null;
 
   function openSaveDialog(e) {
     saveEventId = e.event_id;
     $saveError.textContent = '';
-    $saveDir.value = localStorage.getItem('office.lastSaveDir') || '';
     $saveModal.hidden = false;
+    $saveDir.value = '';
+    loadSaveHistory(); // 异步拉最近保存目录填充下拉；回填上次目录由历史结果决定（见下）
     $saveDir.focus();
+  }
+
+  // 历史保存目录：GET /transcript/save-history（后端从 transcripts-state 的 savedTo 聚合）。
+  // 上次保存目录仍在历史里才回填——否则留空让下拉完整可见，方便从最近 5 条中选
+  async function loadSaveHistory() {
+    const last = localStorage.getItem('office.lastSaveDir') || '';
+    try {
+      const res = await apiFetch('/transcript/save-history');
+      const json = await res.json();
+      const dirs = json && json.ok && json.data && Array.isArray(json.data.dirs) ? json.data.dirs : [];
+      $saveDirHistory.textContent = '';
+      for (const d of dirs) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        $saveDirHistory.appendChild(opt);
+      }
+      if (last && dirs.includes(last)) $saveDir.value = last;
+    } catch (err) {
+      // 历史拉取失败：回退到本地记忆的上次目录，不阻塞手输
+      $saveDir.value = last;
+    }
   }
 
   function closeSaveDialog() {
@@ -897,6 +919,7 @@
   // 逐字稿保存对话框（DOM ref + 事件绑定；原与邮箱同区块，因依赖 closeSaveDialog/confirmSaveTranscript 拆至此）
   const $saveModal = document.getElementById('saveModal');
   const $saveDir = document.getElementById('saveDir');
+  const $saveDirHistory = document.getElementById('saveDirHistory');
   const $saveError = document.getElementById('saveError');
   const $saveConfirmBtn = document.getElementById('saveConfirmBtn');
   const $saveClose = document.getElementById('saveClose');

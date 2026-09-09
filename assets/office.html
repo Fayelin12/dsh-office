@@ -283,7 +283,8 @@
           <button class="icon-btn" id="saveClose" title="关闭">✕</button>
         </div>
         <div class="compose-body">
-          <input type="text" id="saveDir" placeholder="目标目录（Windows 绝对路径，如 D:\会议纪要）" autocomplete="off" />
+          <input type="text" id="saveDir" list="saveDirHistory" placeholder="目标目录（Windows 绝对路径，如 D:\会议纪要）" autocomplete="off" />
+          <datalist id="saveDirHistory"></datalist>
         </div>
         <div class="compose-foot">
           <span class="compose-error" id="saveError"></span>

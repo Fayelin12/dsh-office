@@ -40,6 +40,8 @@ function init(dbPath, dim) {
   if (dim) embeddingDim = dim;
   mkdirSync(dirname(dbPath), { recursive: true });
   db = new DatabaseSync(dbPath, { allowExtension: true });
+  // 并发写者（手动同步/洞察预同步/事件入库可能撞一起）等待而非立即 database is locked
+  db.exec('PRAGMA busy_timeout = 5000');
   db.exec('PRAGMA journal_mode = WAL');
   logInfo('db', `数据库初始化 | path=${dbPath} mode=WAL`);
 

@@ -25,7 +25,7 @@ const { logInfo, logError, httpsRequest } = require('./utils.js');
 
 // ===== 默认值（与 feishu-config 的 embedding 段默认一致） =====
 const DEFAULT_ENDPOINT = 'https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings';
-const DEFAULT_MODEL = 'text-embedding-v4';
+const DEFAULT_MODEL = 'qwen3.7-text-embedding';
 const DEFAULT_DIMENSIONS = 1024;
 const DEFAULT_TIMEOUT_MS = 10000;
 

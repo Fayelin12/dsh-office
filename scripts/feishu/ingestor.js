@@ -13,7 +13,7 @@
  *   FEISHU_DB_PATH        SQLite 库路径（默认 ~/.dsh/office/feishu.db）
  *   EMBEDDING_API_KEY     embedding key（空 = 跳过向量化，只写 msg_metadata）
  *   EMBEDDING_ENDPOINT    默认 https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings
- *   EMBEDDING_MODEL       默认 text-embedding-v4
+ *   EMBEDDING_MODEL       默认 qwen3.7-text-embedding
  *   EMBEDDING_DIMENSIONS  默认 1024
  *
  * 流程：用户身份列出所有会话 → 按时间范围读消息 → 落库（+ 可选 embedding）→ 打印统计 → 退出
@@ -37,7 +37,7 @@ const CONFIG = {
   embedding: {
     apiKey: process.env.EMBEDDING_API_KEY || '',
     endpoint: process.env.EMBEDDING_ENDPOINT || 'https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings',
-    model: process.env.EMBEDDING_MODEL || 'text-embedding-v4',
+    model: process.env.EMBEDDING_MODEL || 'qwen3.7-text-embedding',
     dimensions: parseInt(process.env.EMBEDDING_DIMENSIONS, 10) || 1024,
   },
   poll: {

@@ -56,6 +56,7 @@ token 用量、子代理、Agent 邮箱、飞书消息、会议日程**变成一
 - 🧠 MBTI 角色 + 个性化气泡 / MBTI characters + idle bubble texts
 - 🔢 token 单次 vs 累计口径 / per-input vs cumulative token
 - 🤖 子代理识别与过滤 / subagent detection & filtering
+- 🔔 **会话跑完通知** / Session-done notification（按工作区白名单，会话跑完私聊推送飞书：工作区 + 会话标题 + 最后一段回答 + 耗时；子代理不推送）
 
 ## Install / 安装
 
@@ -79,7 +80,7 @@ pnpm add dsh-office@file:<path/to/dsh-office>
 > 即：在 `~/.dsh/profiles/web/package.json` 的 `dsh.profile.bundles` 数组中加入
 > `"dsh-office"`，然后重启 `dsh web`。
 
-数据目录：`~/.dsh/office/`（`office-config.json`、`token-usage.json`）。
+数据目录：`~/.dsh/office/`（`office-config.json`、`token-usage.json`、`notify-config.json`）。
 
 > 需要 Node.js **22.5+**（飞书消息脚本依赖 Node **内置的 `node:sqlite`**，无需单独安装 SQLite 数据库），建议 Node 24。
 

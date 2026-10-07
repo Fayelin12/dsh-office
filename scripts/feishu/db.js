@@ -67,7 +67,7 @@ function init(dbPath, dim) {
  * rowid 可空：无向量消息（image/file/folder）不关联 msg_embeddings，允许 NULL。
  * 注：重建表只搬下列列（names），新增列需同步维护 META_COLUMNS。
  */
-const META_COLUMNS = ['id','rowid','chat_id','user_id','message_id','msg_type','chat_type','message_type','text','root_id','sender_name','chat_name','created_at','resource_type','resource_key','file_name'];
+const META_COLUMNS = ['id','rowid','chat_id','user_id','message_id','msg_type','chat_type','message_type','text','root_id','sender_name','chat_name','created_at','resource_type','resource_key','file_name','thread_id'];
 
 function createMetaTableSql(tableName, ifNotExists) {
   const create = ifNotExists ? 'CREATE TABLE IF NOT EXISTS' : 'CREATE TABLE';
@@ -88,7 +88,8 @@ function createMetaTableSql(tableName, ifNotExists) {
       created_at TEXT DEFAULT (datetime('now','localtime')),
       resource_type TEXT,
       resource_key TEXT,
-      file_name TEXT
+      file_name TEXT,
+      thread_id TEXT
     );
   `;
 }
@@ -114,6 +115,9 @@ function runMigration() {
     try { db.exec('ALTER TABLE msg_metadata ADD COLUMN resource_type TEXT'); } catch (e) { /* 已存在 */ }
     try { db.exec('ALTER TABLE msg_metadata ADD COLUMN resource_key TEXT'); } catch (e) { /* 已存在 */ }
     try { db.exec('ALTER TABLE msg_metadata ADD COLUMN file_name TEXT'); } catch (e) { /* 已存在 */ }
+    // 2026-09-23：话题群消息标识（omt_xxx；非话题消息为 NULL）——必须在 ensureRowidNullable 之前，
+    // 否则重建表时 META_COLUMNS 里的 thread_id 会因源表缺列而报错
+    try { db.exec('ALTER TABLE msg_metadata ADD COLUMN thread_id TEXT'); } catch (e) { /* 已存在 */ }
     // 2026-08-18：rowid 列改可空（无向量消息不关联 msg_embeddings，需允许 NULL）
     // 老表 `rowid INTEGER NOT NULL` 会让无向量 INSERT 的 NULL rowid 被 NOT NULL 约束拒绝
     ensureRowidNullable();
@@ -163,7 +167,7 @@ function ensureRowidNullable() {
  *     → 不参与召回（2026-08-18 拍板：图片/文件不做语义召回）
  * @param {Float32Array} vec - 可为空数组/空（无文本消息传 new Float32Array(0)）
  * @param {object} meta - { chat_id, user_id, message_id, msg_type, chat_type, text,
- *                          root_id, resource_type?, resource_key?, file_name? }
+ *                          root_id, thread_id?, resource_type?, resource_key?, file_name? }
  * @returns {boolean}
  */
 function insertMsgVector(vec, meta) {
@@ -183,6 +187,7 @@ function insertMsgVector(vec, meta) {
   const resourceType = meta.resource_type || null;
   const resourceKey = meta.resource_key || null;
   const fileName = meta.file_name || null;
+  const threadId = meta.thread_id || null;
 
   // 允许无文本消息（资源类）入库，但必须至少有一个标识
   if (!chatId || !messageId) return false;
@@ -204,9 +209,9 @@ function insertMsgVector(vec, meta) {
         rowId = vecRes.lastInsertRowid;
       }
       const metaRes = db.prepare(`
-        INSERT OR IGNORE INTO msg_metadata (rowid, chat_id, user_id, message_id, msg_type, chat_type, message_type, text, root_id, created_at, sender_name, chat_name, resource_type, resource_key, file_name)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now','localtime')), ?, ?, ?, ?, ?)
-      `).run(rowId, chatId, userId, messageId, msgType, chatType, messageType, text, rootId, createdAt, senderName, chatName, resourceType, resourceKey, fileName);
+        INSERT OR IGNORE INTO msg_metadata (rowid, chat_id, user_id, message_id, msg_type, chat_type, message_type, text, root_id, created_at, sender_name, chat_name, resource_type, resource_key, file_name, thread_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now','localtime')), ?, ?, ?, ?, ?, ?)
+      `).run(rowId, chatId, userId, messageId, msgType, chatType, messageType, text, rootId, createdAt, senderName, chatName, resourceType, resourceKey, fileName, threadId);
       db.exec('COMMIT');
       return metaRes.changes > 0;
     } catch (e) {

@@ -4,6 +4,9 @@
  * poller.js — 用户身份轮询：列出用户所有会话 + 读消息 + 转 meta
  *
  * 依赖 lark-cli.js 封装，用户身份（--as user）读消息需要已授权的 get_as_user scope。
+ *
+ * 2026-09-23：话题群（chat_mode=topic）按会话只返回话题根消息，话题内回复需按 thread_id
+ * 用 listThreadMessages 单独补拉（有界，见 MAX_THREAD_BACKFILL）。
  */
 
 const larkCli = require('./lark-cli.js');
@@ -14,6 +17,9 @@ const IMAGE_KEY_RE = /\[Image:\s*([^\]]+)\]/;      // "[Image: img_v3_xxx]" → 
 const XML_ATTR_KEY_RE = /key="([^"]+)"/;           // <file key="..." name="..."/>
 const XML_ATTR_NAME_RE = /name="([^"]+)"/;
 const CARD_BODY_RE = /<card>([\s\S]*?)<\/card>/;   // interactive 卡片内纯文本
+
+// 话题群（chat_mode=topic）兜底补拉上限：每次同步每会话最多补拉多少个话题（取最新）
+const MAX_THREAD_BACKFILL = 20;
 
 /**
  * 列出用户所在的所有会话（含私聊 p2p + 群 group）。
@@ -51,6 +57,42 @@ async function listMessages(profile, chatId, pageSize = 50, startIso) {
 }
 
 /**
+ * 读某个话题（thread）内的消息（倒序）。
+ * 背景：话题群里 +chat-messages-list 只返回话题根消息，话题内回复必须按 thread_id 单独拉。
+ * @param {string} profile
+ * @param {string} threadId - omt_xxx
+ * @param {number} [pageSize=50]
+ */
+async function listThreadMessages(profile, threadId, pageSize = 50) {
+  const res = await larkCli.run([
+    '--profile', profile, 'im', '+threads-messages-list',
+    '--as', 'user', '--thread', threadId,
+    '--page-size', String(pageSize), '--order', 'desc', '--no-reactions', '--format', 'json',
+  ]);
+  if (res && res.ok && res.data && Array.isArray(res.data.messages)) {
+    return res.data.messages;
+  }
+  return [];
+}
+
+/**
+ * 从会话消息（倒序）里挑出待补拉的话题 id：去重、取最新的前 maxN 个（有界，防 71 话题 → 71 请求）。
+ * 非话题会话的消息不带 thread_id ⇒ 恒返回空数组，不产生任何额外请求。
+ * @param {Array} msgs - listMessages 的返回（desc）
+ * @param {number} [maxN=MAX_THREAD_BACKFILL]
+ * @returns {string[]}
+ */
+function pickThreadIds(msgs, maxN = MAX_THREAD_BACKFILL) {
+  const ids = [];
+  for (const m of msgs || []) {
+    const tid = m && m.thread_id ? String(m.thread_id).trim() : '';
+    if (tid && !ids.includes(tid)) ids.push(tid);
+    if (ids.length >= maxN) break;
+  }
+  return ids;
+}
+
+/**
  * 把一条轮询到的消息转成 ingest meta；跳过（返回 null）时表示不采集。
  *
  * 消息类型覆盖（2026-08-18 扩展，支持非文本消息）：
@@ -80,6 +122,7 @@ function messageToMeta(chat, m) {
     resource_key: '',
     file_name: '',
     root_id: null,
+    thread_id: m.thread_id || '',   // omt_xxx；空串＝非话题消息（话题根与其内回复都带 thread_id）
     created_at: m.create_time || null,
   };
   const content = typeof m.content === 'string' ? m.content.trim() : '';
@@ -126,4 +169,4 @@ function messageToMeta(chat, m) {
   return meta;
 }
 
-module.exports = { listChats, listMessages, messageToMeta };
+module.exports = { listChats, listMessages, listThreadMessages, pickThreadIds, messageToMeta, MAX_THREAD_BACKFILL };

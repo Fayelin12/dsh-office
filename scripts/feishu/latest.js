@@ -18,13 +18,14 @@
  *   { ok: true, total, since, offset?,
  *     chats: [{ chat_id, chat_name, chat_type, count, new_count, last_at,
  *               messages: [{ chat_id, chat_name, user_id, sender_name, message_id,
- *                            message_type, text, created_at,
+ *                            message_type, text, created_at, thread_id,
  *                            resource_type?, resource_key?, file_name? }],
  *               recent_messages: [...] }] }
  *   - messages：全量路径下为「本次新入库（created_at > since）」消息（提及扫描用），
  *               无 --since 时退化为最近 N 条；单会话路径下恒为最近 N 条（分页）
  *   - recent_messages：全量路径下恒为最近 N 条（卡片预览/详情展示用）
  *   resource_* 为 2026-08-18 新增（image/file/folder 非文本消息资源字段；老库回退空串）
+ *   thread_id 为 2026-09-23 新增（话题标识 omt_xxx；非话题消息 / 老库 / 缺列时恒为空串）
  * 失败时：{ ok: false, error }
  */
 
@@ -98,7 +99,8 @@ function main() {
     `${has('sender_name') ? 'sender_name' : 'NULL AS sender_name'}, message_id, message_type, text, created_at, ` +
     `${has('resource_type') ? 'resource_type' : "'' AS resource_type"}, ` +
     `${has('resource_key') ? 'resource_key' : "'' AS resource_key"}, ` +
-    `${has('file_name') ? 'file_name' : "'' AS file_name"}`;
+    `${has('file_name') ? 'file_name' : "'' AS file_name"}, ` +
+    `${has('thread_id') ? "COALESCE(thread_id, '') AS thread_id" : "'' AS thread_id"}`;
 
   try {
     const chatSel = has('chat_name') ? 'chat_name' : 'NULL AS chat_name';
